@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 import Link from 'next/link';
@@ -12,7 +13,11 @@ import {
   DEFAULT_DOCS, DEFAULT_CONTENT, DEFAULT_SOCIAL, DEFAULT_SECTIONS, DEFAULT_BRANDING,
   DEFAULT_STATS, DEFAULT_THEME_PALETTE, DEFAULT_USERS
 } from '@/lib/pjlStore';
-import ZonaMap from '@/components/ZonaMap';
+
+const ZonaMap = dynamic(() => import('@/components/ZonaMap'), { 
+  ssr: false,
+  loading: () => <div style={{ height: '400px', background: 'var(--cream)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '25px', border: '1px solid var(--gold-pale)' }}>Cargando mapa interactivo...</div>
+});
 
 type Module = 'dashboard' | 'identidad' | 'apariencia' | 'contenido' | 'actividades' | 'noticias' | 'usuarios' | 'documentos' | 'configuracion' | 'perfiles' | 'capillas' | 'asistente' | 'carrusel' | 'territorio' | 'logs';
 
@@ -273,16 +278,19 @@ function AdminContent() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    // Intentar primero con las credenciales maestras (CREDS) y luego con la lista de usuarios
+    const isMaster = loginForm.user === CREDS.user && loginForm.pass === CREDS.pass;
     const userMatch = allUsers.find(u => u.email === loginForm.user && (u.password === loginForm.pass || loginForm.pass === 'admin_master'));
-    
-    if (userMatch) {
+
+    if (isMaster || userMatch) {
+      const authUser = userMatch || { id: 'master', name: 'Administrador Principal', email: CREDS.user, role: 'superadmin', status: 'activo' } as User;
       setLoggedIn(true);
-      setCurrentUser(userMatch);
+      setCurrentUser(authUser);
       localStorage.setItem('pjl_admin_auth', 'true');
-      localStorage.setItem('pjl_current_user', JSON.stringify(userMatch));
+      localStorage.setItem('pjl_current_user', JSON.stringify(authUser));
       setLoginErr(false);
-      showToast(`¡Bienvenido, ${userMatch.name}! ✔`);
-      addLog('inicio de sesión', 'sistema', `Usuario ${userMatch.email} ha entrado al panel.`);
+      showToast(`¡Bienvenido, ${authUser.name}! ✔`);
+      addLog('inicio de sesión', 'sistema', `Usuario ${authUser.email} ha entrado al panel.`);
     } else {
       setLoginErr(true);
     }
