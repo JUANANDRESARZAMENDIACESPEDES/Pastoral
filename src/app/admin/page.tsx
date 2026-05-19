@@ -138,7 +138,7 @@ function AdminContent() {
       details,
       timestamp: new Date().toISOString()
     };
-    setLogs(prev => [newLog, ...prev.slice(0, 49)]); // Use functional update
+    setLogs([newLog, ...logs.slice(0, 49)]);
   };
 
   // --- LOCAL UI STATE ---
@@ -1565,7 +1565,7 @@ function AdminContent() {
                             style={{ width: '100%', fontSize: '11px', background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)' }}
                             onClick={() => {
                               if(confirm('¿Eliminar límites de esta zona?')) {
-                                setBranding({...branding, [`zona${num}Polygon`]: null});
+                                setBranding({...branding, [`zona${num}Polygon`]: undefined});
                                 showToast(`Límites de Zona ${num} eliminados`);
                                 addLog('eliminar territorio', 'territorio', `Zona ${num}`);
                               }
