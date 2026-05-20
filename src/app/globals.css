@@ -1561,39 +1561,57 @@ input, textarea { cursor: text; }
 
 @media (max-width: 768px) {
   /* NAVBAR ADAPTIVA (TOP NAV) */
-  /* NAVBAR ADAPTIVA (TOP NAV) */
   .top-nav {
-    position: relative; /* Cambiado de sticky para que scrollee con la página */
+    position: relative;
     width: 100%;
     background: #fff;
     z-index: 1000;
-    padding: 10px 0;
+    padding: 12px 0;
     box-shadow: 0 4px 30px rgba(0,0,0,0.08);
     border-bottom: 2px solid var(--gold-pale);
     height: auto;
   }
-  .nav-content { justify-content: space-around; padding: 0 10px; flex-direction: row; }
-  .logo-area { display: none !important; }
   
-  .nav-links {
+  .nav-content {
     display: flex !important;
-    overflow-x: auto;
-    gap: 15px !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 0 20px !important;
+    flex-direction: row !important;
     width: 100% !important;
-    justify-content: space-around !important;
-    padding: 0 5px !important;
-    scrollbar-width: none;
-    flex-wrap: nowrap;
   }
-  .nav-links::-webkit-scrollbar { display: none; }
-  
-  .nav-btn {
-    font-size: 10px !important;
-    flex-direction: column;
-    padding: 5px !important;
-    gap: 2px !important;
-    min-width: 60px;
-    text-align: center;
+
+  .logo-area {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+
+  .logo-area .logo-img-circular {
+    height: 48px !important;
+    width: 48px !important;
+  }
+
+  .logo-area h1 {
+    font-size: 16px !important;
+    margin: 0 !important;
+    line-height: 1.2 !important;
+    color: var(--navy) !important;
+  }
+
+  .logo-area p {
+    font-size: 9px !important;
+    margin: 0 !important;
+    line-height: 1.1 !important;
+    color: var(--text-muted) !important;
+  }
+
+  .nav-links {
+    display: none !important; /* Hide old horizontal scroll nav on mobile */
+  }
+
+  .mobile-menu-toggle {
+    display: flex !important; /* Show premium hamburger button */
   }
 
   main { padding-top: 0px; } /* Ajustado porque nav ya no es sticky */
@@ -1883,3 +1901,234 @@ input:checked + .pjl-slider:before {
     gap: 20px;
   }
 }
+
+/* ============================================================
+   MOBILE RESPONSIVE NAVIGATION DRAWER & HAMBURGER SYSTEM
+   ============================================================ */
+
+/* Mobile Toggle Menu Button (hidden on desktop) */
+.mobile-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 28px;
+  height: 20px;
+  padding: 0;
+  z-index: 1001;
+}
+
+.mobile-menu-toggle span {
+  display: block;
+  width: 100%;
+  height: 3px;
+  background-color: var(--gold);
+  border-radius: 3px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hamburger animations into Close X */
+.mobile-menu-toggle.active span:nth-child(1) {
+  transform: translateY(8px) rotate(45deg);
+}
+
+.mobile-menu-toggle.active span:nth-child(2) {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
+.mobile-menu-toggle.active span:nth-child(3) {
+  transform: translateY(-9px) rotate(-45deg);
+}
+
+/* Glassmorphic Backdrop overlay */
+.drawer-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100dvh;
+  background: rgba(10, 16, 30, 0.7);
+  backdrop-filter: blur(8px);
+  z-index: 1999;
+  animation: pjlFadeIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes pjlFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Sliding Navigation Drawer Container */
+.mobile-nav-drawer {
+  position: fixed;
+  top: 0;
+  right: -320px;
+  width: 300px;
+  height: 100dvh;
+  background: linear-gradient(135deg, rgba(26, 39, 68, 0.98), rgba(15, 23, 42, 0.99));
+  backdrop-filter: blur(16px);
+  z-index: 2000;
+  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-left: 2px solid var(--gold-pale);
+}
+
+.mobile-nav-drawer.open {
+  right: 0;
+}
+
+/* Header within Drawer */
+.drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 20px;
+  border-bottom: 1px solid rgba(200, 151, 58, 0.2);
+}
+
+.drawer-header .logo-area {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.drawer-header .logo-area h2 {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  font-family: var(--font-display);
+  letter-spacing: 0.5px;
+}
+
+.drawer-header .logo-area p {
+  color: var(--gold-pale);
+  font-size: 10px;
+  margin: 0;
+  font-weight: 500;
+}
+
+.drawer-close {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(200, 151, 58, 0.25);
+  color: var(--gold);
+  font-size: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.drawer-close:hover {
+  background: var(--gold);
+  color: var(--navy);
+  border-color: var(--gold);
+}
+
+/* Scrollable Drawer Body */
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 16px;
+}
+
+/* Custom Scrollbar for Drawer */
+.drawer-body::-webkit-scrollbar {
+  width: 4px;
+}
+.drawer-body::-webkit-scrollbar-thumb {
+  background: rgba(200, 151, 58, 0.3);
+  border-radius: 2px;
+}
+
+.drawer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.drawer-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 14px 18px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.drawer-btn:hover, .drawer-btn:focus {
+  background: rgba(200, 151, 58, 0.15);
+  color: var(--gold);
+  border-color: rgba(200, 151, 58, 0.3);
+  padding-left: 22px;
+}
+
+.drawer-btn.dropdown-toggle span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Nested Drawer Dropdowns */
+.drawer-sublinks {
+  list-style: none;
+  padding: 6px 0 10px 20px;
+  margin: 6px 0 4px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-left: 1.5px dashed rgba(200, 151, 58, 0.25);
+  animation: pjlSlideDown 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes pjlSlideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.drawer-sublink {
+  display: block;
+  padding: 10px 14px;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 13.5px;
+  font-weight: 500;
+  text-decoration: none;
+  border-radius: 10px;
+  transition: all 0.25s ease;
+}
+
+.drawer-sublink:hover, .drawer-sublink:focus {
+  color: var(--gold);
+  background: rgba(255, 255, 255, 0.04);
+  padding-left: 20px;
+}
+
+.drawer-vatican-widget {
+  background: rgba(10, 16, 30, 0.4);
+  border: 1px solid rgba(200, 151, 58, 0.15);
+  border-radius: 14px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+

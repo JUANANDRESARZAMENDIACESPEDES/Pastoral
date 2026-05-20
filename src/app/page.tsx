@@ -29,6 +29,12 @@ function HomeContent() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [globalCommFilter, setGlobalCommFilter] = useState<number | 'all'>('all');
 
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [mobileSubmenuOpen, setMobileSubmenuOpen] = useState<Record<string, boolean>>({});
+  const toggleMobileSubmenu = (key: string) => {
+    setMobileSubmenuOpen(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
   // Reset selected zone when leaving zones page
   useEffect(() => {
     if (currentPage !== 'zonas') {
@@ -49,14 +55,14 @@ function HomeContent() {
   const [heroIntervalSecs, setHeroIntervalSecs] = useState<number>(3);
   const [liveHeroIndex, setLiveHeroIndex] = useState(0);
 
-  // Prevent background scrolling when modals are open
+  // Prevent background scrolling when modals or mobile menu is open
   useEffect(() => {
-    if (selectedProfile || selectedHistoryItem || selectedNews) {
+    if (selectedProfile || selectedHistoryItem || selectedNews || isMobileMenuOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
     }
-  }, [selectedProfile, selectedHistoryItem, selectedNews]);
+  }, [selectedProfile, selectedHistoryItem, selectedNews, isMobileMenuOpen]);
 
   // --- SYNC LOGIC ---
   const syncData = () => {
@@ -287,6 +293,15 @@ function HomeContent() {
               <p>Pastoral Juvenil Luqueña</p>
             </div>
           </div>
+          <button 
+            className={`mobile-menu-toggle ${isMobileMenuOpen ? 'active' : ''}`} 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Abrir menú"
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
           <ul className="nav-links">
             <li className="nav-item">
               <Link href="/" onClick={(e) => navigate('home', e)} className="nav-btn">🏠 Inicio</Link>
@@ -335,6 +350,105 @@ function HomeContent() {
           </ul>
         </div>
       </nav>
+
+      {/* MOBILE DRAWER */}
+      {isMobileMenuOpen && (
+        <div className="drawer-backdrop" onClick={() => setIsMobileMenuOpen(false)}></div>
+      )}
+      <div className={`mobile-nav-drawer ${isMobileMenuOpen ? 'open' : ''}`}>
+        <div className="drawer-header">
+          <div className="logo-area" style={{ cursor: 'pointer' }} onClick={() => { navigate('home'); setIsMobileMenuOpen(false); }}>
+            {branding.mainLogo ? <img src={branding.mainLogo} className="logo-img-circular" style={{ height: '50px', width: '50px' }} alt="Logotipo Principal PJL" /> : <div style={{ fontSize: '24px' }}>†</div>}
+            <div>
+              <h2>PJL LUQUE</h2>
+              <p>Pastoral Juvenil</p>
+            </div>
+          </div>
+          <button className="drawer-close" onClick={() => setIsMobileMenuOpen(false)} aria-label="Cerrar menú">✕</button>
+        </div>
+        <div className="drawer-body">
+          <ul className="drawer-links">
+            <li>
+              <Link href="/" onClick={(e) => { navigate('home', e); setIsMobileMenuOpen(false); }} className="drawer-btn">🏠 Inicio</Link>
+            </li>
+            
+            <li>
+              <button onClick={() => toggleMobileSubmenu('nosotros')} className="drawer-btn dropdown-toggle">
+                <span>📖 Nosotros</span>
+                <span>{mobileSubmenuOpen['nosotros'] ? '▴' : '▾'}</span>
+              </button>
+              {mobileSubmenuOpen['nosotros'] && (
+                <ul className="drawer-sublinks">
+                  <li>
+                    <Link href="/" onClick={(e) => { navigate('estatuto', e); setIsMobileMenuOpen(false); }} className="drawer-sublink">Estatuto</Link>
+                  </li>
+                  <li>
+                    <Link href="/" onClick={(e) => { navigate('historia', e); setIsMobileMenuOpen(false); }} className="drawer-sublink">Nuestra Historia</Link>
+                  </li>
+                  <li>
+                    <Link href="/" onClick={(e) => { navigate('institucional', e); setIsMobileMenuOpen(false); }} className="drawer-sublink">Institucional</Link>
+                  </li>
+                </ul>
+              )}
+            </li>
+
+            <li>
+              <button onClick={() => toggleMobileSubmenu('consejo')} className="drawer-btn dropdown-toggle">
+                <span>👥 Consejo PJL</span>
+                <span>{mobileSubmenuOpen['consejo'] ? '▴' : '▾'}</span>
+              </button>
+              {mobileSubmenuOpen['consejo'] && (
+                <ul className="drawer-sublinks">
+                  {councilTabs.map(t => (
+                    <li key={t.id}>
+                      <Link href="/" onClick={(e) => { navigate('consejo', e); setActiveConsejoTab(t.id); setIsMobileMenuOpen(false); }} className="drawer-sublink">{t.label}</Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+
+            <li>
+              <button onClick={() => toggleMobileSubmenu('zonas')} className="drawer-btn dropdown-toggle">
+                <span>🗺️ Zonas</span>
+                <span>{mobileSubmenuOpen['zonas'] ? '▴' : '▾'}</span>
+              </button>
+              {mobileSubmenuOpen['zonas'] && (
+                <ul className="drawer-sublinks">
+                  {zonasInfo.map(z => (
+                    <li key={z.id}>
+                      <Link href="/" onClick={(e) => { setSelectedZone(z.id); navigate('zonas', e); setIsMobileMenuOpen(false); }} className="drawer-sublink">Zona {z.id} – {z.name}</Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+
+            <li>
+              <Link href="/" onClick={(e) => { navigate('agenda', e); setIsMobileMenuOpen(false); }} className="drawer-btn">📅 Agenda</Link>
+            </li>
+            <li>
+              <Link href="/" onClick={(e) => { navigate('noticias', e); setIsMobileMenuOpen(false); }} className="drawer-btn">📰 Noticias</Link>
+            </li>
+            <li>
+              <Link href="/" onClick={(e) => { navigate('contacto', e); setIsMobileMenuOpen(false); }} className="drawer-btn">✉️ Contacto</Link>
+            </li>
+
+            <li>
+              <button onClick={() => toggleMobileSubmenu('vaticano')} className="drawer-btn dropdown-toggle">
+                <span>🇻🇦 Vaticano</span>
+                <span>{mobileSubmenuOpen['vaticano'] ? '▴' : '▾'}</span>
+              </button>
+              {mobileSubmenuOpen['vaticano'] && (
+                <div className="drawer-vatican-widget" style={{ padding: '10px 15px' }}>
+                  {/* @ts-ignore */}
+                  <vaticannews-widget lang="es" fontSize="16"></vaticannews-widget>
+                </div>
+              )}
+            </li>
+          </ul>
+        </div>
+      </div>
 
       {/* VATICAN SCRIPT */}
       <Script src="https://www.vaticannews.va/widget.js" strategy="lazyOnload" />

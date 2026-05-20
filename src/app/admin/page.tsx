@@ -44,13 +44,15 @@ const NAV_ITEMS = [
 ];
 
 function useLS<T>(key: keyof typeof store, def: T) {
-  const [val, setVal] = useState<T>(() => (store[key].get as () => T)());
-  const [prevKey, setPrevKey] = useState(key);
+  const [val, setVal] = useState<T>(def);
 
-  if (key !== prevKey) {
-    setPrevKey(key);
-    setVal((store[key].get as () => T)());
-  }
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const storeVal = (store[key].get as () => T)();
+      setVal(storeVal);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [key]);
 
   const update = (v: T) => {
     setVal(v);
@@ -159,10 +161,19 @@ function AdminContent() {
   const maxInteractions = Math.max(...validStats.map(s => s?.interactions || 0), 1);
   const [navyHex, setNavyHex] = useState(theme.navy);
   const [goldHex, setGoldHex] = useState(theme.gold);
-  const [savedPalettes, setSavedPalettes] = useState<{navy: string; gold: string}[]>(() => {
-    if (typeof window === 'undefined') return [];
-    try { return JSON.parse(localStorage.getItem('pjl_saved_palettes') || '[]'); } catch { return []; }
-  });
+  const [savedPalettes, setSavedPalettes] = useState<{navy: string; gold: string}[]>([]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        const saved = localStorage.getItem('pjl_saved_palettes');
+        if (saved) {
+          setSavedPalettes(JSON.parse(saved));
+        }
+      } catch (e) {}
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Automatic simulation of stats removed in favor of real interaction tracking
 
