@@ -26,6 +26,7 @@ interface ZonaMapProps {
   mapZoom?: number;
   scrollWheelZoom?: boolean;
   drawingMode?: boolean;
+  hideFallbackPolygon?: boolean;
 }
 
 // Default zone color palette
@@ -93,6 +94,7 @@ export default function ZonaMap({
   tempPolygon = [],
   scrollWheelZoom = false,
   drawingMode = false,
+  hideFallbackPolygon = false,
 }: ZonaMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<any>(null);
@@ -162,7 +164,8 @@ export default function ZonaMap({
     // Draw zone polygons
     const zonesToDraw = (selectedZone && !showAllZones) ? [selectedZone] : [1, 2, 3, 4];
     zonesToDraw.forEach((zId) => {
-      const coords = polygons[zId] || ZONE_POLYGONS[zId];
+      const savedPolygon = polygons[zId];
+      const coords = savedPolygon || (!hideFallbackPolygon ? ZONE_POLYGONS[zId] : undefined);
       const customColor = zoneColors[zId];
       const defaultColor = DEFAULT_ZONE_COLORS[zId];
       

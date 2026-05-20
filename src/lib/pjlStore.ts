@@ -310,6 +310,7 @@ export const TEAM_LABELS: Record<string, string> = {
 function save<T>(key: string, value: T): void {
   if (typeof window === 'undefined') return;
   localStorage.setItem('pjl_' + key, JSON.stringify(value));
+  window.dispatchEvent(new CustomEvent('pjl_store_update', { detail: { key } }));
 }
 
 function load<T>(key: string, fallback: T): T {

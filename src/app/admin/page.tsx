@@ -47,11 +47,28 @@ function useLS<T>(key: keyof typeof store, def: T) {
   const [val, setVal] = useState<T>(def);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const syncFromStore = () => {
       const storeVal = (store[key].get as () => T)();
       setVal(storeVal);
-    }, 0);
-    return () => clearTimeout(timer);
+    };
+
+    const timer = setTimeout(syncFromStore, 0);
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === `pjl_${String(key)}`) syncFromStore();
+    };
+    const onCustomUpdate = (event: Event) => {
+      const detail = (event as CustomEvent<{ key?: string }>).detail;
+      if (!detail?.key || detail.key === key) syncFromStore();
+    };
+
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('pjl_store_update', onCustomUpdate as EventListener);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('pjl_store_update', onCustomUpdate as EventListener);
+    };
   }, [key]);
 
   const update = (v: T) => {
@@ -655,7 +672,7 @@ function AdminContent() {
                     <div style={{ background: 'rgba(255,255,255,0.1)', padding: '12px', borderRadius: '12px', fontSize: '24px' }}>📈</div>
                   </div>
                   <div style={{ marginTop: '20px', fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
-                    Actualizado hace segundos
+                    Actualización automática del navegador
                   </div>
                 </div>
 
@@ -694,12 +711,12 @@ function AdminContent() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                     <div>
                       <h3 style={{ margin: 0, color: 'var(--navy)', fontSize: '16px', fontWeight: 700 }}>📊 Visitas por Sección</h3>
-                      <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#888' }}>Tráfico en tiempo real por página</p>
+                      <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#888' }}>Visitas e interacciones registradas automáticamente</p>
                     </div>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button onClick={() => { const s = store.stats.get(); const csv = 'Sección,Visitas,Interacciones\n' + s.map(e => `"${e.label}",${e.visits},${e.interactions}`).join('\n'); const a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv); a.download = 'reporte_pjl.csv'; a.click(); showToast('CSV descargado ✔'); }} style={{ fontSize: '10px', padding: '5px 12px', background: 'var(--cream)', border: '1px solid var(--gold-pale)', borderRadius: '6px', cursor: 'pointer', color: 'var(--navy)', fontWeight: 600 }}>📥 CSV</button>
                       <button onClick={resetStats} style={{ fontSize: '10px', padding: '5px 12px', background: '#fff0f0', border: '1px solid #fca5a5', borderRadius: '6px', cursor: 'pointer', color: '#b91c1c', fontWeight: 600 }}>🗑️ Reset</button>
-                      <span style={{ fontSize: '10px', background: '#d1fae5', color: '#065f46', padding: '5px 10px', borderRadius: '20px', fontWeight: 700 }}>● En vivo</span>
+                      <span style={{ fontSize: '10px', background: '#d1fae5', color: '#065f46', padding: '5px 10px', borderRadius: '20px', fontWeight: 700 }}>● Auto-sync</span>
                     </div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -1536,14 +1553,15 @@ function AdminContent() {
                 )}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '30px' }}>
-                <div style={{ height: '600px', borderRadius: '25px', overflow: 'hidden', border: `3px solid ${capturingZone ? 'var(--gold)' : 'var(--gold-pale)'}`, position: 'relative', transition: 'border-color 0.3s ease', boxShadow: capturingZone ? '0 0 0 4px rgba(200,151,58,0.15)' : 'none' }}>
+              <div className="territory-editor-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '30px' }}>
+                <div className="territory-map-shell" style={{ height: '600px', borderRadius: '25px', overflow: 'hidden', border: `3px solid ${capturingZone ? 'var(--gold)' : 'var(--gold-pale)'}`, position: 'relative', transition: 'border-color 0.3s ease', boxShadow: capturingZone ? '0 0 0 4px rgba(200,151,58,0.15)' : 'none' }}>
                   <ZonaMap 
                     selectedZone={capturingZone || 0}
                     showAllZones={capturingZone === null}
                     tempPolygon={tempPolygon}
                     scrollWheelZoom={true}
                     drawingMode={!!capturingZone}
+                    hideFallbackPolygon={!!capturingZone && tempPolygon.length === 0 && !branding[`zona${capturingZone}Polygon`]}
                     zoneColors={{
                       1: branding.zona1Color as string || '#C8973A',
                       2: branding.zona2Color as string || '#1A2744',
@@ -1560,7 +1578,7 @@ function AdminContent() {
                   {capturingZone && (
                     <>
                       {/* Top status banner */}
-                      <div style={{ position: 'absolute', top: '15px', left: '15px', right: '65px', background: 'rgba(26,39,68,0.92)', color: '#fff', padding: '12px 20px', borderRadius: '12px', zIndex: 1000, backdropFilter: 'blur(10px)', border: '1px solid var(--gold)', display: 'flex', alignItems: 'center', gap: '12px', pointerEvents: 'none' }}>
+                      <div className="territory-status-banner" style={{ position: 'absolute', top: '15px', left: '15px', right: '65px', background: 'rgba(26,39,68,0.92)', color: '#fff', padding: '12px 20px', borderRadius: '12px', zIndex: 1000, backdropFilter: 'blur(10px)', border: '1px solid var(--gold)', display: 'flex', alignItems: 'center', gap: '12px', pointerEvents: 'none' }}>
                         <span style={{ fontSize: '20px' }}>✏️</span>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontWeight: 900, fontSize: '13px', letterSpacing: '1px' }}>DIBUJANDO ZONA {capturingZone}</div>
@@ -1577,7 +1595,7 @@ function AdminContent() {
                         </div>
                       </div>
                       {/* Bottom action bar */}
-                      <div style={{ position: 'absolute', bottom: '15px', left: '15px', right: '15px', display: 'flex', gap: '8px', zIndex: 1000 }}>
+                      <div className="territory-action-bar" style={{ position: 'absolute', bottom: '15px', left: '15px', right: '15px', display: 'flex', gap: '8px', zIndex: 1000 }}>
                         <button
                           onClick={() => setTempPolygon(prev => prev.slice(0, -1))}
                           disabled={tempPolygon.length === 0}
@@ -1604,7 +1622,7 @@ function AdminContent() {
                   )}
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <div className="territory-zone-list" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                   {[1, 2, 3, 4].map(num => (
                     <div key={num} style={{ 
                       padding: '20px', 
@@ -1783,7 +1801,10 @@ function AdminContent() {
           {mod === 'carrusel' && (
             <div className="animate-reveal pjl-card" style={{ padding: '40px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                <h3 className="serif">Administrador del Carrusel Hero</h3>
+                <div>
+                  <h3 className="serif" style={{ margin: 0 }}>Administrador del Carrusel Hero</h3>
+                  <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--text-muted)' }}>Las fotos, textos y segundos siguen siendo editables. El sitio ahora usa también la posición móvil y escritorio de cada slide.</p>
+                </div>
                 <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                     <label className="premium-label" style={{ fontSize: '0.65rem' }}>INTERVALO (SEG)</label>
@@ -1805,7 +1826,7 @@ function AdminContent() {
               </div>
               <div style={{ display: 'grid', gap: '20px' }}>
                 {liveHeroImages.map((slide, i) => (
-                  <div key={slide.id} style={{ display: 'flex', gap: '20px', padding: '20px', background: 'var(--cream)', borderRadius: '15px', border: '1px solid var(--gold-pale)' }}>
+                  <div key={slide.id} className="hero-slide-admin-card" style={{ display: 'flex', gap: '20px', padding: '20px', background: 'var(--cream)', borderRadius: '15px', border: '1px solid var(--gold-pale)' }}>
                     <div style={{ width: '150px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       <div style={{ fontWeight: 700, color: 'var(--navy)', fontSize: '0.9rem' }}>Slide #{i + 1}</div>
                       <div style={{ width: '100%', height: '100px', background: '#ddd', borderRadius: '10px', overflow: 'hidden' }}>

@@ -2045,6 +2045,63 @@ input:checked + .pjl-slider:before {
   right: 0;
 }
 
+.hero-slide-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  backdrop-filter: blur(12px);
+}
+
+.hero-nav-arrow {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 24px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.hero-nav-arrow:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.vatican-widget-shell {
+  position: relative;
+  z-index: 2;
+  isolation: isolate;
+}
+
+.vatican-widget-shell vaticannews-widget {
+  display: block;
+  width: 100%;
+}
+
+.territory-editor-grid {
+  align-items: start;
+}
+
+.territory-zone-list {
+  min-width: 0;
+}
+
 /* Header within Drawer */
 .drawer-header {
   display: flex;
@@ -2052,6 +2109,135 @@ input:checked + .pjl-slider:before {
   align-items: center;
   padding: 24px 20px;
   border-bottom: 1px solid rgba(200, 151, 58, 0.2);
+}
+
+@media (max-width: 768px) {
+  .hero-slide-meta {
+    margin-bottom: 14px;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+  }
+
+  .hero-cta-group {
+    justify-content: center;
+  }
+
+  .hero-primary-cta,
+  .hero-secondary-cta {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .hero-controls {
+    justify-content: center;
+  }
+
+  .territory-editor-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .territory-map-shell {
+    height: 72dvh !important;
+    min-height: 500px;
+  }
+
+  .territory-status-banner {
+    left: 10px !important;
+    right: 10px !important;
+    padding: 10px 12px !important;
+    gap: 10px !important;
+  }
+
+  .territory-action-bar {
+    left: 10px !important;
+    right: 10px !important;
+    flex-wrap: wrap;
+  }
+
+  .territory-action-bar > button {
+    min-height: 44px;
+  }
+
+  .hero-slide-admin-card {
+    flex-direction: column;
+  }
+
+  .hero-slide-admin-card > div:first-child {
+    width: 100% !important;
+  }
+
+  .hero-slide-admin-card > div:last-child {
+    grid-template-columns: 1fr !important;
+  }
+
+  .vatican-widget-shell {
+    margin-bottom: 28px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-shell {
+    overflow-x: clip;
+  }
+
+  .admin-sidebar {
+    left: -280px !important;
+    bottom: auto !important;
+    top: 0 !important;
+    width: min(88vw, 280px) !important;
+    height: 100dvh !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    padding: 24px 20px !important;
+    border-top: none !important;
+    border-right: 1px solid rgba(200,151,58,0.2) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    z-index: 200 !important;
+  }
+
+  .admin-sidebar.sidebar-mobile-open {
+    left: 0 !important;
+  }
+
+  .sidebar-header,
+  .sidebar-footer {
+    display: flex !important;
+  }
+
+  .sidebar-nav {
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: visible !important;
+  }
+
+  .admin-nav-item {
+    min-width: 0 !important;
+    width: 100% !important;
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    padding: 12px 14px !important;
+    gap: 10px !important;
+  }
+
+  .admin-nav-item .nav-label,
+  .admin-nav-item span:last-child {
+    display: inline !important;
+  }
+
+  .admin-main {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding: 20px 16px 24px !important;
+  }
+
+  .admin-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 120;
+    background: rgba(247, 240, 227, 0.96);
+    backdrop-filter: blur(10px);
+  }
 }
 
 .drawer-header .logo-area {

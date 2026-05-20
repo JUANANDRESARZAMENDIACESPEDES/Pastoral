@@ -12,6 +12,50 @@ import Script from 'next/script';
 
 const ZonaMap = dynamic(() => import('@/components/ZonaMap'), { ssr: false, loading: () => <div style={{ height: '500px', background: 'var(--cream)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>Cargando mapa...</div> });
 
+const STAT_LABELS: Record<string, string> = {
+  '/': 'Página Principal',
+  '/agenda': 'Agenda / Calendario',
+  '/noticias': 'Noticias',
+  '/zonas': 'Zonas Pastorales',
+  '/curriculos': 'Currículos',
+  '/documentos': 'Documentos',
+  '/mision': 'Misión / Visión',
+  '/contacto': 'Contacto',
+  '/estatuto': 'Estatuto',
+  '/historia': 'Historia',
+  '/institucional': 'Institucional',
+  '/consejo': 'Consejo PJL',
+  '/equipos': 'Equipos',
+  '/preguntas': 'Preguntas Frecuentes',
+  '/faq': 'Preguntas Frecuentes',
+  '/home': 'Página Principal',
+};
+
+const humanizeStatLabel = (path: string) => {
+  if (STAT_LABELS[path]) return STAT_LABELS[path];
+  const clean = path.replace(/^\//, '');
+  if (!clean) return 'Página Principal';
+  return clean
+    .split(/[-_]/g)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+};
+
+const mapHeroPosition = (position?: string) => {
+  switch (position) {
+    case 'Top':
+      return 'center top';
+    case 'Bottom':
+      return 'center bottom';
+    case 'Left':
+      return 'left center';
+    case 'Right':
+      return 'right center';
+    default:
+      return 'center center';
+  }
+};
+
 
 function HomeContent() {
   const router = useRouter();
@@ -93,10 +137,19 @@ function HomeContent() {
   useEffect(() => {
     // Small delay to avoid 'setState in effect' warning for synchronous mount sync
     const timer = setTimeout(syncData, 0);
-    const interval = setInterval(syncData, 3000);
+    const interval = setInterval(syncData, 5000);
+    const onStorage = (event: StorageEvent) => {
+      if (!event.key || event.key.startsWith('pjl_')) syncData();
+    };
+    const onCustomUpdate = () => syncData();
+
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('pjl_store_update', onCustomUpdate);
     return () => {
       clearTimeout(timer);
       clearInterval(interval);
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('pjl_store_update', onCustomUpdate);
     };
   }, []);
 
@@ -129,21 +182,35 @@ function HomeContent() {
   }, [currentPage, activeZoneTab, activeConsejoTab, selectedZone, globalCommFilter, liveChapels]);
 
   // --- INTERACTION TRACKING ---
+  const updateStat = (id: string, field: 'visits' | 'interactions') => {
+    try {
+      const mappedId = id === 'home' ? '/' : id.startsWith('/') ? id : `/${id}`;
+      const s = [...store.stats.get()];
+      let existing = s.find(x => x.page === mappedId);
+
+      if (!existing) {
+        existing = { page: mappedId, label: humanizeStatLabel(mappedId), visits: 0, interactions: 0 };
+        s.push(existing);
+      }
+
+      existing[field] += 1;
+      store.stats.set(s);
+    } catch (e) {}
+  };
+
+  const trackVisit = (id: string) => {
+    updateStat(id, 'visits');
+  };
+
   const trackInteraction = (id: string) => {
     try {
-      const s = store.stats.get();
       const mappedId = id === 'home' ? '/' : `/${id}`;
-      const existing = s.find(x => x.page === mappedId);
-      if (existing) {
-        existing.interactions += 1;
-        existing.visits += 1;
-      }
-      store.stats.set(s);
-    } catch(e) {}
+      updateStat(mappedId, 'interactions');
+    } catch (e) {}
   };
 
   useEffect(() => {
-    trackInteraction(currentPage);
+    trackVisit(currentPage);
   }, [currentPage]);
 
   // --- VATICAN WIDGET SCRIPT ---
@@ -221,6 +288,10 @@ function HomeContent() {
     3: branding.zona3Color || '#C8973A',
     4: branding.zona4Color || '#C8973A'
   };
+  const activeHeroSlide = liveHeroImages[liveHeroIndex];
+  const activeHeroPosition = activeHeroSlide
+    ? mapHeroPosition(typeof window !== 'undefined' && window.innerWidth <= 768 ? activeHeroSlide.mobilePosition : activeHeroSlide.desktopPosition)
+    : 'center center';
 
   return (
     <div className={isHighContrast ? 'high-contrast' : ''} style={{ '--font-size-base': `${fontSize}px` } as React.CSSProperties}>
@@ -467,7 +538,7 @@ function HomeContent() {
               <div style={{ position: 'absolute', inset: 0, zIndex: 0, overflow: 'hidden' }}>
                 {liveHeroImages.map((slide, i) => (
                   <div key={slide.id || i} style={{ position: 'absolute', inset: 0, opacity: i === liveHeroIndex ? 1 : 0, transition: 'opacity 1.2s ease-in-out' }}>
-                    <img src={slide.imageUrl} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }} alt="" />
+                    <img src={slide.imageUrl} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: i === liveHeroIndex ? activeHeroPosition : 'center center', display: 'block' }} alt="" />
                     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(105deg, rgba(26,39,68,0.88) 0%, rgba(26,39,68,0.55) 55%, rgba(26,39,68,0.25) 100%)' }} />
                   </div>
                 ))}
@@ -476,31 +547,52 @@ function HomeContent() {
 
               {/* Content layer — always above images */}
               <div className="container" style={{ position: 'relative', zIndex: 10, padding: '130px 30px 170px' }}>
+                {liveHeroImages.length > 0 && (
+                  <div className="reveal hero-slide-meta" style={{ animationDelay: '0.1s' }}>
+                    Slide {liveHeroIndex + 1} de {liveHeroImages.length}
+                  </div>
+                )}
                 <span className="hero-tag reveal">{siteContent.heroTag}</span>
                 <h2 className="reveal" style={{ animationDelay: '0.2s', marginBottom: '20px', fontSize: '68px', lineHeight: 1.05, color: '#fff', fontFamily: 'var(--font-display)', fontWeight: 900 }}>
-                  {liveHeroImages[liveHeroIndex]?.title
-                    ? <span dangerouslySetInnerHTML={{ __html: liveHeroImages[liveHeroIndex].title }} />
+                  {activeHeroSlide?.title
+                    ? <span dangerouslySetInnerHTML={{ __html: activeHeroSlide.title }} />
                     : <span dangerouslySetInnerHTML={{ __html: siteContent.heroTitle || '' }} />
                   }
                 </h2>
                 <p className="reveal" style={{ animationDelay: '0.4s', marginBottom: '35px', fontSize: '1.15rem', maxWidth: '580px', lineHeight: '1.75', color: 'rgba(255,255,255,0.85)' }}>
-                  {liveHeroImages[liveHeroIndex]?.subtitle || siteContent.heroText}
+                  {activeHeroSlide?.subtitle || siteContent.heroText}
                 </p>
-                <div className="reveal" style={{ animationDelay: '0.6s', display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-                  {liveHeroImages[liveHeroIndex]?.buttonText ? (
-                    <button className="btn-pjl" style={{ padding: '15px 40px', background: 'var(--gold)', color: 'var(--navy)', fontWeight: 700, borderRadius: '8px' }} onClick={() => navigate(liveHeroImages[liveHeroIndex].buttonLink?.replace('/', '') || 'contacto')}>{liveHeroImages[liveHeroIndex].buttonText}</button>
+                <div className="reveal hero-cta-group" style={{ animationDelay: '0.6s', display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                  {activeHeroSlide?.buttonText ? (
+                    <button className="btn-pjl hero-primary-cta" style={{ padding: '15px 40px', background: 'var(--gold)', color: 'var(--navy)', fontWeight: 700, borderRadius: '8px' }} onClick={() => navigate(activeHeroSlide.buttonLink?.replace('/', '') || 'contacto')}>{activeHeroSlide.buttonText}</button>
                   ) : (
                     <>
-                      <button className="btn-pjl" style={{ padding: '15px 40px', background: 'var(--gold)', color: 'var(--navy)', fontWeight: 700, borderRadius: '8px' }} onClick={() => navigate('estatuto')}>Conocer Estatuto</button>
-                      <button className="btn-pjl" style={{ padding: '15px 40px', border: '2px solid rgba(255,255,255,0.8)', color: '#fff', borderRadius: '8px' }} onClick={() => navigate('contacto')}>Contáctanos</button>
+                      <button className="btn-pjl hero-primary-cta" style={{ padding: '15px 40px', background: 'var(--gold)', color: 'var(--navy)', fontWeight: 700, borderRadius: '8px' }} onClick={() => navigate('estatuto')}>Conocer Estatuto</button>
+                      <button className="btn-pjl hero-secondary-cta" style={{ padding: '15px 40px', border: '2px solid rgba(255,255,255,0.8)', color: '#fff', borderRadius: '8px' }} onClick={() => navigate('contacto')}>Contáctanos</button>
                     </>
                   )}
                 </div>
                 {liveHeroImages.length > 1 && (
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '50px' }}>
+                  <div className="hero-controls" style={{ display: 'flex', gap: '8px', marginTop: '50px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      className="hero-nav-arrow"
+                      onClick={() => setLiveHeroIndex(prev => (prev - 1 + liveHeroImages.length) % liveHeroImages.length)}
+                      aria-label="Slide anterior"
+                    >
+                      ‹
+                    </button>
                     {liveHeroImages.map((_, i) => (
                       <button key={i} onClick={() => setLiveHeroIndex(i)} style={{ width: i === liveHeroIndex ? '28px' : '8px', height: '8px', borderRadius: '4px', background: i === liveHeroIndex ? 'var(--gold)' : 'rgba(255,255,255,0.35)', border: 'none', cursor: 'pointer', transition: 'all 0.3s ease', padding: 0 }} />
                     ))}
+                    <button
+                      type="button"
+                      className="hero-nav-arrow"
+                      onClick={() => setLiveHeroIndex(prev => (prev + 1) % liveHeroImages.length)}
+                      aria-label="Slide siguiente"
+                    >
+                      ›
+                    </button>
                   </div>
                 )}
               </div>
@@ -649,7 +741,7 @@ function HomeContent() {
                 {/* Column 1: News */}
                 <div>
                   {/* VATICAN WIDGET EN NOTICIAS */}
-                  <div style={{ marginBottom: '30px', background: 'var(--white)', padding: '15px', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', overflow: 'hidden', width: '100%', maxHeight: '400px' }}>
+                  <div className="vatican-widget-shell" style={{ marginBottom: '30px', background: 'var(--white)', padding: '15px', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', overflow: 'hidden', width: '100%', maxHeight: '400px' }}>
                      {/* @ts-ignore */}
                      <vaticannews-widget lang="es" fontSize="18"></vaticannews-widget>
                   </div>
@@ -1388,7 +1480,7 @@ function HomeContent() {
               </div>
               
               {/* VATICAN WIDGET DESTACADO EN LA PÁGINA DE NOTICIAS */}
-              <div className="reveal" style={{ marginBottom: '40px', background: 'var(--white)', padding: '20px', borderRadius: '16px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', border: '1px solid var(--gold-pale)' }}>
+              <div className="reveal vatican-widget-shell" style={{ marginBottom: '40px', background: 'var(--white)', padding: '20px', borderRadius: '16px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', border: '1px solid var(--gold-pale)' }}>
                 <h4 style={{ marginBottom: '15px', color: 'var(--navy)', fontSize: '1.2rem', textAlign: 'center' }}>Noticias del Vaticano</h4>
                 <div style={{ display: 'flex', justifyContent: 'center' }}>
                    {/* @ts-ignore */}
