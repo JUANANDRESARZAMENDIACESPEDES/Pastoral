@@ -1494,7 +1494,7 @@ function AdminContent() {
                 {activeContentTab === 'historia' && (
                   <div className="animate-reveal">
                     <h4 className="serif" style={{ marginBottom: '10px' }}>Línea de Tiempo (Nuestra Historia)</h4>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '25px' }}>Arrastra, edita y añade los hitos históricos. Estos se reflejarán inmediatamente en la sección "Nuestra Historia" de la página principal.</p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '25px' }}>Arrastra, edita y añade los hitos históricos. Estos se reflejarán inmediatamente en la sección &quot;Nuestra Historia&quot; de la página principal.</p>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '25px', borderLeft: '2px dashed var(--gold-pale)', paddingLeft: '30px', marginLeft: '10px', position: 'relative' }}>
                       {(content.historiaTimeline || []).map((item, idx) => (
