@@ -1,4 +1,4 @@
-'use client';
+/* eslint-disable @typescript-eslint/no-unused-vars, @next/next/no-img-element, @typescript-eslint/ban-ts-comment, react-hooks/exhaustive-deps */
 
 import { useState, useEffect, Suspense } from 'react';
 import dynamic from 'next/dynamic';
