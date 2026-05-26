@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Playfair_Display, DM_Sans, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -40,6 +41,7 @@ export default function RootLayout({
       <body suppressHydrationWarning>
         <ThemeLoader />
         {children}
+        <SpeedInsights />
         {/* Vatican News Widget Script — must load after DOM */}
         <script
           dangerouslySetInnerHTML={{
