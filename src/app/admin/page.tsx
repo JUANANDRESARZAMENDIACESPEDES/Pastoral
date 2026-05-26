@@ -612,12 +612,25 @@ function AdminContent() {
         </div>
 
         <nav className="sidebar-nav">
-          {NAV_ITEMS.filter(n => hasPermission(n.id as Module)).map(n => (
-            <button key={n.id} onClick={() => navigateMod(n.id as Module)} className={`admin-nav-item ${mod === n.id ? 'active' : ''}`}>
-              <span className="nav-icon">{n.icon}</span>
-              <span className="nav-label">{n.label}</span>
-            </button>
-          ))}
+          {NAV_ITEMS.map(n => {
+            const allowed = hasPermission(n.id as Module);
+            return (
+              <button
+                key={n.id}
+                onClick={() => {
+                  if (allowed) navigateMod(n.id as Module);
+                  else showToast('Este módulo no está habilitado para este usuario');
+                }}
+                className={`admin-nav-item ${mod === n.id ? 'active' : ''}`}
+                style={!allowed ? { opacity: 0.45, filter: 'grayscale(0.15)' } : undefined}
+                title={allowed ? n.label : `${n.label} (sin permiso)`}
+              >
+                <span className="nav-icon">{n.icon}</span>
+                <span className="nav-label">{n.label}</span>
+                {!allowed && <span style={{ marginLeft: 'auto', fontSize: '12px', opacity: 0.9 }}>🔒</span>}
+              </button>
+            );
+          })}
         </nav>
 
         <div className="sidebar-footer">

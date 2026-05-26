@@ -98,8 +98,8 @@ export default function ZonaMap({
 }: ZonaMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<any>(null);
-
   const layersRef = useRef<any[]>([]);
+  const baseLayerRef = useRef<any>(null);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -130,11 +130,40 @@ export default function ZonaMap({
       leafletMapRef.current = map;
       L.control.zoom({ position: drawingMode ? 'bottomright' : 'topright' }).addTo(map);
 
-      // OpenStreetMap tile layer
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        maxZoom: 19,
-      }).addTo(map);
+      const baseLayers = [
+        {
+          url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          options: {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            maxZoom: 19,
+            crossOrigin: true,
+          },
+        },
+        {
+          url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+          options: {
+            attribution: '&copy; OpenStreetMap &copy; CARTO',
+            subdomains: 'abcd',
+            maxZoom: 20,
+            crossOrigin: true,
+          },
+        },
+      ];
+
+      let currentLayerIndex = 0;
+      const mountBaseLayer = (index: number) => {
+        if (baseLayerRef.current) {
+          try { map.removeLayer(baseLayerRef.current); } catch (e) {}
+        }
+        currentLayerIndex = index;
+        const layer = L.tileLayer(baseLayers[index].url, baseLayers[index].options).addTo(map);
+        layer.on('tileerror', () => {
+          if (currentLayerIndex < baseLayers.length - 1) mountBaseLayer(currentLayerIndex + 1);
+        });
+        baseLayerRef.current = layer;
+      };
+
+      mountBaseLayer(0);
       setTimeout(() => {
         try { map.invalidateSize(); } catch (e) {}
       }, 0);
