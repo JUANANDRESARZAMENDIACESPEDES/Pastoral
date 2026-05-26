@@ -5,10 +5,10 @@
 export interface NewsItem     { id: number; title: string; body: string; date: string; published: boolean; }
 export interface Activity     { id: number; title: string; date: string; category: string; active: boolean; inscription: boolean; description?: string; }
 export interface FaqItem      { id: number; question: string; answer: string; }
-export interface DocItem      { id: number; name: string; type: string; size: string; downloads: number; url?: string; }
+export interface DocItem      { id: number; name: string; type: string; size: string; downloads: number; url?: string; description?: string; category?: string; previewImage?: string; uploadedAt?: string; }
 export interface GalleryItem  { id: number; name: string; src: string; }
 export interface SocialLinks  { instagram: string; facebook: string; youtube: string; whatsapp: string; }
-export interface TimelineEvent { id: string; title: string; text: string; }
+export interface TimelineEvent { id: string; title: string; text: string; image?: string; accentColor?: string; }
 export interface Chapel { 
   id: string; 
   name: string; 
@@ -182,9 +182,9 @@ export const DEFAULT_FAQ: FaqItem[] = [
 ];
 
 export const DEFAULT_DOCS: DocItem[] = [
-  { id: 1, name: 'Boletín Pastoral Marzo 2026', type: 'PDF', size: '1.2 MB', downloads: 214 },
-  { id: 2, name: 'Plan Pastoral 2026', type: 'PDF', size: '3.4 MB', downloads: 87 },
-  { id: 3, name: 'Currículo Pastoral – Coord. Gral', type: 'PDF', size: '0.8 MB', downloads: 32 },
+  { id: 1, name: 'Boletín Pastoral Marzo 2026', type: 'PDF', size: '1.2 MB', downloads: 214, category: 'Boletines', description: 'Resumen pastoral del mes con avisos, agenda y reflexiones.', uploadedAt: '2026-03-01' },
+  { id: 2, name: 'Plan Pastoral 2026', type: 'PDF', size: '3.4 MB', downloads: 87, category: 'Planificación', description: 'Documento marco con los objetivos y líneas de acción del año.', uploadedAt: '2026-02-10' },
+  { id: 3, name: 'Currículo Pastoral – Coord. Gral', type: 'PDF', size: '0.8 MB', downloads: 32, category: 'Currículos', description: 'Presentación del perfil pastoral y experiencia de coordinación.', uploadedAt: '2026-01-22' },
 ];
 
 export const DEFAULT_CONTENT: SiteContent = {
@@ -207,8 +207,8 @@ export const DEFAULT_CONTENT: SiteContent = {
   statsAnos: '20',
   googleCalendarUrl: '',
   historiaTimeline: [
-    { id: '1', title: 'Inicios', text: 'La Pastoral Juvenil Luqueña nació con la misión de acompañar a los jóvenes de la ciudad de Luque en su camino de fe.' },
-    { id: '2', title: 'Presente', text: 'Hoy en día, la PJL Luque se consolida como un referente diocesano de organización y fe activa.' }
+    { id: '1', title: 'Inicios', text: 'La Pastoral Juvenil Luqueña nació con la misión de acompañar a los jóvenes de la ciudad de Luque en su camino de fe.', accentColor: '#C8973A' },
+    { id: '2', title: 'Presente', text: 'Hoy en día, la PJL Luque se consolida como un referente diocesano de organización y fe activa.', accentColor: '#1A2744' }
   ],
   instiTitulo: 'Nuestra Identidad',
   instiDesc: 'Somos una pastoral joven que camina de la mano de María, buscando ser luz en el mundo.',

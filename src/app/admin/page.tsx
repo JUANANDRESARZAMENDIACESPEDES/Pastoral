@@ -43,6 +43,29 @@ const NAV_ITEMS = [
   { id: 'asistente',      icon: '🤖', label: 'Asistente IA' },
 ];
 
+const ADMIN_RESTRICTED_MODULES: Module[] = ['identidad', 'apariencia', 'usuarios', 'configuracion'];
+
+const getDocPresentation = (doc: Partial<DocItem>) => {
+  const lowerType = doc.type?.toLowerCase() || '';
+  const lowerName = doc.name?.toLowerCase() || '';
+  const lowerUrl = doc.url?.toLowerCase() || '';
+  const source = `${lowerType} ${lowerName} ${lowerUrl}`;
+
+  if (source.includes('pdf')) return { kind: 'pdf', icon: 'ðŸ“„', color: '#ef4444', label: 'PDF' };
+  if (source.includes('doc') || source.includes('word')) return { kind: 'word', icon: 'ðŸ“', color: '#2563eb', label: 'Word' };
+  if (source.includes('xls') || source.includes('sheet') || source.includes('csv')) return { kind: 'sheet', icon: 'ðŸ“Š', color: '#16a34a', label: 'Planilla' };
+  if (source.includes('ppt')) return { kind: 'slides', icon: 'ðŸŽžï¸', color: '#ea580c', label: 'PresentaciÃ³n' };
+  if (source.includes('png') || source.includes('jpg') || source.includes('jpeg') || source.includes('webp') || source.includes('gif') || source.includes('image')) {
+    return { kind: 'image', icon: 'ðŸ–¼ï¸', color: '#0f766e', label: 'Imagen' };
+  }
+  return { kind: 'file', icon: 'ðŸ“', color: '#C8973A', label: 'Archivo' };
+};
+
+const canPreviewInFrame = (doc: Partial<DocItem>) => {
+  const kind = getDocPresentation(doc).kind;
+  return kind === 'pdf' || kind === 'image';
+};
+
 function useLS<T>(key: keyof typeof store, def: T) {
   const [val, setVal] = useState<T>(def);
 
@@ -119,18 +142,18 @@ function AdminContent() {
     if (!loggedIn) return false;
     if (!currentUser) return true; 
     if (currentUser.role === 'superadmin') return true;
-    
-    // Check specific module permissions
-    if (currentUser.permissions && currentUser.permissions.includes(m)) return true;
+
+    const explicitPermissions = currentUser.permissions || [];
+    const hasExplicitRules = explicitPermissions.length > 0;
 
     if (currentUser.role === 'editor') {
-      // Editor cannot access identity, appearance, or users
-      const restricted = ['identidad', 'apariencia', 'usuarios', 'configuracion'];
-      if (restricted.includes(m)) return false;
+      if (ADMIN_RESTRICTED_MODULES.includes(m)) return false;
+      if (hasExplicitRules) return explicitPermissions.includes(m);
       return true;
     }
     if (currentUser.role === 'viewer') {
-      return action === 'view' && !['identidad', 'apariencia', 'usuarios', 'configuracion'].includes(m);
+      if (action !== 'view' || ADMIN_RESTRICTED_MODULES.includes(m)) return false;
+      return hasExplicitRules ? explicitPermissions.includes(m) : ['dashboard', 'logs', 'noticias', 'actividades', 'documentos', 'capillas', 'perfiles', 'territorio'].includes(m);
     }
     return false;
   };
@@ -180,6 +203,25 @@ function AdminContent() {
   const [navyHex, setNavyHex] = useState(theme.navy);
   const [goldHex, setGoldHex] = useState(theme.gold);
   const [savedPalettes, setSavedPalettes] = useState<{navy: string; gold: string}[]>([]);
+
+  useEffect(() => {
+    if (!currentUser || currentUser.id === 'master') return;
+
+    const freshUser = allUsers.find(u => u.id === currentUser.id || u.email === currentUser.email);
+    if (!freshUser) return;
+
+    if (freshUser.status === 'inactivo') {
+      handleLogout();
+      return;
+    }
+
+    const mergedUser = { ...currentUser, ...freshUser, lastActive: currentUser.lastActive || freshUser.lastActive };
+    const changed = JSON.stringify(mergedUser) !== JSON.stringify(currentUser);
+    if (changed) {
+      setCurrentUser(mergedUser);
+      localStorage.setItem('pjl_current_user', JSON.stringify(mergedUser));
+    }
+  }, [allUsers, currentUser]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -382,11 +424,16 @@ function AdminContent() {
   };
 
   const saveDoc = () => {
+    const normalizedDoc = {
+      ...form,
+      category: form.category || 'General',
+      uploadedAt: form.uploadedAt || new Date().toISOString().slice(0, 10),
+    };
     const updated = editId
-      ? docs.map(d => d.id === editId ? { ...d, ...form } : d)
-      : [...docs, { ...form, id: Date.now(), downloads: 0 }];
+      ? docs.map(d => d.id === editId ? { ...d, ...normalizedDoc } : d)
+      : [...docs, { ...normalizedDoc, id: Date.now(), downloads: 0 }];
     setDocs(updated); closeModal(); showToast('Documento registrado ✔');
-    addLog(editId ? 'editar' : 'crear', 'documentos', `Doc: ${form.title}`);
+    addLog(editId ? 'editar' : 'crear', 'documentos', `Doc: ${normalizedDoc.name}`);
   };
 
   const saveChapel = () => {
@@ -400,9 +447,16 @@ function AdminContent() {
 
   const saveUser = () => {
     if (!form.email || !form.name) return;
+    const normalizedUser = {
+      ...form,
+      permissions:
+        form.role === 'superadmin'
+          ? NAV_ITEMS.map(n => n.id)
+          : Array.from(new Set(form.permissions || [])),
+    };
     const updated = editId
-      ? allUsers.map(u => u.id === editId ? { ...u, ...form } : u)
-      : [...allUsers, { ...form, id: Date.now().toString(), password: form.password || 'pjl123', createdAt: new Date().toISOString() }];
+      ? allUsers.map(u => u.id === editId ? { ...u, ...normalizedUser } : u)
+      : [...allUsers, { ...normalizedUser, id: Date.now().toString(), password: form.password || 'pjl123', createdAt: new Date().toISOString() }];
     setAllUsers(updated); closeModal(); showToast('Usuario actualizado ✔');
     addLog(editId ? 'editar' : 'crear', 'usuarios', `User: ${form.email}`);
   };
@@ -420,7 +474,7 @@ function AdminContent() {
 
   const resetStats = () => {
     if (!confirm('¿Deseas reiniciar todas las estadísticas a cero? Esta acción no se puede deshacer.')) return;
-    const resetData = DEFAULT_STATS.map(s => ({ ...s, visits: 0, interactions: 0 }));
+    const resetData = DEFAULT_STATS.map(s => ({ ...s, visits: 0, interactions: 0, desktopVisits: 0, tabletVisits: 0, mobileVisits: 0 }));
     setPageStats(resetData);
     showToast('Estadísticas reiniciadas ✔');
     addLog('reiniciar estadísticas', 'dashboard');
@@ -431,6 +485,25 @@ function AdminContent() {
     const reader = new FileReader();
     reader.onload = (ev) => callback(ev.target?.result as string);
     reader.readAsDataURL(file);
+  };
+
+  const handleDocumentFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const extension = file.name.includes('.') ? file.name.split('.').pop()?.toUpperCase() : file.type.split('/').pop()?.toUpperCase();
+    const sizeMb = file.size / (1024 * 1024);
+
+    handleFileUpload(e, (url) => {
+      setForm((prev: any) => ({
+        ...prev,
+        name: prev.name || file.name,
+        type: prev.type || extension || 'FILE',
+        size: `${sizeMb >= 1 ? sizeMb.toFixed(1) : Math.max(sizeMb, 0.1).toFixed(1)} MB`,
+        url,
+        uploadedAt: prev.uploadedAt || new Date().toISOString().slice(0, 10),
+      }));
+    });
   };
 
   const applyThemeColor = (navy: string, gold: string) => {
@@ -1244,7 +1317,7 @@ function AdminContent() {
 
           {/* IDENTIDAD */}
           {mod === 'identidad' && (
-            <div className="animate-reveal" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
+            <div className="animate-reveal identity-admin-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
               
               {/* LOGOS SECTION */}
               <div className="pjl-card" style={{ padding: '40px', background: 'linear-gradient(145deg, #ffffff, #fcfcfc)', border: '1px solid var(--gold-pale)' }}>
@@ -1253,6 +1326,31 @@ function AdminContent() {
                   <div>
                     <h3 className="serif" style={{ color: 'var(--navy)', margin: 0 }}>Identidad de Marca</h3>
                     <p style={{ color: 'var(--text-muted)', fontSize: '12px' }}>Gestión de logotipos y colores por zona</p>
+                  </div>
+                </div>
+
+                <div className="identity-admin-hero-grid" style={{ display: 'grid', gridTemplateColumns: '1.15fr 0.85fr', gap: '16px', marginBottom: '18px' }}>
+                  <div style={{ padding: '20px', borderRadius: '22px', background: 'linear-gradient(135deg, var(--navy), #31456f)', color: '#fff', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', opacity: 0.7, marginBottom: '12px' }}>Vista de marca</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <div style={{ width: '62px', height: '62px', borderRadius: '18px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                        {branding.mainLogo ? <img src={branding.mainLogo} alt="Logo principal" style={{ width: '82%', height: '82%', objectFit: 'contain' }} /> : <span style={{ fontSize: '24px' }}>⛪</span>}
+                      </div>
+                      <div>
+                        <div className="serif" style={{ fontSize: '1.4rem', lineHeight: 1.1 }}>PJL Admin</div>
+                        <div style={{ fontSize: '12px', opacity: 0.8, marginTop: '6px' }}>Panel premium de identidad visual institucional</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'grid', gap: '12px' }}>
+                    <div style={{ padding: '16px', borderRadius: '18px', border: '1px solid var(--gold-pale)', background: '#fff' }}>
+                      <div style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--text-muted)', marginBottom: '6px' }}>Activos visuales</div>
+                      <div style={{ color: 'var(--navy)', fontSize: '28px', fontWeight: 900, lineHeight: 1 }}>{[branding.mainLogo, branding.whiteLogo, branding.favLogo, branding.zona1Logo, branding.zona2Logo, branding.zona3Logo, branding.zona4Logo].filter(Boolean).length}</div>
+                    </div>
+                    <div style={{ padding: '16px', borderRadius: '18px', border: '1px solid var(--gold-pale)', background: 'var(--cream)' }}>
+                      <div style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--text-muted)', marginBottom: '6px' }}>Marca de agua</div>
+                      <div style={{ color: 'var(--navy)', fontWeight: 800 }}>{branding.logoWatermark ? 'Activa en el sitio' : 'Desactivada'}</div>
+                    </div>
                   </div>
                 </div>
 
@@ -1499,7 +1597,7 @@ function AdminContent() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '25px', borderLeft: '2px dashed var(--gold-pale)', paddingLeft: '30px', marginLeft: '10px', position: 'relative' }}>
                       {(content.historiaTimeline || []).map((item, idx) => (
                         <div key={item.id} style={{ background: '#fff', padding: '25px', borderRadius: '16px', border: '1px solid #e8e0d5', position: 'relative', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', transition: '0.3s' }}>
-                          <div style={{ position: 'absolute', left: '-41px', top: '35px', width: '20px', height: '20px', background: 'var(--gold)', borderRadius: '50%', border: '5px solid #faf9f6', boxShadow: '0 0 0 1px var(--gold-pale)' }}></div>
+                          <div style={{ position: 'absolute', left: '-41px', top: '35px', width: '20px', height: '20px', background: item.accentColor || 'var(--gold)', borderRadius: '50%', border: '5px solid #faf9f6', boxShadow: '0 0 0 1px var(--gold-pale)' }}></div>
                           
                           <button 
                             onClick={() => {
@@ -1530,13 +1628,82 @@ function AdminContent() {
                               }} />
                             </div>
                           </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '20px', marginTop: '18px' }}>
+                            <div className="form-group">
+                              <label className="premium-label">IMAGEN DEL HITO</label>
+                              <div style={{ display: 'flex', gap: '14px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                <div style={{ width: '96px', height: '72px', borderRadius: '14px', border: '1px solid var(--gold-pale)', overflow: 'hidden', background: 'linear-gradient(135deg, var(--cream), #fff)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  {item.image ? <img src={item.image} alt={item.title || 'Vista previa del hito'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: '28px', opacity: 0.35 }}>🖼️</span>}
+                                </div>
+                                <label className="btn-premium btn-premium-outline" style={{ padding: '8px 14px', fontSize: '10px' }}>
+                                  SUBIR IMAGEN
+                                  <input
+                                    type="file"
+                                    style={{ display: 'none' }}
+                                    accept="image/*"
+                                    onChange={e => handleFileUpload(e, (url) => {
+                                      const nt = [...content.historiaTimeline];
+                                      nt[idx].image = url;
+                                      setContent({ ...content, historiaTimeline: nt });
+                                    })}
+                                  />
+                                </label>
+                                {item.image && (
+                                  <button
+                                    className="btn-premium"
+                                    style={{ padding: '8px 14px', fontSize: '10px', color: '#b91c1c', border: '1px solid #fca5a5', background: '#fff5f5' }}
+                                    onClick={() => {
+                                      const nt = [...content.historiaTimeline];
+                                      nt[idx].image = '';
+                                      setContent({ ...content, historiaTimeline: nt });
+                                    }}
+                                  >
+                                    QUITAR
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                            <div className="form-group">
+                              <label className="premium-label">COLOR ACENTO</label>
+                              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                <input
+                                  type="color"
+                                  className="pjl-input"
+                                  style={{ width: '64px', height: '46px', padding: '4px' }}
+                                  value={item.accentColor || '#C8973A'}
+                                  onChange={e => {
+                                    const nt = [...content.historiaTimeline];
+                                    nt[idx].accentColor = e.target.value;
+                                    setContent({ ...content, historiaTimeline: nt });
+                                  }}
+                                />
+                                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                                  Este tono se verá en la línea de tiempo y en el modal.
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div style={{ marginTop: '20px', borderRadius: '18px', border: '1px solid var(--gold-pale)', background: 'linear-gradient(135deg, #fff, #fcf8ef)', overflow: 'hidden' }}>
+                            {item.image && <img src={item.image} alt={item.title || 'Vista previa'} style={{ width: '100%', height: '140px', objectFit: 'cover', display: 'block' }} />}
+                            <div style={{ padding: '18px' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', marginBottom: '10px' }}>
+                                <span style={{ padding: '6px 12px', borderRadius: '999px', background: 'var(--cream)', border: '1px solid var(--gold-pale)', color: item.accentColor || 'var(--gold)', fontSize: '11px', fontWeight: 800, textTransform: 'uppercase' }}>
+                                  {item.title || 'Nuevo hito'}
+                                </span>
+                                <span style={{ width: '12px', height: '12px', borderRadius: '50%', background: item.accentColor || 'var(--gold)', boxShadow: `0 0 0 6px ${item.accentColor || '#C8973A'}22` }} />
+                              </div>
+                              <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '13px', lineHeight: 1.7 }}>
+                                {item.text || 'Aquí aparecerá una vista previa de la historia para que el equipo vea cómo queda en el sitio.'}
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       ))}
                       <button 
                         className="btn-premium btn-premium-gold" 
                         style={{ width: '100%', padding: '15px', marginTop: '10px' }}
                         onClick={() => {
-                          const newEvent = { id: Date.now().toString(), title: '', text: '' };
+                          const newEvent = { id: Date.now().toString(), title: '', text: '', image: '', accentColor: '#C8973A' };
                           setContent({ ...content, historiaTimeline: [...(content.historiaTimeline || []), newEvent] });
                         }}
                       >+ AGREGAR EVENTO A LA HISTORIA</button>
@@ -2103,45 +2270,95 @@ function AdminContent() {
           {/* DOCUMENTOS */}
           {mod === 'documentos' && (
             <div className="animate-reveal pjl-card" style={{ padding: '40px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                <h3 className="serif">Centro de Descargas</h3>
-                <button className="btn-premium btn-premium-gold" onClick={() => openNew('documentos')}>+ REGISTRAR ARCHIVO</button>
+              <div style={{ display: 'grid', gap: '24px', marginBottom: '30px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                  <div>
+                    <h3 className="serif" style={{ margin: 0, color: 'var(--navy)' }}>Centro de Descargas</h3>
+                    <p style={{ margin: '8px 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>Un área más clara, útil y elegante para organizar PDFs, imágenes, Word y materiales internos.</p>
+                  </div>
+                  <button className="btn-premium btn-premium-gold" onClick={() => openNew('documentos')}>+ REGISTRAR ARCHIVO</button>
+                </div>
+              <div className="docs-admin-summary-grid" style={{ display: 'grid', gridTemplateColumns: '1.2fr repeat(3, minmax(0, 1fr))', gap: '16px' }}>
+                  <div style={{ padding: '22px', borderRadius: '22px', background: 'linear-gradient(135deg, var(--navy), #31456f)', color: '#fff', boxShadow: '0 18px 35px rgba(26,39,68,0.14)' }}>
+                    <div style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', opacity: 0.75, marginBottom: '10px' }}>Biblioteca activa</div>
+                    <div className="serif" style={{ fontSize: '2rem', lineHeight: 1, marginBottom: '8px' }}>{docs.length}</div>
+                    <div style={{ fontSize: '13px', opacity: 0.82 }}>documentos listos para descarga o consulta</div>
+                  </div>
+                  <div style={{ padding: '18px', borderRadius: '22px', background: '#fff', border: '1px solid var(--gold-pale)' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.16em', marginBottom: '8px' }}>Más descargado</div>
+                    <div style={{ color: 'var(--navy)', fontWeight: 800, fontSize: '14px', lineHeight: 1.4 }}>{[...docs].sort((a, b) => (b.downloads || 0) - (a.downloads || 0))[0]?.name || 'Sin datos aún'}</div>
+                  </div>
+                  <div style={{ padding: '18px', borderRadius: '22px', background: '#fff', border: '1px solid var(--gold-pale)' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.16em', marginBottom: '8px' }}>Categorías</div>
+                    <div style={{ color: 'var(--navy)', fontWeight: 800, fontSize: '28px', lineHeight: 1 }}>{new Set(docs.map(d => d.category || 'General')).size}</div>
+                  </div>
+                  <div style={{ padding: '18px', borderRadius: '22px', background: '#fff', border: '1px solid var(--gold-pale)' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.16em', marginBottom: '8px' }}>Con vista previa</div>
+                    <div style={{ color: 'var(--navy)', fontWeight: 800, fontSize: '28px', lineHeight: 1 }}>{docs.filter(d => !!d.url).length}</div>
+                  </div>
+                </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px' }}>
                 {docs.map(d => {
-                  const lowerType = d.type?.toLowerCase() || '';
-                  const lowerName = d.name?.toLowerCase() || '';
-                  const isPDF = lowerType.includes('pdf') || lowerName.endsWith('.pdf');
-                  const isWord = lowerType.includes('word') || lowerType.includes('doc') || lowerName.endsWith('.doc') || lowerName.endsWith('.docx');
-                  const isImg = lowerType.includes('img') || lowerType.includes('imagen') || lowerName.endsWith('.png') || lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg');
-                  const icon = isPDF ? '📄' : isWord ? '📝' : isImg ? '🖼️' : '📁';
-                  const color = isPDF ? '#ef4444' : isWord ? '#3b82f6' : isImg ? '#10b981' : '#C8973A';
+                  const presentation = getDocPresentation(d);
+                  const previewable = canPreviewInFrame(d);
 
                   return (
-                    <div key={d.id} className="pjl-card hover-lift" style={{ padding: '24px', border: '1px solid var(--gold-pale)', display: 'flex', flexDirection: 'column', gap: '15px', background: '#fff' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <div style={{ width: '54px', height: '54px', borderRadius: '14px', background: `${color}15`, color: color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px' }}>
-                          {icon}
-                        </div>
-                        <button onClick={() => deleteItem('docs', d.id)} style={{ background: '#fee2e2', border: '1px solid #fca5a5', color: '#b91c1c', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', cursor: 'pointer', transition: '0.2s' }} title="Eliminar documento">×</button>
-                      </div>
-                      
-                      <div>
-                        <h4 style={{ margin: '0 0 8px', color: 'var(--navy)', fontSize: '15px', fontWeight: 800, lineHeight: 1.3 }}>{d.name}</h4>
-                        <div style={{ display: 'flex', gap: '8px', fontSize: '11px', color: '#888', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                          <span style={{ background: '#f3f4f6', padding: '2px 8px', borderRadius: '4px' }}>{d.type || 'DOC'}</span>
-                          <span style={{ background: '#f3f4f6', padding: '2px 8px', borderRadius: '4px' }}>{d.size || '0 KB'}</span>
+                    <div key={d.id} className="pjl-card hover-lift" style={{ padding: '0', border: '1px solid var(--gold-pale)', display: 'flex', flexDirection: 'column', gap: '0', background: '#fff', overflow: 'hidden' }}>
+                      <div style={{ padding: '18px', background: 'linear-gradient(135deg, rgba(200,151,58,0.08), rgba(26,39,68,0.04))', borderBottom: '1px solid rgba(200,151,58,0.14)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+                          <div style={{ width: '54px', height: '54px', borderRadius: '14px', background: `${presentation.color}15`, color: presentation.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px' }}>
+                            {presentation.icon}
+                          </div>
+                          <button onClick={() => deleteItem('docs', d.id)} style={{ background: '#fee2e2', border: '1px solid #fca5a5', color: '#b91c1c', width: '30px', height: '30px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', cursor: 'pointer', transition: '0.2s' }} title="Eliminar documento">×</button>
                         </div>
                       </div>
-
-                      <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid #f0ece4', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ fontSize: '12px', color: 'var(--navy)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontSize: '16px', color: 'var(--gold)' }}>📥</span> 
-                          <span>{d.downloads || 0} <span style={{ fontWeight: 400, color: '#888' }}>descargas</span></span>
+                      <div style={{ padding: '18px', display: 'grid', gap: '14px', flex: 1 }}>
+                        <div>
+                          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                            <span style={{ background: '#f8fafc', padding: '4px 9px', borderRadius: '999px', fontSize: '10px', fontWeight: 800, color: presentation.color, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{presentation.label}</span>
+                            <span style={{ background: 'var(--cream)', padding: '4px 9px', borderRadius: '999px', fontSize: '10px', fontWeight: 700, color: 'var(--navy)' }}>{d.category || 'General'}</span>
+                          </div>
+                          <h4 style={{ margin: '0 0 8px', color: 'var(--navy)', fontSize: '15px', fontWeight: 800, lineHeight: 1.35 }}>{d.name}</h4>
+                          <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '12px', lineHeight: 1.7 }}>{d.description || 'Documento institucional listo para ser consultado desde la biblioteca pastoral.'}</p>
                         </div>
-                        <button onClick={() => openEdit('documentos', d)} className="btn-premium btn-premium-gold" style={{ padding: '6px 14px', fontSize: '10px', borderRadius: '8px' }}>
-                          VINCULAR
-                        </button>
+                        <div style={{ borderRadius: '16px', border: '1px solid #f0ece4', background: '#fcfcfb', overflow: 'hidden' }}>
+                          {previewable && d.url ? (
+                            presentation.kind === 'image' ? (
+                              <img src={d.url} alt={d.name} style={{ width: '100%', height: '150px', objectFit: 'cover', display: 'block' }} />
+                            ) : (
+                              <iframe src={d.url} title={d.name} style={{ width: '100%', height: '150px', border: 'none', display: 'block', background: '#fff' }} />
+                            )
+                          ) : (
+                            <div style={{ height: '150px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '10px', color: presentation.color, background: 'linear-gradient(135deg, rgba(248,250,252,0.95), rgba(255,255,255,1))' }}>
+                              <div style={{ fontSize: '34px' }}>{presentation.icon}</div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700 }}>Vista previa disponible al vincular archivo</div>
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '10px', fontSize: '11px' }}>
+                          <div style={{ padding: '10px 12px', background: 'var(--cream)', borderRadius: '12px' }}>
+                            <div style={{ color: 'var(--text-muted)', marginBottom: '4px' }}>Formato</div>
+                            <div style={{ color: 'var(--navy)', fontWeight: 800 }}>{d.type || 'DOC'}</div>
+                          </div>
+                          <div style={{ padding: '10px 12px', background: 'var(--cream)', borderRadius: '12px' }}>
+                            <div style={{ color: 'var(--text-muted)', marginBottom: '4px' }}>Tamaño</div>
+                            <div style={{ color: 'var(--navy)', fontWeight: 800 }}>{d.size || '0 KB'}</div>
+                          </div>
+                          <div style={{ padding: '10px 12px', background: 'var(--cream)', borderRadius: '12px' }}>
+                            <div style={{ color: 'var(--text-muted)', marginBottom: '4px' }}>Subido</div>
+                            <div style={{ color: 'var(--navy)', fontWeight: 800 }}>{d.uploadedAt || '-'}</div>
+                          </div>
+                        </div>
+                        <div style={{ marginTop: 'auto', paddingTop: '4px', borderTop: '1px solid #f0ece4', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
+                          <div style={{ fontSize: '12px', color: 'var(--navy)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '16px', color: 'var(--gold)' }}>📥</span>
+                            <span>{d.downloads || 0} <span style={{ fontWeight: 400, color: '#888' }}>descargas</span></span>
+                          </div>
+                          <button onClick={() => openEdit('documentos', d)} className="btn-premium btn-premium-gold" style={{ padding: '6px 14px', fontSize: '10px', borderRadius: '8px' }}>
+                            EDITAR
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );
@@ -2514,17 +2731,76 @@ function AdminContent() {
 
             {modal === 'documentos' && (
               <div style={{ display: 'grid', gap: '20px' }}>
+                <div style={{ padding: '18px', borderRadius: '18px', background: 'linear-gradient(135deg, rgba(200,151,58,0.12), rgba(26,39,68,0.06))', border: '1px solid var(--gold-pale)', display: 'grid', gap: '14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', flexWrap: 'wrap' }}>
+                    <div>
+                      <div className="premium-label" style={{ marginBottom: '6px' }}>ARCHIVO PRINCIPAL</div>
+                      <div style={{ color: 'var(--text-muted)', fontSize: '12px' }}>Sube el documento y el panel completará automáticamente formato, tamaño y fecha.</div>
+                    </div>
+                    <label className="btn-premium btn-premium-gold" style={{ padding: '8px 16px', fontSize: '11px' }}>
+                      SUBIR ARCHIVO
+                      <input type="file" style={{ display: 'none' }} accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,image/*" onChange={handleDocumentFileUpload} />
+                    </label>
+                  </div>
+                  <div style={{ borderRadius: '16px', border: '1px solid rgba(200,151,58,0.18)', background: '#fff', overflow: 'hidden' }}>
+                    {form.url && canPreviewInFrame(form) ? (
+                      getDocPresentation(form).kind === 'image' ? (
+                        <img src={form.url} alt={form.name || 'Vista previa'} style={{ width: '100%', height: '220px', objectFit: 'cover', display: 'block' }} />
+                      ) : (
+                        <iframe src={form.url} title={form.name || 'Vista previa de documento'} style={{ width: '100%', height: '220px', border: 'none', display: 'block', background: '#fff' }} />
+                      )
+                    ) : (
+                      <div style={{ minHeight: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '10px', color: getDocPresentation(form).color || 'var(--gold)' }}>
+                        <div style={{ fontSize: '40px' }}>{getDocPresentation(form).icon}</div>
+                        <div style={{ fontWeight: 800, color: 'var(--navy)' }}>{form.name || 'Documento sin nombre'}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>PDF e imágenes mostrarán vista previa aquí. Word y otros formatos se registran con su ficha.</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <div className="form-group">
                   <label className="premium-label">NOMBRE DEL ARCHIVO</label>
                   <input className="pjl-input" value={form.name || ''} onChange={e => setForm({...form, name: e.target.value})} />
                 </div>
-                <div className="form-group">
-                  <label className="premium-label">FORMATO (PDF, DOC, etc)</label>
-                  <input className="pjl-input" value={form.type || 'PDF'} onChange={e => setForm({...form, type: e.target.value})} />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="form-group">
+                    <label className="premium-label">FORMATO (PDF, DOC, etc)</label>
+                    <input className="pjl-input" value={form.type || 'PDF'} onChange={e => setForm({...form, type: e.target.value})} />
+                  </div>
+                  <div className="form-group">
+                    <label className="premium-label">TAMAÑO</label>
+                    <input className="pjl-input" value={form.size || '1.0 MB'} onChange={e => setForm({...form, size: e.target.value})} />
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="form-group">
+                    <label className="premium-label">CATEGORÍA</label>
+                    <select className="pjl-input" value={form.category || 'General'} onChange={e => setForm({...form, category: e.target.value})}>
+                      <option>General</option>
+                      <option>Boletines</option>
+                      <option>Planificación</option>
+                      <option>Currículos</option>
+                      <option>Formación</option>
+                      <option>Presentaciones</option>
+                      <option>Recursos visuales</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="premium-label">FECHA DE CARGA</label>
+                    <input className="pjl-input" type="date" value={form.uploadedAt || ''} onChange={e => setForm({...form, uploadedAt: e.target.value})} />
+                  </div>
                 </div>
                 <div className="form-group">
-                  <label className="premium-label">TAMAÑO (MB)</label>
-                  <input className="pjl-input" value={form.size || '1.0 MB'} onChange={e => setForm({...form, size: e.target.value})} />
+                  <label className="premium-label">DESCRIPCIÓN BREVE</label>
+                  <textarea className="pjl-input" rows={4} value={form.description || ''} onChange={e => setForm({...form, description: e.target.value})} placeholder="Describe para qué sirve este archivo y cuándo conviene usarlo." />
+                </div>
+                <div className="form-group">
+                  <label className="premium-label">URL / ENLACE DEL ARCHIVO</label>
+                  <input className="pjl-input" value={form.url || ''} onChange={e => setForm({...form, url: e.target.value})} placeholder="https://... o archivo subido" />
+                </div>
+                <div style={{ padding: '16px', borderRadius: '16px', background: 'var(--cream)', border: '1px solid var(--gold-pale)', display: 'grid', gap: '8px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--navy)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Sugerencias útiles</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.7 }}>Usa categorías para ordenar la biblioteca, agrega descripciones cortas para que el equipo sepa qué descargar y sube el archivo desde aquí para evitar enlaces rotos.</div>
                 </div>
               </div>
             )}
@@ -2640,9 +2916,14 @@ function AdminContent() {
                   <input className="pjl-input" type="text" value={form.password || ''} onChange={e => setForm({...form, password: e.target.value})} placeholder="Definir contraseña de acceso" />
                 </div>
                 
-                {form.role === 'editor' && (
+                {(form.role === 'editor' || form.role === 'viewer') && (
                   <div style={{ marginTop: '20px' }}>
                     <label className="premium-label" style={{ marginBottom: '12px', display: 'block' }}>🔐 MÓDULOS PERMITIDOS (ACCESO ESPECÍFICO)</label>
+                    <p style={{ margin: '0 0 12px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                      {form.role === 'viewer'
+                        ? 'Para usuarios visualizadores, estos módulos se mostrarán en modo solo lectura.'
+                        : 'Para editores, estos módulos quedarán habilitados de forma inmediata al guardar.'}
+                    </p>
                     <div style={{ 
                       display: 'grid', 
                       gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', 
@@ -2652,7 +2933,7 @@ function AdminContent() {
                       borderRadius: '16px', 
                       border: '1px solid var(--gold-pale)' 
                     }}>
-                      {NAV_ITEMS.filter(n => !['dashboard', 'usuarios', 'configuracion'].includes(n.id)).map(n => (
+                      {NAV_ITEMS.filter(n => !['usuarios', 'configuracion'].includes(n.id)).map(n => (
                         <label key={n.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', background: '#fff', padding: '10px', borderRadius: '10px', border: '1px solid #eee', transition: '0.2s' }} className="hover-lift">
                           <input 
                             type="checkbox" 

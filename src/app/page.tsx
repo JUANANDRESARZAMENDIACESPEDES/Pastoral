@@ -57,6 +57,16 @@ const mapHeroPosition = (position?: string) => {
   }
 };
 
+const detectDeviceType = () => {
+  if (typeof window === 'undefined') return 'desktop' as const;
+  const ua = window.navigator.userAgent.toLowerCase();
+  const width = window.innerWidth;
+
+  if (/ipad|tablet/.test(ua) || (width >= 768 && width <= 1024 && /android/.test(ua))) return 'tablet' as const;
+  if (/mobi|iphone|ipod|android/.test(ua) || width < 768) return 'mobile' as const;
+  return 'desktop' as const;
+};
+
 
 function HomeContent() {
   const router = useRouter();
@@ -186,15 +196,21 @@ function HomeContent() {
   const updateStat = (id: string, field: 'visits' | 'interactions') => {
     try {
       const mappedId = id === 'home' ? '/' : id.startsWith('/') ? id : `/${id}`;
+      const deviceType = detectDeviceType();
       const s = [...store.stats.get()];
       let existing = s.find(x => x.page === mappedId);
 
       if (!existing) {
-        existing = { page: mappedId, label: humanizeStatLabel(mappedId), visits: 0, interactions: 0 };
+        existing = { page: mappedId, label: humanizeStatLabel(mappedId), visits: 0, interactions: 0, desktopVisits: 0, tabletVisits: 0, mobileVisits: 0 };
         s.push(existing);
       }
 
       existing[field] += 1;
+      if (field === 'visits') {
+        if (deviceType === 'desktop') existing.desktopVisits = (existing.desktopVisits || 0) + 1;
+        if (deviceType === 'tablet') existing.tabletVisits = (existing.tabletVisits || 0) + 1;
+        if (deviceType === 'mobile') existing.mobileVisits = (existing.mobileVisits || 0) + 1;
+      }
       store.stats.set(s);
     } catch (e) {}
   };
@@ -212,7 +228,7 @@ function HomeContent() {
 
   useEffect(() => {
     trackVisit(currentPage);
-  }, [currentPage, trackVisit]);
+  }, [currentPage]);
 
   // --- VATICAN WIDGET SCRIPT ---
   useEffect(() => {
@@ -839,11 +855,14 @@ function HomeContent() {
 
         {/* HISTORIA - TIMELINE */}
         {currentPage === 'historia' && (
-          <section className="section-pjl">
+          <section className="section-pjl history-premium-section">
             <div className="container">
-              <div className="section-head">
+              <div className="section-head history-premium-head">
                 <span className="premium-label">LEGADO</span>
                 <h3>Nuestra <i>Historia</i></h3>
+                <p style={{ color: 'var(--text-muted)', maxWidth: '640px', margin: '14px auto 0', fontSize: '15px', lineHeight: 1.8 }}>
+                  Una línea de tiempo más visual y memorable para mostrar el crecimiento de la Pastoral Juvenil Luqueña.
+                </p>
                 <div className="line"></div>
               </div>
               <div className="timeline">
@@ -855,11 +874,28 @@ function HomeContent() {
                       style={{ animationDelay: `${i * 0.1}s`, cursor: 'pointer' }}
                       onClick={() => setSelectedHistoryItem(item)}
                     >
-                      <div className="timeline-dot"></div>
+                      <div className="timeline-dot" style={{ background: item.accentColor || 'var(--gold)' }}></div>
                       <span className="timeline-date">{item.title}</span>
-                      <div className="mvv-card" style={{ padding: '30px', transition: '0.3s transform' }}>
-                        <p style={{ whiteSpace: 'pre-line', margin: 0 }}>{item.text}</p>
-                        <div style={{ marginTop: '15px', color: 'var(--gold)', fontSize: '13px', fontWeight: 700 }}>Haz clic para ampliar →</div>
+                      <div
+                        className="timeline-premium-card"
+                        style={{ '--timeline-accent': item.accentColor || 'var(--gold)' } as any}
+                      >
+                        {item.image && (
+                          <div className="timeline-premium-media">
+                            <img src={item.image} alt={item.title} />
+                          </div>
+                        )}
+                        <div className="timeline-premium-body">
+                          <div className="timeline-premium-topline">
+                            <span>Memoria pastoral</span>
+                            <span>{String(i + 1).padStart(2, '0')}</span>
+                          </div>
+                          <p style={{ whiteSpace: 'pre-line', margin: 0 }}>{item.text}</p>
+                          <div className="timeline-premium-footer">
+                            <span>Haz clic para ampliar</span>
+                            <strong>Ver detalle</strong>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ))
@@ -1701,10 +1737,15 @@ function HomeContent() {
               style={{ position: 'absolute', top: '24px', right: '24px', background: 'var(--cream)', border: 'none', borderRadius: '50%', width: '40px', height: '40px', color: 'var(--navy)', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.2s' }}
             >×</button>
             <div style={{ textAlign: 'center' }}>
-              <span style={{ color: 'var(--gold)', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '3px', display: 'block', marginBottom: '15px' }}>NUESTRA HISTORIA</span>
-              <h2 className="serif" style={{ fontSize: '2.5rem', color: 'var(--navy)', marginBottom: '30px' }}>{selectedHistoryItem.title}</h2>
-              <div className="line" style={{ margin: '0 auto 40px' }}></div>
-              <p style={{ color: 'var(--navy)', lineHeight: '1.8', fontSize: '1.2rem', textAlign: 'justify', whiteSpace: 'pre-line', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
+              <span style={{ color: selectedHistoryItem.accentColor || 'var(--gold)', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '3px', display: 'block', marginBottom: '15px' }}>NUESTRA HISTORIA</span>
+              <h2 className="serif" style={{ fontSize: '2.5rem', color: 'var(--navy)', marginBottom: '20px' }}>{selectedHistoryItem.title}</h2>
+              <div className="line" style={{ margin: '0 auto 30px', background: selectedHistoryItem.accentColor || 'var(--gold)' }}></div>
+              {selectedHistoryItem.image && (
+                <div style={{ borderRadius: '22px', overflow: 'hidden', marginBottom: '28px', boxShadow: '0 18px 40px rgba(0,0,0,0.12)' }}>
+                  <img src={selectedHistoryItem.image} alt={selectedHistoryItem.title} style={{ width: '100%', maxHeight: '320px', objectFit: 'cover', display: 'block' }} />
+                </div>
+              )}
+              <p style={{ color: 'var(--navy)', lineHeight: '1.8', fontSize: '1.1rem', textAlign: 'justify', whiteSpace: 'pre-line', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
                 {selectedHistoryItem.text}
               </p>
             </div>

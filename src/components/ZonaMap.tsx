@@ -126,17 +126,30 @@ export default function ZonaMap({
 
       const zoom = mapZoom || (selectedZone ? 14 : 13);
 
-      const map = L.map(mapRef.current, { zoomControl: true, scrollWheelZoom }).setView(center, zoom);
+      const map = L.map(mapRef.current, { zoomControl: false, scrollWheelZoom }).setView(center, zoom);
       leafletMapRef.current = map;
+      L.control.zoom({ position: drawingMode ? 'bottomright' : 'topright' }).addTo(map);
 
       // OpenStreetMap tile layer
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         maxZoom: 19,
       }).addTo(map);
+      setTimeout(() => {
+        try { map.invalidateSize(); } catch (e) {}
+      }, 0);
     }
 
     const map = leafletMapRef.current;
+    try { map.invalidateSize(); } catch (e) {}
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined' && mapRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        try { map.invalidateSize(false); } catch (e) {}
+      });
+      resizeObserver.observe(mapRef.current);
+    }
 
     // Clear old layers
     layersRef.current.forEach(layer => {
@@ -270,7 +283,7 @@ export default function ZonaMap({
     });
 
     // Legend
-    if (!selectedZone) {
+    if (!selectedZone && !drawingMode) {
       const legend = L.control({ position: 'bottomright' });
       legend.onAdd = () => {
         const div = L.DomUtil.create('div', '');
@@ -314,6 +327,7 @@ export default function ZonaMap({
 
     // Cleanup when component unmounts or deps change
     return () => {
+      resizeObserver?.disconnect();
       layersRef.current.forEach(layer => {
         if (layer.remove) layer.remove();
         else if (map && map.removeLayer) {
@@ -340,6 +354,28 @@ export default function ZonaMap({
       <style>{`
         .zone-tooltip { background: rgba(26,39,68,0.85) !important; border: none !important; color: white !important; font-weight: 700 !important; border-radius: 6px !important; font-size: 12px !important; }
         .leaflet-drawing-cursor .leaflet-container { cursor: crosshair !important; }
+        .leaflet-control-zoom {
+          border: none !important;
+          box-shadow: 0 10px 24px rgba(26,39,68,0.18) !important;
+          overflow: hidden;
+        }
+        .leaflet-control-zoom a {
+          background: rgba(255,255,255,0.96) !important;
+          color: #1A2744 !important;
+          border: none !important;
+          width: 38px !important;
+          height: 38px !important;
+          line-height: 38px !important;
+          font-weight: 800 !important;
+        }
+        .leaflet-top.leaflet-right .leaflet-control-zoom {
+          margin-top: 88px !important;
+          margin-right: 16px !important;
+        }
+        .leaflet-bottom.leaflet-right .leaflet-control-zoom {
+          margin-bottom: 88px !important;
+          margin-right: 16px !important;
+        }
       `}</style>
       <div ref={mapRef} style={{ height, width: '100%', borderRadius: '12px', zIndex: 1 }} className={drawingMode ? 'leaflet-drawing-cursor' : ''} />
     </>
