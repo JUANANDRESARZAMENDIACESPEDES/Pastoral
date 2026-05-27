@@ -3,7 +3,14 @@ import { getSupabaseClient } from './supabase';
 export const STORE_TABLE = 'pjl_store';
 
 export async function fetchStoreValue<T>(key: string): Promise<T | null> {
-  const supabase = getSupabaseClient();
+  let supabase;
+  try {
+    supabase = getSupabaseClient();
+  } catch (e) {
+    console.warn('fetchStoreValue: Supabase not configured:', (e as Error).message);
+    return null;
+  }
+
   const { data, error } = await supabase
     .from(STORE_TABLE)
     .select('value')
@@ -19,7 +26,14 @@ export async function fetchStoreValue<T>(key: string): Promise<T | null> {
 }
 
 export async function fetchAllStoreValues<T>(keys: string[]): Promise<Record<string, T>> {
-  const supabase = getSupabaseClient();
+  let supabase;
+  try {
+    supabase = getSupabaseClient();
+  } catch (e) {
+    console.warn('fetchAllStoreValues: Supabase not configured:', (e as Error).message);
+    return {} as Record<string, T>;
+  }
+
   const { data, error } = await supabase
     .from(STORE_TABLE)
     .select('key, value')
@@ -37,7 +51,14 @@ export async function fetchAllStoreValues<T>(keys: string[]): Promise<Record<str
 }
 
 export async function upsertStoreValue(key: string, value: unknown): Promise<boolean> {
-  const supabase = getSupabaseClient();
+  let supabase;
+  try {
+    supabase = getSupabaseClient();
+  } catch (e) {
+    console.warn('upsertStoreValue: Supabase not configured:', (e as Error).message);
+    return false;
+  }
+
   const { error } = await supabase
     .from(STORE_TABLE)
     .upsert({ key, value }, { onConflict: 'key' });
@@ -59,11 +80,12 @@ export function subscribeStoreChanges(onChange: (key: string, value: unknown) =>
   let supabase;
   try {
     supabase = getSupabaseClient();
-  } catch {
+  } catch (e) {
+    console.warn('subscribeStoreChanges: Supabase not configured:', (e as Error).message);
     return () => {};
   }
 
-  const channel = supabase
+  const channel = (supabase as any)
     .channel('pjl_store_changes')
     .on(
       'postgres_changes',
@@ -75,9 +97,9 @@ export function subscribeStoreChanges(onChange: (key: string, value: unknown) =>
       }
     );
 
-  channel.subscribe();
+  (channel as any).subscribe();
 
   return () => {
-    supabase.removeChannel(channel);
+    try { supabase.removeChannel(channel); } catch (e) { /* ignore */ }
   };
 }
