@@ -29,7 +29,7 @@ interface ZonaMapProps {
   hideFallbackPolygon?: boolean;
 }
 
-// Default zone color palette
+// Paleta de colores por defecto para las 4 zonas de la Pastoral
 const DEFAULT_ZONE_COLORS: Record<number, { fill: string; border: string; text: string }> = {
   1: { fill: 'rgba(59, 130, 246, 0.35)',  border: '#3B82F6', text: 'Zona 1' },
   2: { fill: 'rgba(34, 197, 94, 0.35)',   border: '#22C55E', text: 'Zona 2' },
@@ -44,36 +44,15 @@ const MARKER_COLORS: Record<number, string> = {
   4: '#EF4444',
 };
 
-// Approximate zone polygons for Luque, Paraguay
-// Center of Luque: -25.2688, -57.4754
+// Polígonos de aproximación por defecto para Luque, Paraguay si no hay guardados
 const ZONE_POLYGONS: Record<number, [number, number][]> = {
-  1: [
-    [-25.235, -57.510],
-    [-25.235, -57.445],
-    [-25.265, -57.445],
-    [-25.265, -57.510],
-  ],
-  2: [
-    [-25.265, -57.510],
-    [-25.265, -57.445],
-    [-25.295, -57.445],
-    [-25.295, -57.510],
-  ],
-  3: [
-    [-25.235, -57.445],
-    [-25.235, -57.385],
-    [-25.265, -57.385],
-    [-25.265, -57.445],
-  ],
-  4: [
-    [-25.265, -57.445],
-    [-25.265, -57.385],
-    [-25.295, -57.385],
-    [-25.295, -57.445],
-  ],
+  1: [[-25.235, -57.510], [-25.235, -57.445], [-25.265, -57.445], [-25.265, -57.510]],
+  2: [[-25.265, -57.510], [-25.265, -57.445], [-25.295, -57.445], [-25.295, -57.510]],
+  3: [[-25.235, -57.445], [-25.235, -57.385], [-25.265, -57.385], [-25.265, -57.445]],
+  4: [[-25.265, -57.445], [-25.265, -57.385], [-25.295, -57.385], [-25.295, -57.445]],
 };
 
-// Default approximate positions per zone center (for chapels without coordinates)
+// Coordenadas centrales por defecto para cada zona
 const ZONE_CENTERS: Record<number, [number, number]> = {
   1: [-25.250, -57.478],
   2: [-25.280, -57.478],
@@ -111,8 +90,9 @@ export default function ZonaMap({
       return;
     }
 
+    // 1. INICIALIZACIÓN ÚNICA DEL MAPA (Solo corre la primera vez)
     if (!leafletMapRef.current) {
-      // Fix Leaflet default icon path issue in Next.js
+      // Corrección de rutas para los iconos por defecto de Leaflet en Next.js
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
         iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
@@ -130,6 +110,7 @@ export default function ZonaMap({
       leafletMapRef.current = map;
       L.control.zoom({ position: drawingMode ? 'bottomright' : 'topright' }).addTo(map);
 
+      // Capas de mapas disponibles (OpenStreetMap estándar y Carto Light)
       const baseLayers = [
         {
           url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -164,14 +145,30 @@ export default function ZonaMap({
       };
 
       mountBaseLayer(0);
+
+      // 🔥 MODIFICACIÓN 1: Cambiamos el tiempo de 0ms a 150ms.
+      // Esto le da tiempo al contenedor HTML de terminar de expandirse visualmente
+      // antes de obligar al mapa a calcular sus dimensiones.
       setTimeout(() => {
         try { map.invalidateSize(); } catch (e) {}
-      }, 0);
+      }, 150);
     }
 
     const map = leafletMapRef.current;
+    
+    // 🔥 MODIFICACIÓN 2: Forzar recalculado inmediato cada vez que cambie cualquier estado.
     try { map.invalidateSize(); } catch (e) {}
 
+    // 🔥 MODIFICACIÓN 3: Si entramos en modo de dibujo (se presionó Definir Límites),
+    // disparamos otro invalidateSize con un pequeño retraso extra para asegurar
+    // que la transición visual del contenedor terminó de ejecutarse.
+    if (drawingMode) {
+      setTimeout(() => {
+        try { map.invalidateSize(); } catch (e) {}
+      }, 100);
+    }
+
+    // Observador que detecta si el tamaño de la ventana o del contenedor cambia dinámicamente
     let resizeObserver: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined' && mapRef.current) {
       resizeObserver = new ResizeObserver(() => {
@@ -180,7 +177,7 @@ export default function ZonaMap({
       resizeObserver.observe(mapRef.current);
     }
 
-    // Clear old layers
+    // Limpieza de capas antiguas para evitar que se dupliquen polígonos y marcadores
     layersRef.current.forEach(layer => {
       if (layer && layer.remove) layer.remove();
       else if (map && map.removeLayer) {
@@ -194,21 +191,10 @@ export default function ZonaMap({
       : selectedZone ? ZONE_CENTERS[selectedZone] : [-25.2688, -57.4754];
     const zoom = mapZoom || (selectedZone ? 14 : 13);
     
-    // Centering logic disabled to keep map view stable during zone capture
-// const center: [number, number] = mapCenterLat && mapCenterLng
-//   ? [mapCenterLat, mapCenterLng]
-//   : selectedZone ? ZONE_CENTERS[selectedZone] : [-25.2688, -57.4754];
-// const zoom = mapZoom || (selectedZone ? 14 : 13);
-// // Only set view if coordinates or zoom actually changed to avoid flicker
-// const currentCenter = map.getCenter();
-// const currentZoom = map.getZoom();
-// const dist = Math.sqrt(Math.pow(currentCenter.lat - center[0], 2) + Math.pow(currentCenter.lng - center[1], 2));
-// if (dist > 0.0001 || Math.abs(currentZoom - zoom) > 0.1) {
-//   map.setView(center, zoom);
-// }
     const currentCenter = map.getCenter();
     const currentZoom = map.getZoom();
-    // Update view only when not actively drawing a zone to avoid resetting map during capture
+    
+    // Solo actualiza la vista del mapa si NO estamos dibujando para no moverle la pantalla al usuario
     if (!drawingMode) {
       const dist = Math.sqrt(Math.pow(currentCenter.lat - center[0], 2) + Math.pow(currentCenter.lng - center[1], 2));
       if (dist > 0.0001 || Math.abs(currentZoom - zoom) > 0.1) {
@@ -216,7 +202,7 @@ export default function ZonaMap({
       }
     }
 
-    // Draw zone polygons
+    // 2. DIBUJAR LOS POLÍGONOS DE LAS ZONAS
     const zonesToDraw = (selectedZone && !showAllZones) ? [selectedZone] : [1, 2, 3, 4];
     zonesToDraw.forEach((zId) => {
       const savedPolygon = polygons[zId];
@@ -248,7 +234,7 @@ export default function ZonaMap({
       }
     });
 
-    // Add map click listener
+    // Escuchador de clics en el mapa para capturar coordenadas al dibujar una zona
     const onMapClickInternal = (e: any) => {
       if ((window as any).onPJLMapClick) {
         (window as any).onPJLMapClick(e.latlng.lat, e.latlng.lng);
@@ -257,7 +243,7 @@ export default function ZonaMap({
     map.on('click', onMapClickInternal);
     layersRef.current.push({ remove: () => map.off('click', onMapClickInternal) });
 
-    // Draw chapel markers
+    // 3. DIBUJAR LOS MARCADORES DE LAS CAPILLAS (Iconos de iglesias ⛪)
     const chapelsToShow = selectedZone
       ? chapels.filter(c => c.zonaId === selectedZone)
       : chapels;
@@ -266,7 +252,6 @@ export default function ZonaMap({
       const markerColor = chapel.markerColor || zoneColors[chapel.zonaId] || MARKER_COLORS[chapel.zonaId] || '#C8973A';
       const defaultCenter = ZONE_CENTERS[chapel.zonaId] || [-25.2688, -57.4754];
       
-      // Use chapel coordinates if available, otherwise use zone center with slight offset
       const idxInZone = chapels.filter(c => c.zonaId === chapel.zonaId).indexOf(chapel);
       const latOffset = (idxInZone % 4) * 0.003 - 0.006;
       const lngOffset = Math.floor(idxInZone / 4) * 0.003 - 0.006;
@@ -311,7 +296,7 @@ export default function ZonaMap({
       layersRef.current.push(marker);
     });
 
-    // Legend
+    // 4. DIBUJAR LA LEYENDA FLOTANTE DEL MAPA (Esquina inferior derecha)
     if (!selectedZone && !drawingMode) {
       const legend = L.control({ position: 'bottomright' });
       legend.onAdd = () => {
@@ -334,7 +319,7 @@ export default function ZonaMap({
       layersRef.current.push({ remove: () => legend.remove() });
     }
 
-    // Draw temp drawing polygon
+    // 5. DIBUJAR POLÍGONO TEMPORAL MIENTRAS EL USUARIO HACE CLIC PARA TRAZAR LÍMITES
     if (tempPolygon && tempPolygon.length > 0) {
       try {
         const polyline = L.polyline(tempPolygon, { color: '#C8973A', weight: 4, dashArray: '10, 10' }).addTo(map);
@@ -354,7 +339,7 @@ export default function ZonaMap({
       }
     }
 
-    // Cleanup when component unmounts or deps change
+    // Función de limpieza cuando los estados cambian
     return () => {
       resizeObserver?.disconnect();
       layersRef.current.forEach(layer => {
@@ -367,7 +352,7 @@ export default function ZonaMap({
     };
   }, [chapels, selectedZone, zoneColors, polygons, tempPolygon, showAllZones, mapCenterLat, mapCenterLng, mapZoom, scrollWheelZoom, drawingMode, hideFallbackPolygon]);
 
-  // Handle actual unmount
+  // Manejo del desmontaje real del mapa al salir de la pantalla por completo
   useEffect(() => {
     return () => {
       if (leafletMapRef.current) {
