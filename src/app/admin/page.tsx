@@ -14,7 +14,7 @@ import {
   DEFAULT_STATS, DEFAULT_THEME_PALETTE, DEFAULT_USERS
 } from '@/lib/pjlStore';
 import { fetchStoreValue, upsertStoreValue, subscribeStoreChanges } from '@/lib/supabaseStore';
-import { SupabaseProfile, fetchProfileByEmail, fetchAllProfiles, fetchPendingProfiles, approveProfile, signInProfile, signUpProfile } from '@/lib/supabaseProfiles';
+import { SupabaseProfile, fetchProfileByEmail, fetchAllProfiles, fetchPendingProfiles, approveProfile, signInProfile, signUpProfile, subscribeProfileChanges } from '@/lib/supabaseProfiles';
 
 const ZonaMap = dynamic(() => import('@/components/ZonaMap'), { 
   ssr: false,
@@ -130,11 +130,15 @@ function useLS<T>(key: keyof typeof store, def: T) {
     };
   }, [key]);
 
-  const update = (v: T) => {
-    setVal(v);
+  const update = (v: T | ((prev: T) => T)) => {
+    const next = typeof v === 'function'
+      ? (v as (prev: T) => T)((store[key].get as () => T)())
+      : v;
+
+    setVal(next);
     const setter = store[key].set as (v: T) => void;
-    setter(v);
-    upsertStoreValue(String(key), v).catch(() => {
+    setter(next);
+    upsertStoreValue(String(key), next).catch(() => {
       // Fallback to local persistence if Supabase no está disponible
     });
   };
@@ -181,6 +185,8 @@ function AdminContent() {
   }, [allUsers]);
   const [loginForm, setLoginForm] = useState({ user: '', pass: '' });
   const [loginErr, setLoginErr] = useState(false);
+  const [loginErrorMessage, setLoginErrorMessage] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
@@ -206,6 +212,45 @@ function AdminContent() {
       }
     };
     initSession();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeProfileChanges((profile, eventType) => {
+      setAllUsers((prev: User[]) => {
+        const existingIndex = prev.findIndex(u => u.id === profile.id);
+        const updatedUser = {
+          id: profile.id,
+          name: profile.name,
+          email: profile.email,
+          role: profile.role,
+          status: profile.status,
+          permissions: profile.permissions,
+          createdAt: profile.created_at,
+          authUid: profile.auth_uid,
+        };
+
+        if (eventType === 'DELETE') {
+          return prev.filter(u => u.id !== profile.id);
+        }
+        if (existingIndex >= 0) {
+          return prev.map(u => u.id === profile.id ? updatedUser : u);
+        }
+        return [...prev, updatedUser];
+      });
+
+      setPendingProfiles(prev => {
+        if (profile.status === 'pendiente') {
+          const found = prev.find(p => p.id === profile.id);
+          if (found) {
+            return prev.map(p => p.id === profile.id ? profile : p);
+          }
+          return [...prev, profile];
+        }
+        return prev.filter(p => p.id !== profile.id);
+      });
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const hasPermission = (m: Module, action: 'view' | 'edit' | 'admin' = 'view') => {
@@ -420,6 +465,10 @@ function AdminContent() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoginErr(false);
+    setLoginErrorMessage('');
+    setIsLoggingIn(true);
+
     const inputUser = loginForm.user.trim();
     const inputPass = loginForm.pass.trim();
     const normalize = (value: string) => value.trim().toLowerCase();
@@ -441,49 +490,73 @@ function AdminContent() {
     const isMaster = normalize(inputUser) === CREDS.user && inputPass === CREDS.pass;
     let authUser: User | null = null;
 
-    if (inputEmail) {
-      const { data, error } = await signInProfile(inputEmail, inputPass);
-      if (!error && data?.session?.user?.email) {
-        const profile = await fetchProfileByEmail(inputEmail);
-        if (profile && profile.status === 'activo') {
-          authUser = {
-            id: profile.id,
-            name: profile.name,
-            email: profile.email,
-            role: profile.role,
-            status: profile.status,
-            permissions: profile.permissions,
-            createdAt: profile.created_at,
-            lastActive: new Date().toISOString(),
-          };
+    try {
+      if (inputEmail) {
+        const { data, error } = await signInProfile(inputEmail, inputPass);
+        if (error) {
+          const profile = await fetchProfileByEmail(inputEmail);
+          if (profile?.status === 'pendiente') {
+            setLoginErr(true);
+            setLoginErrorMessage('Tu cuenta está pendiente de aprobación. Pronto el administrador te aceptará.');
+            return;
+          }
+          setLoginErr(true);
+          setLoginErrorMessage(error.message || 'Usuario o contraseña incorrectos.');
+          return;
+        }
+
+        if (data?.session?.user?.email) {
+          const profile = await fetchProfileByEmail(inputEmail);
+          if (profile) {
+            if (profile.status !== 'activo') {
+              setLoginErr(true);
+              setLoginErrorMessage(profile.status === 'pendiente'
+                ? 'Tu cuenta está pendiente de aprobación.'
+                : 'Tu cuenta no está activa.');
+              return;
+            }
+            authUser = {
+              id: profile.id,
+              name: profile.name,
+              email: profile.email,
+              role: profile.role,
+              status: profile.status,
+              permissions: profile.permissions,
+              createdAt: profile.created_at,
+              lastActive: new Date().toISOString(),
+            };
+          }
         }
       }
-    }
 
-    if (!authUser && isMaster) {
-      authUser = {
-        id: 'master',
-        name: 'Desarrollador',
-        email: CREDS.user,
-        role: 'desarrollador',
-        status: 'activo',
-        lastActive: new Date().toISOString(),
-      };
-    }
+      if (!authUser && isMaster) {
+        authUser = {
+          id: 'master',
+          name: 'Desarrollador',
+          email: CREDS.user,
+          role: 'desarrollador',
+          status: 'activo',
+          lastActive: new Date().toISOString(),
+        };
+      }
 
-    if (authUser) {
-      setLoggedIn(true);
-      setCurrentUser(authUser);
-      localStorage.setItem('pjl_admin_auth', 'true');
-      localStorage.setItem('pjl_current_user', JSON.stringify(authUser));
-      setLoginErr(false);
-      setShowPassword(false);
-      showToast(`¡Bienvenido, ${authUser.name}! ✔`);
-      addLog('inicio de sesión', 'sistema', `Usuario ${authUser.email} ha entrado al panel.`);
-      return;
-    }
+      if (authUser) {
+        setLoggedIn(true);
+        setCurrentUser(authUser);
+        localStorage.setItem('pjl_admin_auth', 'true');
+        localStorage.setItem('pjl_current_user', JSON.stringify(authUser));
+        setLoginErr(false);
+        setShowPassword(false);
+        showToast(`¡Bienvenido, ${authUser.name}! ✔`);
+        addLog('inicio de sesión', 'sistema', `Usuario ${authUser.email} ha entrado al panel.`);
+        return;
+      }
 
-    setLoginErr(true);
+      setLoginErr(true);
+      setLoginErrorMessage('Usuario o contraseña incorrectos.');
+    } finally {
+      setIsLoggingIn(false);
+    }
   };
 
   const handleLogout = () => {
@@ -539,16 +612,21 @@ function AdminContent() {
     }
 
     setIsRegistering(true);
-    const { error } = await signUpProfile(registerForm.name, registerForm.email, registerForm.password);
-    setIsRegistering(false);
+    try {
+      const { error } = await signUpProfile(registerForm.name, registerForm.email, registerForm.password);
+      if (error) {
+        setRegisterErr(error.message || 'Error al solicitar acceso.');
+        return;
+      }
 
-    if (error) {
-      setRegisterErr(error.message || 'Error al solicitar acceso.');
-      return;
+      setRegisterSuccess('Solicitud enviada. El desarrollador aprobará tu cuenta pronto.');
+      setRegisterForm({ name: '', email: '', password: '', confirmPassword: '' });
+      await loadPendingProfiles();
+    } catch (e) {
+      setRegisterErr('Error al solicitar acceso. Intenta nuevamente.');
+    } finally {
+      setIsRegistering(false);
     }
-
-    setRegisterSuccess('Solicitud enviada. El desarrollador aprobará tu cuenta pronto.');
-    setRegisterForm({ name: '', email: '', password: '', confirmPassword: '' });
   };
 
   const navigateMod = (m: Module) => {
@@ -699,7 +777,7 @@ function AdminContent() {
         </div>
         {registerMode === 'login' ? (
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {loginErr && <div className="login-alert" style={{ background: '#fee2e2', color: '#b91c1c', padding: '12px', borderRadius: '8px', fontSize: '13px', textAlign: 'center' }}>Usuario o contraseña incorrectos</div>}
+            {loginErr && <div className="login-alert" style={{ background: '#fee2e2', color: '#b91c1c', padding: '12px', borderRadius: '8px', fontSize: '13px', textAlign: 'center' }}>{loginErrorMessage || 'Usuario o contraseña incorrectos'}</div>}
             <div className="form-group">
               <label className="premium-label" style={{ marginBottom: '8px', display: 'block' }}>Usuario</label>
               <input
@@ -740,7 +818,9 @@ function AdminContent() {
                 Mostrar contraseña
               </label>
             </div>
-            <button type="submit" className="btn-premium btn-premium-gold" style={{ width: '100%', marginTop: '10px' }}>Entrar al Panel</button>
+            <button type="submit" className="btn-premium btn-premium-gold" style={{ width: '100%', marginTop: '10px' }} disabled={isLoggingIn}>
+              {isLoggingIn ? 'Ingresando...' : 'Entrar al Panel'}
+            </button>
           </form>
         ) : (
           <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>

@@ -16,6 +16,23 @@ export interface SupabaseProfile {
 
 export async function signUpProfile(name: string, email: string, password: string) {
   const supabase = getSupabaseClient();
+
+  const { data: existingProfile, error: existingError } = await supabase
+    .from(PROFILE_TABLE)
+    .select('id, status')
+    .eq('email', email)
+    .maybeSingle();
+
+  if (existingError) {
+    console.error('Supabase signUpProfile check error:', existingError.message);
+  }
+  if (existingProfile) {
+    const message = existingProfile.status === 'pendiente'
+      ? 'Ya existe una solicitud pendiente para este correo.'
+      : 'Este correo ya está registrado.';
+    return { error: new Error(message) };
+  }
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -43,6 +60,40 @@ export async function signUpProfile(name: string, email: string, password: strin
   });
 
   return { error: profileError };
+}
+
+type SupabaseProfileChangePayload = {
+  new?: SupabaseProfile;
+  old?: SupabaseProfile;
+  eventType?: string;
+};
+
+export function subscribeProfileChanges(
+  onChange: (profile: SupabaseProfile, eventType: 'INSERT' | 'UPDATE' | 'DELETE') => void
+): () => void {
+  let supabase;
+  try {
+    supabase = getSupabaseClient();
+  } catch {
+    return () => {};
+  }
+
+  const channel = (supabase.channel('profile_changes') as any).on(
+    'postgres_changes',
+    { event: '*', schema: 'public', table: PROFILE_TABLE },
+    (payload: SupabaseProfileChangePayload) => {
+      const profile = payload.new ?? payload.old;
+      if (!profile) return;
+      const eventType = (payload.eventType as 'INSERT' | 'UPDATE' | 'DELETE') || (payload.new ? 'INSERT' : 'UPDATE');
+      onChange(profile, eventType);
+    }
+  );
+
+  (channel as any).subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
 }
 
 export async function signInProfile(email: string, password: string) {
