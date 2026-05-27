@@ -388,24 +388,29 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
 /* ZONE CARDS */
 .zone-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 30px;
+  grid-template-columns: repeat(2, minmax(320px, 1fr));
+  gap: 28px;
 }
 .zone-card {
-  background: #fff;
-  border-radius: var(--radius);
+  background: linear-gradient(180deg, #ffffff 0%, #fdf8ef 100%);
+  border-radius: 32px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+  box-shadow: 0 18px 45px rgba(18, 42, 83, 0.08);
+  border: 1px solid rgba(34, 51, 92, 0.08);
 }
 .zone-card-header {
-  background: var(--navy);
+  background: linear-gradient(135deg, var(--navy), #1e3663);
   color: #fff;
-  padding: 30px;
+  padding: 28px 28px 24px;
 }
-.zone-card-header h4 { font-size: 20px; font-weight: 700; font-family: var(--font-display); margin:0; }
-.zone-card-body { padding: 30px; }
-.zone-info { margin-bottom: 25px; font-size: 14px; }
-.zone-info div { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--cream); }
+.zone-card-header h4 { font-size: 22px; font-weight: 800; font-family: var(--font-display); margin:0; letter-spacing: 0.5px; }
+.zone-card-body { padding: 26px 28px 30px; }
+.zone-info { margin-bottom: 20px; font-size: 14px; background: rgba(255, 238, 204, 0.75); border-radius: 20px; padding: 12px; }
+.zone-info-row { display: flex; align-items: center; justify-content: flex-start; gap: 10px; padding: 12px 14px; border-bottom: 1px solid rgba(34, 51, 92, 0.08); border-radius: 16px; margin-bottom: 10px; background: rgba(255,255,255,0.95); }
+.zone-info-row:last-child { margin-bottom: 0; border-bottom: none; }
+.zone-info-row span { color: var(--navy); font-weight: 700; }
+.zone-meta { color: #203049; }
+.zone-meta span { background: rgba(255, 209, 102, 0.16); border-radius: 999px; padding: 7px 12px; display: inline-flex; align-items: center; }
 
 /* NEW REFINED COMPONENTS */
 .zone-hero {

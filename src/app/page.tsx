@@ -727,21 +727,26 @@ function HomeContent() {
                         </div>
                         <div className="zone-card-body">
                           <p style={{ fontFamily: 'var(--font-display)', fontWeight: 600, color: 'var(--gold)', marginBottom: '5px', fontSize: '18px' }}>{z.name}</p>
-                          
-                          {/* Estadísticas Eliminadas en Selección */}
-                          <div style={{ marginTop: '10px', marginBottom: '20px' }}>
-                            <button className="btn-premium btn-premium-gold" style={{ width: '100%', fontSize: '11px' }}>
+
+                          <div className="zone-meta" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '18px', color: 'var(--navy)', fontSize: '13px', fontWeight: 600 }}>
+                            <span>{total} comunidades</span>
+                            <span>{activos} activas</span>
+                            <span>{nucleacion} nucleación</span>
+                          </div>
+
+                          <div style={{ marginTop: '0', marginBottom: '20px' }}>
+                            <button className="btn-premium btn-premium-gold" style={{ width: '100%', fontSize: '12px', borderRadius: '999px', padding: '14px 18px' }} onClick={() => { setSelectedZone(z.id); navigate('zonas'); }}>
                               VER COMUNIDADES
                             </button>
                           </div>
 
-                          <div className="zone-info" style={{ maxHeight: '100px', overflowY: 'auto', marginBottom: '15px' }}>
+                          <div className="zone-info" style={{ maxHeight: '140px', overflowY: 'auto', marginBottom: '15px' }}>
                             {zoneChapels.slice(0, 3).map((c, i) => (
-                              <div key={i} style={{ marginBottom: '5px', fontSize: '12px' }}>
-                                <span style={{ color: 'var(--navy)', fontWeight: 600 }}>{c.name}</span>
+                              <div key={i} className="zone-info-row">
+                                <span>{c.name}</span>
                               </div>
                             ))}
-                            {total > 3 && <p style={{ fontSize: '11px', color: 'var(--gold)', margin: 0 }}>+ {total - 3} más...</p>}
+                            {total > 3 && <p style={{ fontSize: '12px', color: 'var(--navy)', margin: '10px 0 0' }}>+ {total - 3} más...</p>}
                           </div>
                           <button className="pjl-link" style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '5px', color: 'var(--gold)', border: 'none', background: 'none', cursor: 'pointer' }} onClick={() => { setSelectedZone(z.id); navigate('zonas'); }}>Explorar zona →</button>
                         </div>
