@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Playfair_Display, DM_Sans, Cormorant_Garamond } from "next/font/google";
-import "./globals.css";
+import ThemeLoader from "../components/ThemeLoader";
+import "../components/globals.css";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -24,8 +25,6 @@ export const metadata: Metadata = {
   title: "Pastoral Juvenil Luqueña | PJL",
   description: "Sitio oficial de la Pastoral Juvenil Luqueña. Comunidad, fe y misión para la juventud de Luque.",
 };
-
-import ThemeLoader from "@/components/ThemeLoader";
 
 export default function RootLayout({
   children,
@@ -58,4 +57,3 @@ export default function RootLayout({
     </html>
   );
 }
-

@@ -2441,29 +2441,37 @@ input:checked + .pjl-slider:before {
   gap: 10px;
 }
 
+/* ==========================================================================
+  CORRECCIÓN DEL MENÚ LATERAL (EVITA EL TEMBLOR Y PARPADEO)
+   ========================================================================== */
+
 .drawer-btn {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 14px 18px;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 15px;
-  font-weight: 600;
+  padding: 14px 18px 14px 18px; /* Ajuste balanceado de base */
+  color: rgba(255, 255, 255, 0.7);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
   text-decoration: none;
   background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.03);
+  border: 1px solid transparent; /* Reserva el espacio del borde invisible desde el inicio */
   border-radius: 14px;
   text-align: left;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box; /* Clave: Mantiene las dimensiones fijas pase lo que pase */
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  transform: translateZ(0); /* Aceleración por hardware para suavizar fuentes */
+  backface-visibility: hidden;
 }
 
 .drawer-btn:hover, .drawer-btn:focus {
   background: rgba(200, 151, 58, 0.15);
   color: var(--gold);
-  border-color: rgba(200, 151, 58, 0.3);
-  padding-left: 22px;
+  border-color: rgba(200, 151, 58, 0.3); /* Cambia el color del borde, no el tamaño */
+  transform: translateX(4px); /* Desplaza suavemente todo el bloque sin empujar el resto de la página */
 }
 
 .drawer-btn.dropdown-toggle span {
