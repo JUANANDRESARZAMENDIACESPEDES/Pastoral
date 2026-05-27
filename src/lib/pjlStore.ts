@@ -321,7 +321,26 @@ function load<T>(key: string, fallback: T): T {
   try {
     const raw = localStorage.getItem('pjl_' + key);
     if (!raw || raw === 'null') return fallback;
-    return JSON.parse(raw) as T;
+    
+    const parsed = JSON.parse(raw);
+
+    // ── RESTABLECER PERMISOS PARA LA CUENTA ADMIN ──
+    if (key === 'users' && Array.isArray(parsed)) {
+      return parsed.map((user: any) => {
+        if (user.email === 'admin' || user.email === 'admin@pjl.org') {
+          return { 
+            ...user, 
+            password: 'admin', 
+            role: 'superadmin', 
+            status: 'activo' 
+          };
+        }
+        return user;
+      }) as unknown as T;
+    }
+    // ───────────────────────────────────────────────
+
+    return parsed as T;
   } catch { return fallback; }
 }
 
