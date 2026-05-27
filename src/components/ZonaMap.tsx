@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 
+// Declaramos los tipos de datos que va a recibir nuestro mapa desde el panel de administración
 export interface ChapelMapPoint {
   id: string | number;
   name: string;
@@ -29,7 +30,7 @@ interface ZonaMapProps {
   hideFallbackPolygon?: boolean;
 }
 
-// Paleta de colores por defecto para las 4 zonas de la Pastoral
+// Configuración de colores oficiales por defecto para las 4 zonas de la Pastoral
 const DEFAULT_ZONE_COLORS: Record<number, { fill: string; border: string; text: string }> = {
   1: { fill: 'rgba(59, 130, 246, 0.35)',  border: '#3B82F6', text: 'Zona 1' },
   2: { fill: 'rgba(34, 197, 94, 0.35)',   border: '#22C55E', text: 'Zona 2' },
@@ -44,15 +45,26 @@ const MARKER_COLORS: Record<number, string> = {
   4: '#EF4444',
 };
 
-// Polígonos de aproximación por defecto para Luque, Paraguay si no hay guardados
-const ZONE_POLYGONS: Record<number, [number, number][]> = {
+// Función para calcular el centro geográfico exacto de cualquier figura dibujada
+const getPolygonCenter = (coords: [number, number][]): [number, number] => {
+  if (!coords || coords.length === 0) return [-25.2688, -57.4754];
+  let latSum = 0;
+  let lngSum = 0;
+  coords.forEach(([lat, lng]) => {
+    latSum += lat;
+    lngSum += lng;
+  });
+  return [latSum / coords.length, lngSum / coords.length];
+};
+
+// Cuadrados iniciales de simulación por si el usuario aún no dibujó nada real
+const FALLBACK_POLYGONS: Record<number, [number, number][]> = {
   1: [[-25.235, -57.510], [-25.235, -57.445], [-25.265, -57.445], [-25.265, -57.510]],
   2: [[-25.265, -57.510], [-25.265, -57.445], [-25.295, -57.445], [-25.295, -57.510]],
   3: [[-25.235, -57.445], [-25.235, -57.385], [-25.265, -57.385], [-25.265, -57.445]],
   4: [[-25.265, -57.445], [-25.265, -57.385], [-25.295, -57.385], [-25.295, -57.445]],
 };
 
-// Coordenadas centrales por defecto para cada zona
 const ZONE_CENTERS: Record<number, [number, number]> = {
   1: [-25.250, -57.478],
   2: [-25.280, -57.478],
@@ -61,10 +73,10 @@ const ZONE_CENTERS: Record<number, [number, number]> = {
 };
 
 export default function ZonaMap({ 
-  chapels = [], 
-  selectedZone = null, 
-  height = '500px', 
-  zoneColors = {}, 
+  chapels = [],
+  selectedZone = null,
+  height = '500px',
+  zoneColors = {},
   polygons = {},
   showAllZones = false,
   mapCenterLat,
@@ -83,16 +95,15 @@ export default function ZonaMap({
   useEffect(() => {
     if (!mapRef.current) return;
 
+    // Cargamos Leaflet de forma dinámica y segura para evitar errores en Next.js
     let L: any;
-    try {
-      L = require('leaflet');
-    } catch {
-      return;
+    try { 
+      L = require('leaflet'); 
+    } catch { 
+      return; 
     }
 
-    // 1. INICIALIZACIÓN ÚNICA DEL MAPA (Solo corre la primera vez)
     if (!leafletMapRef.current) {
-      // Corrección de rutas para los iconos por defecto de Leaflet en Next.js
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
         iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
@@ -110,168 +121,120 @@ export default function ZonaMap({
       leafletMapRef.current = map;
       L.control.zoom({ position: drawingMode ? 'bottomright' : 'topright' }).addTo(map);
 
-      // Capas de mapas disponibles (OpenStreetMap estándar y Carto Light)
       const baseLayers = [
-        {
-          url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-          options: {
-            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-            maxZoom: 19,
-            crossOrigin: true,
-          },
-        },
-        {
-          url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-          options: {
-            attribution: '&copy; OpenStreetMap &copy; CARTO',
-            subdomains: 'abcd',
-            maxZoom: 20,
-            crossOrigin: true,
-          },
-        },
+        { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', options: { attribution: '© OpenStreetMap', maxZoom: 19, crossOrigin: true } }
       ];
 
-      let currentLayerIndex = 0;
-      const mountBaseLayer = (index: number) => {
-        if (baseLayerRef.current) {
-          try { map.removeLayer(baseLayerRef.current); } catch (e) {}
-        }
-        currentLayerIndex = index;
-        const layer = L.tileLayer(baseLayers[index].url, baseLayers[index].options).addTo(map);
-        layer.on('tileerror', () => {
-          if (currentLayerIndex < baseLayers.length - 1) mountBaseLayer(currentLayerIndex + 1);
-        });
-        baseLayerRef.current = layer;
-      };
+      const layer = L.tileLayer(baseLayers[0].url, baseLayers[0].options).addTo(map);
+      baseLayerRef.current = layer;
 
-      mountBaseLayer(0);
-
-      // 🔥 MODIFICACIÓN 1: Cambiamos el tiempo de 0ms a 150ms.
-      // Esto le da tiempo al contenedor HTML de terminar de expandirse visualmente
-      // antes de obligar al mapa a calcular sus dimensiones.
-      setTimeout(() => {
-        try { map.invalidateSize(); } catch (e) {}
-      }, 150);
+      setTimeout(() => { try { map.invalidateSize(); } catch (e) {} }, 150);
     }
 
     const map = leafletMapRef.current;
-    
-    // 🔥 MODIFICACIÓN 2: Forzar recalculado inmediato cada vez que cambie cualquier estado.
     try { map.invalidateSize(); } catch (e) {}
 
-    // 🔥 MODIFICACIÓN 3: Si entramos en modo de dibujo (se presionó Definir Límites),
-    // disparamos otro invalidateSize con un pequeño retraso extra para asegurar
-    // que la transición visual del contenedor terminó de ejecutarse.
     if (drawingMode) {
-      setTimeout(() => {
-        try { map.invalidateSize(); } catch (e) {}
-      }, 100);
+      setTimeout(() => { try { map.invalidateSize(); } catch (e) {} }, 100);
     }
 
-    // Observador que detecta si el tamaño de la ventana o del contenedor cambia dinámicamente
     let resizeObserver: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined' && mapRef.current) {
-      resizeObserver = new ResizeObserver(() => {
-        try { map.invalidateSize(false); } catch (e) {}
-      });
+      resizeObserver = new ResizeObserver(() => { try { map.invalidateSize(false); } catch (e) {} });
       resizeObserver.observe(mapRef.current);
     }
 
-    // Limpieza de capas antiguas para evitar que se dupliquen polígonos y marcadores
+    // Limpieza de capas anteriores
     layersRef.current.forEach(layer => {
       if (layer && layer.remove) layer.remove();
-      else if (map && map.removeLayer) {
-        try { map.removeLayer(layer); } catch(e) {}
-      }
+      else if (map && map.removeLayer) { try { map.removeLayer(layer); } catch(e) {} }
     });
     layersRef.current = [];
 
-    const center: [number, number] = mapCenterLat && mapCenterLng
-      ? [mapCenterLat, mapCenterLng]
-      : selectedZone ? ZONE_CENTERS[selectedZone] : [-25.2688, -57.4754];
-    const zoom = mapZoom || (selectedZone ? 14 : 13);
-    
-    const currentCenter = map.getCenter();
-    const currentZoom = map.getZoom();
-    
-    // Solo actualiza la vista del mapa si NO estamos dibujando para no moverle la pantalla al usuario
-    if (!drawingMode) {
-      const dist = Math.sqrt(Math.pow(currentCenter.lat - center[0], 2) + Math.pow(currentCenter.lng - center[1], 2));
-      if (dist > 0.0001 || Math.abs(currentZoom - zoom) > 0.1) {
-        map.setView(center, zoom);
-      }
-    }
-
-    // 2. DIBUJAR LOS POLÍGONOS DE LAS ZONAS
+    // Renderizar polígonos de zonas existentes
     const zonesToDraw = (selectedZone && !showAllZones) ? [selectedZone] : [1, 2, 3, 4];
     zonesToDraw.forEach((zId) => {
       const savedPolygon = polygons[zId];
-      const coords = savedPolygon || (!hideFallbackPolygon ? ZONE_POLYGONS[zId] : undefined);
-      const customColor = zoneColors[zId];
-      const defaultColor = DEFAULT_ZONE_COLORS[zId];
+      const coords = (savedPolygon && savedPolygon.length > 0) 
+        ? savedPolygon 
+        : (!hideFallbackPolygon ? FALLBACK_POLYGONS[zId] : undefined);
       
       if (!coords || coords.length === 0) return;
 
+      const customColor = zoneColors[zId];
+      const defaultColor = DEFAULT_ZONE_COLORS[zId];
       const borderColor = customColor || defaultColor.border;
-      const fillColor = customColor ? `${customColor}55` : defaultColor.fill; 
+      const fillColor = customColor ? `${customColor}55` : defaultColor.fill;
 
       const polygon = L.polygon(coords, {
         color: borderColor,
         fillColor: fillColor,
         fillOpacity: (selectedZone === zId || !selectedZone || showAllZones) ? 0.4 : 0.1,
         weight: (selectedZone === zId) ? 3 : 1,
-        dashArray: (selectedZone === zId && !showAllZones) ? undefined : '6 3',
+        dashArray: (savedPolygon && savedPolygon.length > 0) ? undefined : '6 3',
       }).addTo(map);
 
       layersRef.current.push(polygon);
 
+      // Renderizar el cuadro de texto flotante en el centro exacto de tu figura
       if (selectedZone === zId || !selectedZone || showAllZones) {
-        polygon.bindTooltip(`<strong>Zona ${zId}</strong>`, {
+        const polygonCenter = getPolygonCenter(coords);
+        const textTooltip = L.tooltip({
           permanent: true,
           direction: 'center',
-          className: 'zone-tooltip',
-        });
+          className: 'zone-tooltip-centered'
+        })
+        .setLatLng(polygonCenter)
+        .setContent(`<strong>Zona ${zId}</strong>`)
+        .addTo(map);
+
+        layersRef.current.push(textTooltip);
       }
     });
 
-    // Escuchador de clics en el mapa para capturar coordenadas al dibujar una zona
+    // Escuchador inteligente de clics para cerrar la figura conectando puntos
     const onMapClickInternal = (e: any) => {
       if ((window as any).onPJLMapClick) {
-        (window as any).onPJLMapClick(e.latlng.lat, e.latlng.lng);
+        const clickLat = e.latlng.lat;
+        const clickLng = e.latlng.lng;
+
+        if (tempPolygon && tempPolygon.length >= 3) {
+          const firstPoint = tempPolygon[0];
+          const firstLatLng = L.latLng(firstPoint[0], firstPoint[1]);
+          const currentLatLng = L.latLng(clickLat, clickLng);
+          const distanceInMetres = firstLatLng.distanceTo(currentLatLng);
+
+          // Si el clic está cerca del punto de inicio, cerramos la figura automáticamente
+          if (distanceInMetres < 45) {
+            (window as any).onPJLMapClick(firstPoint[0], firstPoint[1]);
+            return;
+          }
+        }
+
+        (window as any).onPJLMapClick(clickLat, clickLng);
       }
     };
     map.on('click', onMapClickInternal);
     layersRef.current.push({ remove: () => map.off('click', onMapClickInternal) });
 
-    // 3. DIBUJAR LOS MARCADORES DE LAS CAPILLAS (Iconos de iglesias ⛪)
-    const chapelsToShow = selectedZone
-      ? chapels.filter(c => c.zonaId === selectedZone)
-      : chapels;
-
+    // Dibujar los marcadores premium de las capillas ⛪
+    const chapelsToShow = selectedZone ? chapels.filter(c => c.zonaId === selectedZone) : chapels;
     chapelsToShow.forEach((chapel) => {
       const markerColor = chapel.markerColor || zoneColors[chapel.zonaId] || MARKER_COLORS[chapel.zonaId] || '#C8973A';
-      const defaultCenter = ZONE_CENTERS[chapel.zonaId] || [-25.2688, -57.4754];
+      const currentZoneCoords = polygons[chapel.zonaId] || FALLBACK_POLYGONS[chapel.zonaId];
+      const referenceCenter = getPolygonCenter(currentZoneCoords);
       
       const idxInZone = chapels.filter(c => c.zonaId === chapel.zonaId).indexOf(chapel);
-      const latOffset = (idxInZone % 4) * 0.003 - 0.006;
-      const lngOffset = Math.floor(idxInZone / 4) * 0.003 - 0.006;
+      const latOffset = (idxInZone % 4) * 0.002 - 0.004;
+      const lngOffset = Math.floor(idxInZone / 4) * 0.002 - 0.004;
       
-      const lat = chapel.lat || (defaultCenter[0] + latOffset);
-      const lng = chapel.lng || (defaultCenter[1] + lngOffset);
+      const lat = chapel.lat || (referenceCenter[0] + latOffset);
+      const lng = chapel.lng || (referenceCenter[1] + lngOffset);
 
       const svgIcon = L.divIcon({
         html: `
-          <div style="
-            width: 32px; height: 32px;
-            background: ${markerColor};
-            border: 3px solid white;
-            border-radius: 50% 50% 50% 0;
-            transform: rotate(-45deg);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.35);
-            display: flex; align-items: center; justify-content: center;
-            transition: 0.3s;
-          ">
-            <div style="transform: rotate(45deg); color: #fff; font-size: 14px; font-weight: 900; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">⛪</div>
+          <div style="width: 32px; height: 32px; background: ${markerColor}; border: 3px solid white; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); box-shadow: 0 4px 12px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center;">
+            <div style="transform: rotate(45deg); color: #fff; font-size: 14px; font-weight: 900;">⛪</div>
           </div>`,
         className: 'premium-marker',
         iconSize: [32, 32],
@@ -279,54 +242,31 @@ export default function ZonaMap({
         popupAnchor: [0, -34],
       });
 
-      const marker = L.marker([lat, lng], { icon: svgIcon })
-        .addTo(map)
-        .bindPopup(`
-          <div style="min-width:180px; font-family: 'Inter', sans-serif; padding: 5px;">
-            <div style="font-weight:800; color:#1A2744; margin-bottom:6px; font-size:15px; border-bottom: 1px solid #eee; padding-bottom: 6px;">${chapel.name}</div>
-            ${chapel.comunidadNombre ? `<div style="color:var(--gold); font-weight: 700; font-size:12px; margin-bottom:6px; display: flex; align-items: center; gap: 6px;"><span>👥</span> ${chapel.comunidadNombre}</div>` : ''}
-            <div style="font-size:11px; color:#666; margin-bottom: 8px;">Zona Pastoral ${chapel.zonaId}</div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              ${chapel.estadoComunidad ? `<span style="display:inline-block; padding:3px 10px; border-radius:20px; font-size:10px; font-weight:800; text-transform: uppercase; letter-spacing: 0.5px; background:${chapel.estadoComunidad === 'Activo' ? '#d1fae5' : '#fef3c7'}; color:${chapel.estadoComunidad === 'Activo' ? '#065f46' : '#92400e'};">${chapel.estadoComunidad}</span>` : ''}
-              <span style="font-size: 10px; opacity: 0.5;">ID: ${chapel.id}</span>
-            </div>
-          </div>
-        `);
+      const marker = L.marker([lat, lng], { icon: svgIcon }).addTo(map)
+        .bindPopup(`<div style="padding: 5px;"><strong>${chapel.name}</strong><br/><span style="font-size:11px;color:#666;">Zona Pastoral ${chapel.zonaId}</span></div>`);
       
       layersRef.current.push(marker);
     });
 
-    // 4. DIBUJAR LA LEYENDA FLOTANTE DEL MAPA (Esquina inferior derecha)
-    if (!selectedZone && !drawingMode) {
-      const legend = L.control({ position: 'bottomright' });
-      legend.onAdd = () => {
-        const div = L.DomUtil.create('div', '');
-        div.style.cssText = 'background:white; padding:12px 16px; border-radius:10px; box-shadow:0 2px 12px rgba(0,0,0,0.15); font-family:sans-serif; font-size:12px; min-width:120px;';
-        div.innerHTML = `
-          <div style="font-weight:700; margin-bottom:8px; color:#1A2744; font-size:13px;">Zonas PJL</div>
-          ${[1,2,3,4].map(zId => {
-            const color = zoneColors[zId] || DEFAULT_ZONE_COLORS[zId].border;
-            return `
-              <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
-                <div style="width:14px; height:14px; border-radius:3px; background:${color}55; border:2px solid ${color}; flex-shrink:0;"></div>
-                <span style="color:#1A2744;">Zona ${zId}</span>
-              </div>`;
-          }).join('')}
-        `;
-        return div;
-      };
-      legend.addTo(map);
-      layersRef.current.push({ remove: () => legend.remove() });
-    }
-
-    // 5. DIBUJAR POLÍGONO TEMPORAL MIENTRAS EL USUARIO HACE CLIC PARA TRAZAR LÍMITES
+    // Dibujar líneas dinámicas mientras se definen límites
     if (tempPolygon && tempPolygon.length > 0) {
       try {
         const polyline = L.polyline(tempPolygon, { color: '#C8973A', weight: 4, dashArray: '10, 10' }).addTo(map);
         layersRef.current.push(polyline);
         
         tempPolygon.forEach((p, i) => {
-          const dot = L.circleMarker(p, { radius: 5, fillColor: '#C8973A', color: '#fff', weight: 2, fillOpacity: 1 }).addTo(map);
+          const isFirst = i === 0 && tempPolygon.length >= 3;
+          const dot = L.circleMarker(p, { 
+            radius: isFirst ? 8 : 5, 
+            fillColor: isFirst ? '#22C55E' : '#C8973A', 
+            color: '#fff', 
+            weight: 2, 
+            fillOpacity: 1 
+          }).addTo(map);
+          
+          if (isFirst) {
+            dot.bindTooltip("Clic aquí para cerrar zona", { direction: 'top', className: 'close-hint-tooltip' });
+          }
           layersRef.current.push(dot);
         });
         
@@ -334,62 +274,50 @@ export default function ZonaMap({
           const fill = L.polygon(tempPolygon, { color: 'transparent', fillColor: '#C8973A', fillOpacity: 0.2 }).addTo(map);
           layersRef.current.push(fill);
         }
-      } catch (err) {
-        console.error('Leaflet Error rendering tempPolygon:', err);
-      }
+      } catch (err) { console.error('Leaflet Error:', err); }
     }
 
-    // Función de limpieza cuando los estados cambian
     return () => {
       resizeObserver?.disconnect();
       layersRef.current.forEach(layer => {
         if (layer.remove) layer.remove();
-        else if (map && map.removeLayer) {
-           try { map.removeLayer(layer); } catch(e) {}
-        }
+        else if (map && map.removeLayer) { try { map.removeLayer(layer); } catch(e) {} }
       });
       layersRef.current = [];
     };
   }, [chapels, selectedZone, zoneColors, polygons, tempPolygon, showAllZones, mapCenterLat, mapCenterLng, mapZoom, scrollWheelZoom, drawingMode, hideFallbackPolygon]);
 
-  // Manejo del desmontaje real del mapa al salir de la pantalla por completo
   useEffect(() => {
-    return () => {
-      if (leafletMapRef.current) {
-        leafletMapRef.current.remove();
-        leafletMapRef.current = null;
-      }
-    };
+    return () => { if (leafletMapRef.current) { leafletMapRef.current.remove(); leafletMapRef.current = null; } };
   }, []);
 
   return (
     <>
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
       <style>{`
-        .zone-tooltip { background: rgba(26,39,68,0.85) !important; border: none !important; color: white !important; font-weight: 700 !important; border-radius: 6px !important; font-size: 12px !important; }
-        .leaflet-drawing-cursor .leaflet-container { cursor: crosshair !important; }
-        .leaflet-control-zoom {
-          border: none !important;
-          box-shadow: 0 10px 24px rgba(26,39,68,0.18) !important;
-          overflow: hidden;
-        }
-        .leaflet-control-zoom a {
-          background: rgba(255,255,255,0.96) !important;
-          color: #1A2744 !important;
-          border: none !important;
-          width: 38px !important;
-          height: 38px !important;
-          line-height: 38px !important;
+        .zone-tooltip-centered {
+          background: rgba(26, 39, 68, 0.85) !important;
+          border: 2px solid white !important;
+          color: white !important;
           font-weight: 800 !important;
+          border-radius: 8px !important;
+          font-size: 13px !important;
+          padding: 6px 12px !important;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.25) !important;
+          text-align: center;
+          white-space: nowrap;
         }
-        .leaflet-top.leaflet-right .leaflet-control-zoom {
-          margin-top: 88px !important;
-          margin-right: 16px !important;
+        .zone-tooltip-centered::before { display: none !important; }
+        
+        .close-hint-tooltip {
+          background: #16a34a !important;
+          color: white !important;
+          border: none !important;
+          font-weight: 700 !important;
+          font-size: 11px !important;
+          border-radius: 4px !important;
         }
-        .leaflet-bottom.leaflet-right .leaflet-control-zoom {
-          margin-bottom: 88px !important;
-          margin-right: 16px !important;
-        }
+        .leaflet-drawing-cursor .leaflet-container { cursor: crosshair !important; }
       `}</style>
       <div ref={mapRef} style={{ height, width: '100%', borderRadius: '12px', zIndex: 1 }} className={drawingMode ? 'leaflet-drawing-cursor' : ''} />
     </>
