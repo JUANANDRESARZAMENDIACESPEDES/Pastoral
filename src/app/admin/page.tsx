@@ -14,7 +14,6 @@ import {
   DEFAULT_STATS, DEFAULT_THEME_PALETTE, DEFAULT_USERS
 } from '@/lib/pjlStore';
 import { fetchStoreValue, upsertStoreValue, subscribeStoreChanges } from '@/lib/supabaseStore';
-import { getSupabaseClient } from '@/lib/supabase';
 import { SupabaseProfile, fetchProfileByEmail, fetchAllProfiles, fetchPendingProfiles, approveProfile, signInProfile, signUpProfile, subscribeProfileChanges } from '@/lib/supabaseProfiles';
 
 const ZonaMap = dynamic(() => import('@/components/ZonaMap'), { 
@@ -293,7 +292,6 @@ function AdminContent() {
   const [logs, setLogs] = useLS<any[]>('logs', []);
 
   useEffect(() => {
-    const supabase = getSupabaseClient();
     let isMounted = true;
 
     const updateStatsFromRemote = (remoteValue: unknown) => {
@@ -324,21 +322,14 @@ function AdminContent() {
 
     fetchInitialStats();
 
-    const channel = supabase
-      .channel('dashboard_stats_realtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'pjl_store', filter: 'key=eq.stats' },
-        (payload: any) => {
-          const value = payload?.new?.value ?? payload?.old?.value;
-          updateStatsFromRemote(value);
-        }
-      )
-      .subscribe();
+    const unsubscribe = subscribeStoreChanges((changedKey, changedValue) => {
+      if (changedKey !== 'stats') return;
+      updateStatsFromRemote(changedValue);
+    });
 
     return () => {
       isMounted = false;
-      supabase.removeChannel(channel);
+      try { unsubscribe(); } catch (e) {}
     };
   }, []);
 
