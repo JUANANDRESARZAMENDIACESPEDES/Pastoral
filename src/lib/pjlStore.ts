@@ -30,8 +30,9 @@ export interface User {
   name: string;
   email: string;
   password?: string;
-  role: 'superadmin' | 'editor' | 'viewer';
-  status: 'activo' | 'inactivo';
+  authUid?: string;
+  role: 'desarrollador' | 'editor' | 'viewer';
+  status: 'activo' | 'inactivo' | 'pendiente';
   lastActive?: string;
   createdAt?: string;
   avatar?: string;
@@ -263,7 +264,7 @@ export const DEFAULT_BRANDING: Branding = {
 };
 
 export const DEFAULT_USERS: User[] = [
-  { id: '1', name: 'Admin Principal', email: 'admin@pjl.org', password: 'admin', role: 'superadmin', status: 'activo', lastActive: new Date().toISOString() },
+  { id: '1', name: 'Desarrollador', email: 'admin@pjl.org', password: 'admin', role: 'desarrollador', status: 'activo', lastActive: new Date().toISOString() },
   { id: '2', name: 'Editor de Contenido', email: 'editor@pjl.org', password: 'editor', role: 'editor', status: 'activo', lastActive: new Date().toISOString(), permissions: ['dashboard', 'contenido', 'noticias', 'actividades', 'perfiles', 'documentos'] },
   { id: '3', name: 'Lector / Invitado', email: 'viewer@pjl.org', password: 'viewer', role: 'viewer', status: 'activo', lastActive: new Date().toISOString() }
 ];
@@ -331,7 +332,7 @@ function load<T>(key: string, fallback: T): T {
           return { 
             ...user, 
             password: 'admin', 
-            role: 'superadmin', 
+            role: 'desarrollador', 
             status: 'activo' 
           };
         }

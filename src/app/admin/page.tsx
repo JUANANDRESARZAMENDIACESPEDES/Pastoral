@@ -13,6 +13,8 @@ import {
   DEFAULT_DOCS, DEFAULT_CONTENT, DEFAULT_SOCIAL, DEFAULT_SECTIONS, DEFAULT_BRANDING,
   DEFAULT_STATS, DEFAULT_THEME_PALETTE, DEFAULT_USERS
 } from '@/lib/pjlStore';
+import { fetchStoreValue, fetchAllStoreValues, upsertStoreValue } from '@/lib/supabaseStore';
+import { SupabaseProfile, fetchProfileByEmail, fetchAllProfiles, fetchPendingProfiles, approveProfile, signInProfile, signUpProfile } from '@/lib/supabaseProfiles';
 
 const ZonaMap = dynamic(() => import('@/components/ZonaMap'), { 
   ssr: false,
@@ -87,6 +89,16 @@ function useLS<T>(key: keyof typeof store, def: T) {
     window.addEventListener('storage', onStorage);
     window.addEventListener('pjl_store_update', onCustomUpdate as EventListener);
 
+    const loadRemoteValue = async () => {
+      try {
+        const remote = await fetchStoreValue<T>(String(key));
+        if (remote !== null) setVal(remote);
+      } catch (error) {
+        // Ignorar si Supabase no está disponible
+      }
+    };
+    loadRemoteValue();
+
     return () => {
       clearTimeout(timer);
       window.removeEventListener('storage', onStorage);
@@ -98,6 +110,9 @@ function useLS<T>(key: keyof typeof store, def: T) {
     setVal(v);
     const setter = store[key].set as (v: T) => void;
     setter(v);
+    upsertStoreValue(String(key), v).catch(() => {
+      // Fallback to local persistence if Supabase no está disponible
+    });
   };
   return [val, update] as const;
 }
@@ -113,6 +128,12 @@ function AdminContent() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [allUsers, setAllUsers] = useLS<User[]>('users', DEFAULT_USERS);
+  const [pendingProfiles, setPendingProfiles] = useState<SupabaseProfile[]>([]);
+  const [registerMode, setRegisterMode] = useState<'login' | 'register'>('login');
+  const [registerForm, setRegisterForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
+  const [registerErr, setRegisterErr] = useState('');
+  const [registerSuccess, setRegisterSuccess] = useState('');
+  const [isRegistering, setIsRegistering] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -138,10 +159,35 @@ function AdminContent() {
   const [loginErr, setLoginErr] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  useEffect(() => {
+    const initSession = async () => {
+      try {
+        const profiles = await fetchAllProfiles();
+        if (profiles.length > 0) {
+          setAllUsers(profiles.map(p => ({
+            id: p.id,
+            name: p.name,
+            email: p.email,
+            role: p.role,
+            status: p.status,
+            permissions: p.permissions,
+            createdAt: p.created_at,
+            authUid: p.auth_uid,
+          })));
+        }
+        const pending = await fetchPendingProfiles();
+        setPendingProfiles(pending);
+      } catch (e) {
+        console.error('Error cargando perfiles Supabase:', e);
+      }
+    };
+    initSession();
+  }, []);
+
   const hasPermission = (m: Module, action: 'view' | 'edit' | 'admin' = 'view') => {
     if (!loggedIn) return false;
     if (!currentUser) return true; 
-    if (currentUser.role === 'superadmin') return true;
+    if (currentUser.role === 'desarrollador') return true;
     if (m === 'dashboard' && action === 'view') return true;
 
     const explicitPermissions = currentUser.permissions || [];
@@ -348,35 +394,60 @@ function AdminContent() {
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const inputUser = loginForm.user.trim().toLowerCase();
+    const inputUser = loginForm.user.trim();
     const inputPass = loginForm.pass.trim();
     const normalize = (value: string) => value.trim().toLowerCase();
-    // Intentar primero con las credenciales maestras (CREDS) y luego con la lista de usuarios
-    const isMaster = inputUser === CREDS.user && inputPass === CREDS.pass;
-    const userMatch = allUsers.find(u => {
-      const email = normalize(u.email);
-      const name = normalize(u.name);
-      const emailAlias = email.split('@')[0];
-      const compactName = name.replace(/\s+/g, '');
-      const canUseMasterPass = inputPass === 'admin_master';
-      const passwordMatches = u.password === inputPass || canUseMasterPass;
-      const userMatches = [
-        email,
-        name,
-        emailAlias,
-        compactName,
-        email === 'admin@pjl.org' ? CREDS.user : '',
-      ].includes(inputUser);
-      return u.status !== 'inactivo' && userMatches && passwordMatches;
-    });
 
-    if (isMaster || userMatch) {
-      const authUser = {
-        ...(userMatch || { id: 'master', name: 'Administrador Principal', email: CREDS.user, role: 'superadmin', status: 'activo' } as User),
-        lastActive: new Date().toISOString()
+    const resolveEmail = () => {
+      const value = normalize(inputUser);
+      if (value.includes('@')) return value;
+      const found = allUsers.find(u => {
+        const email = normalize(u.email);
+        const name = normalize(u.name);
+        const alias = email.split('@')[0];
+        const compactName = name.replace(/\s+/g, '');
+        return [email, name, alias, compactName].includes(value);
+      });
+      return found?.email;
+    };
+
+    const inputEmail = resolveEmail();
+    const isMaster = normalize(inputUser) === CREDS.user && inputPass === CREDS.pass;
+    let authUser: User | null = null;
+
+    if (inputEmail) {
+      const { data, error } = await signInProfile(inputEmail, inputPass);
+      if (!error && data?.session?.user?.email) {
+        const profile = await fetchProfileByEmail(inputEmail);
+        if (profile && profile.status === 'activo') {
+          authUser = {
+            id: profile.id,
+            name: profile.name,
+            email: profile.email,
+            role: profile.role,
+            status: profile.status,
+            permissions: profile.permissions,
+            createdAt: profile.created_at,
+            lastActive: new Date().toISOString(),
+          };
+        }
+      }
+    }
+
+    if (!authUser && isMaster) {
+      authUser = {
+        id: 'master',
+        name: 'Desarrollador',
+        email: CREDS.user,
+        role: 'desarrollador',
+        status: 'activo',
+        lastActive: new Date().toISOString(),
       };
+    }
+
+    if (authUser) {
       setLoggedIn(true);
       setCurrentUser(authUser);
       localStorage.setItem('pjl_admin_auth', 'true');
@@ -385,9 +456,10 @@ function AdminContent() {
       setShowPassword(false);
       showToast(`¡Bienvenido, ${authUser.name}! ✔`);
       addLog('inicio de sesión', 'sistema', `Usuario ${authUser.email} ha entrado al panel.`);
-    } else {
-      setLoginErr(true);
+      return;
     }
+
+    setLoginErr(true);
   };
 
   const handleLogout = () => {
@@ -396,6 +468,63 @@ function AdminContent() {
     localStorage.removeItem('pjl_admin_auth');
     localStorage.removeItem('pjl_current_user');
     router.push('/');
+  };
+
+  const loadPendingProfiles = async () => {
+    try {
+      const pending = await fetchPendingProfiles();
+      setPendingProfiles(pending);
+    } catch (error) {
+      console.error('Error cargando solicitudes pendientes:', error);
+    }
+  };
+
+  const handleApproveProfile = async (profileId: string) => {
+    const success = await approveProfile(profileId);
+    if (success) {
+      showToast('Cuenta aprobada ✔');
+      const profiles = await fetchAllProfiles();
+      setAllUsers(profiles.map(p => ({
+        id: p.id,
+        name: p.name,
+        email: p.email,
+        role: p.role,
+        status: p.status,
+        permissions: p.permissions,
+        createdAt: p.created_at,
+        authUid: p.auth_uid,
+      })));
+      await loadPendingProfiles();
+      addLog('aprobar cuenta', 'usuarios', `Perfil aprobado: ${profileId}`);
+    } else {
+      showToast('No se pudo aprobar la cuenta');
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRegisterErr('');
+    setRegisterSuccess('');
+    if (!registerForm.name || !registerForm.email || !registerForm.password) {
+      setRegisterErr('Completa todos los campos.');
+      return;
+    }
+    if (registerForm.password !== registerForm.confirmPassword) {
+      setRegisterErr('Las contraseñas no coinciden.');
+      return;
+    }
+
+    setIsRegistering(true);
+    const { error } = await signUpProfile(registerForm.name, registerForm.email, registerForm.password);
+    setIsRegistering(false);
+
+    if (error) {
+      setRegisterErr(error.message || 'Error al solicitar acceso.');
+      return;
+    }
+
+    setRegisterSuccess('Solicitud enviada. El desarrollador aprobará tu cuenta pronto.');
+    setRegisterForm({ name: '', email: '', password: '', confirmPassword: '' });
   };
 
   const navigateMod = (m: Module) => {
@@ -536,50 +665,116 @@ function AdminContent() {
           <div className="serif login-title" style={{ fontSize: '2rem', color: 'var(--navy)', letterSpacing: '-1px' }}>PJL <em>Admin</em></div>
           <p className="premium-label" style={{ color: 'var(--gold)', marginTop: '5px' }}>Acceso Restringido</p>
         </div>
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {loginErr && <div className="login-alert" style={{ background: '#fee2e2', color: '#b91c1c', padding: '12px', borderRadius: '8px', fontSize: '13px', textAlign: 'center' }}>Usuario o contraseña incorrectos</div>}
-          <div className="form-group">
-            <label className="premium-label" style={{ marginBottom: '8px', display: 'block' }}>Usuario</label>
-            <input
-              className="pjl-input"
-              value={loginForm.user}
-              onChange={e => {
-                setLoginForm({ ...loginForm, user: e.target.value });
-                if (loginErr) setLoginErr(false);
-              }}
-              placeholder="admin"
-              autoComplete="username"
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label className="premium-label" style={{ marginBottom: '8px', display: 'block' }}>Contraseña</label>
-            <div className="login-password-field" style={{ position: 'relative' }}>
+        <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
+          <button type="button" className={`btn-premium ${registerMode === 'login' ? 'btn-premium-gold' : 'btn-premium-outline'}`} onClick={() => setRegisterMode('login')} style={{ minWidth: '140px' }}>
+            Iniciar sesión
+          </button>
+          <button type="button" className={`btn-premium ${registerMode === 'register' ? 'btn-premium-gold' : 'btn-premium-outline'}`} onClick={() => setRegisterMode('register')} style={{ minWidth: '140px' }}>
+            Solicitar acceso
+          </button>
+        </div>
+        {registerMode === 'login' ? (
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {loginErr && <div className="login-alert" style={{ background: '#fee2e2', color: '#b91c1c', padding: '12px', borderRadius: '8px', fontSize: '13px', textAlign: 'center' }}>Usuario o contraseña incorrectos</div>}
+            <div className="form-group">
+              <label className="premium-label" style={{ marginBottom: '8px', display: 'block' }}>Usuario</label>
               <input
-                className="pjl-input login-password-input"
-                type={showPassword ? 'text' : 'password'}
-                value={loginForm.pass}
+                className="pjl-input"
+                value={loginForm.user}
                 onChange={e => {
-                  setLoginForm({ ...loginForm, pass: e.target.value });
+                  setLoginForm({ ...loginForm, user: e.target.value });
                   if (loginErr) setLoginErr(false);
                 }}
-                placeholder="••••••••"
-                autoComplete="current-password"
+                placeholder="admin"
+                autoComplete="username"
                 required
               />
             </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px', fontSize: '13px', color: 'var(--navy)', cursor: 'pointer', fontWeight: 600 }}>
-              <input 
-                type="checkbox" 
-                checked={showPassword} 
-                onChange={() => setShowPassword(!showPassword)} 
-                style={{ width: '16px', height: '16px', accentColor: 'var(--gold)', cursor: 'pointer' }}
+            <div className="form-group">
+              <label className="premium-label" style={{ marginBottom: '8px', display: 'block' }}>Contraseña</label>
+              <div className="login-password-field" style={{ position: 'relative' }}>
+                <input
+                  className="pjl-input login-password-input"
+                  type={showPassword ? 'text' : 'password'}
+                  value={loginForm.pass}
+                  onChange={e => {
+                    setLoginForm({ ...loginForm, pass: e.target.value });
+                    if (loginErr) setLoginErr(false);
+                  }}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  required
+                />
+              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px', fontSize: '13px', color: 'var(--navy)', cursor: 'pointer', fontWeight: 600 }}>
+                <input 
+                  type="checkbox" 
+                  checked={showPassword} 
+                  onChange={() => setShowPassword(!showPassword)} 
+                  style={{ width: '16px', height: '16px', accentColor: 'var(--gold)', cursor: 'pointer' }}
+                />
+                Mostrar contraseña
+              </label>
+            </div>
+            <button type="submit" className="btn-premium btn-premium-gold" style={{ width: '100%', marginTop: '10px' }}>Entrar al Panel</button>
+          </form>
+        ) : (
+          <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {registerErr && <div className="login-alert" style={{ background: '#fee2e2', color: '#b91c1c', padding: '12px', borderRadius: '8px', fontSize: '13px', textAlign: 'center' }}>{registerErr}</div>}
+            {registerSuccess && <div className="login-alert" style={{ background: '#dcfce7', color: '#166534', padding: '12px', borderRadius: '8px', fontSize: '13px', textAlign: 'center' }}>{registerSuccess}</div>}
+            <div className="form-group">
+              <label className="premium-label" style={{ marginBottom: '8px', display: 'block' }}>Nombre completo</label>
+              <input
+                className="pjl-input"
+                value={registerForm.name}
+                onChange={e => setRegisterForm({ ...registerForm, name: e.target.value })}
+                placeholder="Tu nombre"
+                autoComplete="name"
+                required
               />
-              Mostrar contraseña
-            </label>
-          </div>
-          <button type="submit" className="btn-premium btn-premium-gold" style={{ width: '100%', marginTop: '10px' }}>Entrar al Panel</button>
-        </form>
+            </div>
+            <div className="form-group">
+              <label className="premium-label" style={{ marginBottom: '8px', display: 'block' }}>Email</label>
+              <input
+                className="pjl-input"
+                type="email"
+                value={registerForm.email}
+                onChange={e => setRegisterForm({ ...registerForm, email: e.target.value })}
+                placeholder="correo@dominio.com"
+                autoComplete="email"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label className="premium-label" style={{ marginBottom: '8px', display: 'block' }}>Contraseña</label>
+              <input
+                className="pjl-input"
+                type="password"
+                value={registerForm.password}
+                onChange={e => setRegisterForm({ ...registerForm, password: e.target.value })}
+                placeholder="••••••••"
+                autoComplete="new-password"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label className="premium-label" style={{ marginBottom: '8px', display: 'block' }}>Repite contraseña</label>
+              <input
+                className="pjl-input"
+                type="password"
+                value={registerForm.confirmPassword}
+                onChange={e => setRegisterForm({ ...registerForm, confirmPassword: e.target.value })}
+                placeholder="••••••••"
+                autoComplete="new-password"
+                required
+              />
+            </div>
+            <button type="submit" className="btn-premium btn-premium-gold" style={{ width: '100%', marginTop: '10px' }} disabled={isRegistering}>
+              {isRegistering ? 'Enviando...' : 'Solicitar acceso'}
+            </button>
+            <p style={{ fontSize: '12px', color: '#555', margin: 0, textAlign: 'center' }}>Tu solicitud será revisada por un desarrollador y quedará en estado <strong>pendiente</strong>.</p>
+          </form>
+        )}
       </div>
     </div>
   );
@@ -2501,6 +2696,34 @@ function AdminContent() {
                   setModal('usuarios');
                 }}>+ NUEVO USUARIO</button>
               </div>
+              {currentUser?.role === 'desarrollador' && (
+                <div className="pjl-card" style={{ padding: '24px', marginBottom: '24px', background: '#fdf7e8', border: '1px dashed #f3ce66' }}>
+                  <h4 className="serif" style={{ margin: '0 0 12px', color: 'var(--navy)' }}>Solicitudes pendientes</h4>
+                  {pendingProfiles.length === 0 ? (
+                    <p style={{ margin: 0, fontSize: '13px', color: '#555' }}>No hay cuentas pendientes de aprobación.</p>
+                  ) : (
+                    <div style={{ display: 'grid', gap: '12px' }}>
+                      {pendingProfiles.map(profile => (
+                        <div key={profile.id} style={{ padding: '14px', borderRadius: '14px', background: '#fff', border: '1px solid #f1d77b' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                            <div>
+                              <strong>{profile.name}</strong> <span style={{ color: '#666', fontSize: '12px' }}>{profile.email}</span>
+                              <div style={{ fontSize: '11px', color: '#777', marginTop: '4px' }}>Registrado el {profile.created_at ? new Date(profile.created_at).toLocaleDateString() : '—'}</div>
+                            </div>
+                            <button
+                              className="btn-premium btn-premium-gold"
+                              style={{ padding: '8px 14px', fontSize: '11px' }}
+                              onClick={() => handleApproveProfile(profile.id)}
+                            >
+                              Aprobar cuenta
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '30px' }}>
                 <div style={{ overflowX: 'auto' }}>
                   <table className="pjl-table">
@@ -2517,7 +2740,7 @@ function AdminContent() {
                             </div>
                           </td>
                           <td><code>{u.email}</code></td>
-                          <td><span className={`premium-label ${u.role === 'superadmin' ? 'badge-active' : ''}`}>{u.role.toUpperCase()}</span></td>
+                          <td><span className={`premium-label ${u.role === 'desarrollador' ? 'badge-active' : ''}`}>{u.role.toUpperCase()}</span></td>
                           <td>
                             <span style={{ 
                               padding: '4px 8px', 
