@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from 'react';
 
-// Declaramos los tipos de datos que va a recibir nuestro mapa desde el panel de administración
 export interface ChapelMapPoint {
   id: string | number;
   name: string;
@@ -30,12 +29,11 @@ interface ZonaMapProps {
   hideFallbackPolygon?: boolean;
 }
 
-// Configuración de colores oficiales por defecto para las 4 zonas de la Pastoral
 const DEFAULT_ZONE_COLORS: Record<number, { fill: string; border: string; text: string }> = {
-  1: { fill: 'rgba(59, 130, 246, 0.35)',  border: '#3B82F6', text: 'Zona 1' },
-  2: { fill: 'rgba(34, 197, 94, 0.35)',   border: '#22C55E', text: 'Zona 2' },
-  3: { fill: 'rgba(234, 179, 8, 0.35)',   border: '#EAB308', text: 'Zona 3' },
-  4: { fill: 'rgba(239, 68, 68, 0.35)',   border: '#EF4444', text: 'Zona 4' },
+  1: { fill: 'rgba(59, 130, 246, 0.25)',  border: '#3B82F6', text: 'Zona 1' },
+  2: { fill: 'rgba(34, 197, 94, 0.25)',   border: '#22C55E', text: 'Zona 2' },
+  3: { fill: 'rgba(234, 179, 8, 0.25)',   border: '#EAB308', text: 'Zona 3' },
+  4: { fill: 'rgba(239, 68, 68, 0.25)',   border: '#EF4444', text: 'Zona 4' },
 };
 
 const MARKER_COLORS: Record<number, string> = {
@@ -45,7 +43,7 @@ const MARKER_COLORS: Record<number, string> = {
   4: '#EF4444',
 };
 
-// Función para calcular el centro geográfico exacto de cualquier figura dibujada
+// Función matemática para calcular el centro exacto (Centroide) de los polígonos personalizados
 const getPolygonCenter = (coords: [number, number][]): [number, number] => {
   if (!coords || coords.length === 0) return [-25.2688, -57.4754];
   let latSum = 0;
@@ -57,7 +55,6 @@ const getPolygonCenter = (coords: [number, number][]): [number, number] => {
   return [latSum / coords.length, lngSum / coords.length];
 };
 
-// Cuadrados iniciales de simulación por si el usuario aún no dibujó nada real
 const FALLBACK_POLYGONS: Record<number, [number, number][]> = {
   1: [[-25.235, -57.510], [-25.235, -57.445], [-25.265, -57.445], [-25.265, -57.510]],
   2: [[-25.265, -57.510], [-25.265, -57.445], [-25.295, -57.445], [-25.295, -57.510]],
@@ -95,7 +92,6 @@ export default function ZonaMap({
   useEffect(() => {
     if (!mapRef.current) return;
 
-    // Cargamos Leaflet de forma dinámica y segura para evitar errores en Next.js
     let L: any;
     try { 
       L = require('leaflet'); 
@@ -128,30 +124,37 @@ export default function ZonaMap({
       const layer = L.tileLayer(baseLayers[0].url, baseLayers[0].options).addTo(map);
       baseLayerRef.current = layer;
 
-      setTimeout(() => { try { map.invalidateSize(); } catch (e) {} }, 150);
+      // ─── SOLUCIÓN MAPA EN BLANCO: Forzar recálculo inmediato ───
+      setTimeout(() => { 
+        try { 
+          map.invalidateSize(); 
+        } catch (e) {} 
+      }, 50);
     }
 
     const map = leafletMapRef.current;
-    try { map.invalidateSize(); } catch (e) {}
-
-    if (drawingMode) {
-      setTimeout(() => { try { map.invalidateSize(); } catch (e) {} }, 100);
-    }
+    
+    // Repetimos la sincronización dimensional del contenedor por seguridad
+    try { 
+      map.invalidateSize(); 
+    } catch (e) {}
 
     let resizeObserver: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined' && mapRef.current) {
-      resizeObserver = new ResizeObserver(() => { try { map.invalidateSize(false); } catch (e) {} });
+      resizeObserver = new ResizeObserver(() => { 
+        try { map.invalidateSize(false); } catch (e) {} 
+      });
       resizeObserver.observe(mapRef.current);
     }
 
-    // Limpieza de capas anteriores
+    // Limpieza estricta de capas
     layersRef.current.forEach(layer => {
       if (layer && layer.remove) layer.remove();
       else if (map && map.removeLayer) { try { map.removeLayer(layer); } catch(e) {} }
     });
     layersRef.current = [];
 
-    // Renderizar polígonos de zonas existentes
+    // Dibujar polígonos de zonas activas
     const zonesToDraw = (selectedZone && !showAllZones) ? [selectedZone] : [1, 2, 3, 4];
     zonesToDraw.forEach((zId) => {
       const savedPolygon = polygons[zId];
@@ -169,14 +172,13 @@ export default function ZonaMap({
       const polygon = L.polygon(coords, {
         color: borderColor,
         fillColor: fillColor,
-        fillOpacity: (selectedZone === zId || !selectedZone || showAllZones) ? 0.4 : 0.1,
-        weight: (selectedZone === zId) ? 3 : 1,
-        dashArray: (savedPolygon && savedPolygon.length > 0) ? undefined : '6 3',
+        fillOpacity: (selectedZone === zId || !selectedZone || showAllZones) ? 0.35 : 0.08,
+        weight: (selectedZone === zId) ? 3 : 1.5,
+        dashArray: (savedPolygon && savedPolygon.length > 0) ? undefined : '6 4',
       }).addTo(map);
 
       layersRef.current.push(polygon);
 
-      // Renderizar el cuadro de texto flotante en el centro exacto de tu figura
       if (selectedZone === zId || !selectedZone || showAllZones) {
         const polygonCenter = getPolygonCenter(coords);
         const textTooltip = L.tooltip({
@@ -192,25 +194,37 @@ export default function ZonaMap({
       }
     });
 
-    // Escuchador inteligente de clics para cerrar la figura conectando puntos
+    // ─── LÓGICA MEJORADA: CONEXIÓN MAGNÉTICA A CUALQUIER PUNTO PREVIO ───
     const onMapClickInternal = (e: any) => {
       if ((window as any).onPJLMapClick) {
         const clickLat = e.latlng.lat;
         const clickLng = e.latlng.lng;
 
-        if (tempPolygon && tempPolygon.length >= 3) {
-          const firstPoint = tempPolygon[0];
-          const firstLatLng = L.latLng(firstPoint[0], firstPoint[1]);
-          const currentLatLng = L.latLng(clickLat, clickLng);
-          const distanceInMetres = firstLatLng.distanceTo(currentLatLng);
+        if (tempPolygon && tempPolygon.length > 0) {
+          let closestPoint: [number, number] | null = null;
+          let minDistance = Infinity;
 
-          // Si el clic está cerca del punto de inicio, cerramos la figura automáticamente
-          if (distanceInMetres < 45) {
-            (window as any).onPJLMapClick(firstPoint[0], firstPoint[1]);
+          // Recorremos todos los puntos existentes para ver cuál está más cerca del nuevo clic
+          tempPolygon.forEach((pt) => {
+            const ptLatLng = L.latLng(pt[0], pt[1]);
+            const clickLatLng = L.latLng(clickLat, clickLng);
+            const dist = ptLatLng.distanceTo(clickLatLng); // Distancia real en metros
+
+            if (dist < dist.minDistance || dist < minDistance) {
+              minDistance = dist;
+              closestPoint = pt;
+            }
+          });
+
+          // Si el clic se hizo a menos de 40 metros de CUALQUIER punto anterior, 
+          // se acopla magnéticamente a ese punto exacto en vez de crear uno encima.
+          if (closestPoint && minDistance < 40) {
+            (window as any).onPJLMapClick(closestPoint[0], closestPoint[1]);
             return;
           }
         }
 
+        // Si no está cerca de ningún punto previo, se crea uno normal
         (window as any).onPJLMapClick(clickLat, clickLng);
       }
     };
@@ -248,36 +262,36 @@ export default function ZonaMap({
       layersRef.current.push(marker);
     });
 
-    // Dibujar líneas dinámicas mientras se definen límites
+    // Dibujar la traza interactiva actual
     if (tempPolygon && tempPolygon.length > 0) {
       try {
-        const polyline = L.polyline(tempPolygon, { color: '#C8973A', weight: 4, dashArray: '10, 10' }).addTo(map);
+        const polyline = L.polyline(tempPolygon, { color: '#C8973A', weight: 4, dashArray: '8, 8' }).addTo(map);
         layersRef.current.push(polyline);
         
         tempPolygon.forEach((p, i) => {
-          const isFirst = i === 0 && tempPolygon.length >= 3;
           const dot = L.circleMarker(p, { 
-            radius: isFirst ? 8 : 5, 
-            fillColor: isFirst ? '#22C55E' : '#C8973A', 
+            radius: 6, 
+            fillColor: '#C8973A', 
             color: '#fff', 
             weight: 2, 
             fillOpacity: 1 
           }).addTo(map);
           
-          if (isFirst) {
-            dot.bindTooltip("Clic aquí para cerrar zona", { direction: 'top', className: 'close-hint-tooltip' });
-          }
           layersRef.current.push(dot);
         });
         
         if (tempPolygon.length > 2) {
-          const fill = L.polygon(tempPolygon, { color: 'transparent', fillColor: '#C8973A', fillOpacity: 0.2 }).addTo(map);
+          const fill = L.polygon(tempPolygon, { color: 'transparent', fillColor: '#C8973A', fillOpacity: 0.18 }).addTo(map);
           layersRef.current.push(fill);
         }
-      } catch (err) { console.error('Leaflet Error:', err); }
+      } catch (err) { console.error('Leaflet Temp Draw Error:', err); }
     }
 
+    // Ejecutar un invalidateSize extra diferido al renderizar elementos reactivos
+    const mapTimeout = setTimeout(() => { try { map.invalidateSize(); } catch(e){} }, 300);
+
     return () => {
+      clearTimeout(mapTimeout);
       resizeObserver?.disconnect();
       layersRef.current.forEach(layer => {
         if (layer.remove) layer.remove();
@@ -296,27 +310,18 @@ export default function ZonaMap({
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
       <style>{`
         .zone-tooltip-centered {
-          background: rgba(26, 39, 68, 0.85) !important;
+          background: rgba(26, 39, 68, 0.88) !important;
           border: 2px solid white !important;
           color: white !important;
           font-weight: 800 !important;
           border-radius: 8px !important;
           font-size: 13px !important;
           padding: 6px 12px !important;
-          box-shadow: 0 4px 15px rgba(0,0,0,0.25) !important;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
           text-align: center;
           white-space: nowrap;
         }
         .zone-tooltip-centered::before { display: none !important; }
-        
-        .close-hint-tooltip {
-          background: #16a34a !important;
-          color: white !important;
-          border: none !important;
-          font-weight: 700 !important;
-          font-size: 11px !important;
-          border-radius: 4px !important;
-        }
         .leaflet-drawing-cursor .leaflet-container { cursor: crosshair !important; }
       `}</style>
       <div ref={mapRef} style={{ height, width: '100%', borderRadius: '12px', zIndex: 1 }} className={drawingMode ? 'leaflet-drawing-cursor' : ''} />
