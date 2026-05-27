@@ -49,3 +49,26 @@ export async function upsertStoreValue(key: string, value: unknown): Promise<boo
 
   return true;
 }
+
+export function subscribeStoreChanges(onChange: (key: string, value: unknown) => void): () => void {
+  let supabase;
+  try {
+    supabase = getSupabaseClient();
+  } catch {
+    return () => {};
+  }
+
+  const channel = supabase
+    .channel('pjl_store_changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: STORE_TABLE }, (payload) => {
+      const key = payload.new?.key ?? payload.old?.key;
+      const value = payload.new?.value ?? payload.old?.value;
+      if (key) onChange(key, value);
+    });
+
+  channel.subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}

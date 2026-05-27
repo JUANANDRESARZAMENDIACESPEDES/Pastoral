@@ -1,6 +1,7 @@
 // ─── SHARED PJL STORE ────────────────────────────────────────────────────────
 // Admin writes here → main page reads here.
 // All keys are stored in localStorage so changes persist across pages.
+import { upsertStoreValue } from './supabaseStore';
 
 export interface NewsItem     { id: number; title: string; body: string; date: string; published: boolean; }
 export interface Activity     { id: number; title: string; date: string; category: string; active: boolean; inscription: boolean; description?: string; }
@@ -315,6 +316,9 @@ function save<T>(key: string, value: T): void {
   if (typeof window === 'undefined') return;
   localStorage.setItem('pjl_' + key, JSON.stringify(value));
   window.dispatchEvent(new CustomEvent('pjl_store_update', { detail: { key } }));
+  upsertStoreValue(key, value).catch(() => {
+    // Si Supabase no está disponible, seguimos guardando localmente.
+  });
 }
 
 function load<T>(key: string, fallback: T): T {

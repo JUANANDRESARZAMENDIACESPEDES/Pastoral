@@ -13,7 +13,7 @@ import {
   DEFAULT_DOCS, DEFAULT_CONTENT, DEFAULT_SOCIAL, DEFAULT_SECTIONS, DEFAULT_BRANDING,
   DEFAULT_STATS, DEFAULT_THEME_PALETTE, DEFAULT_USERS
 } from '@/lib/pjlStore';
-import { fetchStoreValue, fetchAllStoreValues, upsertStoreValue } from '@/lib/supabaseStore';
+import { fetchStoreValue, upsertStoreValue, subscribeStoreChanges } from '@/lib/supabaseStore';
 import { SupabaseProfile, fetchProfileByEmail, fetchAllProfiles, fetchPendingProfiles, approveProfile, signInProfile, signUpProfile } from '@/lib/supabaseProfiles';
 
 const ZonaMap = dynamic(() => import('@/components/ZonaMap'), { 
@@ -89,18 +89,42 @@ function useLS<T>(key: keyof typeof store, def: T) {
     window.addEventListener('storage', onStorage);
     window.addEventListener('pjl_store_update', onCustomUpdate as EventListener);
 
+    const applyRemoteValue = (remoteValue: unknown) => {
+      if (remoteValue === null || remoteValue === undefined) return;
+      try {
+        const parsed = remoteValue as T;
+        const current = (store[key].get as () => T)();
+        if (JSON.stringify(current) !== JSON.stringify(parsed)) {
+          setVal(parsed);
+          localStorage.setItem(`pjl_${String(key)}`, JSON.stringify(parsed));
+          window.dispatchEvent(new CustomEvent('pjl_store_update', { detail: { key } }));
+        }
+      } catch {
+        // Ignorar problemas de parseo remotos
+      }
+    };
+
     const loadRemoteValue = async () => {
       try {
         const remote = await fetchStoreValue<T>(String(key));
-        if (remote !== null) setVal(remote);
+        if (remote !== null) {
+          applyRemoteValue(remote);
+        }
       } catch (error) {
         // Ignorar si Supabase no está disponible
       }
     };
+
+    const unsubscribeRemote = subscribeStoreChanges((changedKey, changedValue) => {
+      if (changedKey !== String(key)) return;
+      applyRemoteValue(changedValue);
+    });
+
     loadRemoteValue();
 
     return () => {
       clearTimeout(timer);
+      unsubscribeRemote();
       window.removeEventListener('storage', onStorage);
       window.removeEventListener('pjl_store_update', onCustomUpdate as EventListener);
     };
