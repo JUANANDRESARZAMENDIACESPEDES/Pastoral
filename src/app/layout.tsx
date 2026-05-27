@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Playfair_Display, DM_Sans, Cormorant_Garamond } from "next/font/google";
 import ThemeLoader from "../components/ThemeLoader";
-import "../components/globals.css";
+import "./globals.css";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -39,19 +40,10 @@ export default function RootLayout({
       <body suppressHydrationWarning>
         <ThemeLoader />
         {children}
-        {/* Vatican News Widget Script — must load after DOM */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                var s = document.createElement('script');
-                s.src = 'https://www.vaticannews.va/etc/designs/vaticannews/widget/widget.js';
-                s.async = true;
-                s.defer = true;
-                document.body.appendChild(s);
-              })();
-            `
-          }}
+        <Script
+          src="https://www.vaticannews.va/etc/designs/vaticannews/widget/widget.js"
+          strategy="afterInteractive"
+          id="vaticannews-widget"
         />
       </body>
     </html>
