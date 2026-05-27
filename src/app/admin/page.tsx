@@ -51,14 +51,14 @@ const getDocPresentation = (doc: Partial<DocItem>) => {
   const lowerUrl = doc.url?.toLowerCase() || '';
   const source = `${lowerType} ${lowerName} ${lowerUrl}`;
 
-  if (source.includes('pdf')) return { kind: 'pdf', icon: 'ðŸ“„', color: '#ef4444', label: 'PDF' };
-  if (source.includes('doc') || source.includes('word')) return { kind: 'word', icon: 'ðŸ“', color: '#2563eb', label: 'Word' };
-  if (source.includes('xls') || source.includes('sheet') || source.includes('csv')) return { kind: 'sheet', icon: 'ðŸ“Š', color: '#16a34a', label: 'Planilla' };
-  if (source.includes('ppt')) return { kind: 'slides', icon: 'ðŸŽžï¸', color: '#ea580c', label: 'PresentaciÃ³n' };
+  if (source.includes('pdf')) return { kind: 'pdf', icon: '📄', color: '#ef4444', label: 'PDF' };
+  if (source.includes('doc') || source.includes('word')) return { kind: 'word', icon: '📝', color: '#2563eb', label: 'Word' };
+  if (source.includes('xls') || source.includes('sheet') || source.includes('csv')) return { kind: 'sheet', icon: '📊', color: '#16a34a', label: 'Planilla' };
+  if (source.includes('ppt')) return { kind: 'slides', icon: '🎞️', color: '#ea580c', label: 'Presentación' };
   if (source.includes('png') || source.includes('jpg') || source.includes('jpeg') || source.includes('webp') || source.includes('gif') || source.includes('image')) {
-    return { kind: 'image', icon: 'ðŸ–¼ï¸', color: '#0f766e', label: 'Imagen' };
+    return { kind: 'image', icon: '🖼️', color: '#0f766e', label: 'Imagen' };
   }
-  return { kind: 'file', icon: 'ðŸ“', color: '#C8973A', label: 'Archivo' };
+  return { kind: 'file', icon: '📁', color: '#C8973A', label: 'Archivo' };
 };
 
 const canPreviewInFrame = (doc: Partial<DocItem>) => {
