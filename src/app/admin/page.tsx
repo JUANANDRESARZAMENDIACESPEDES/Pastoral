@@ -188,6 +188,36 @@ function AdminContent() {
   const [loginErrorMessage, setLoginErrorMessage] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [clientError, setClientError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const onError = (ev: ErrorEvent) => {
+      try {
+        const msg = `${ev.message}\n${ev.filename}:${ev.lineno}:${ev.colno}\n${ev.error?.stack || ''}`;
+        console.error('Captured client error:', msg);
+        setClientError(msg);
+      } catch (e) {
+        console.error('Error handling onError:', e);
+      }
+    };
+    const onRejection = (ev: PromiseRejectionEvent) => {
+      try {
+        const reason = ev.reason;
+        const msg = typeof reason === 'string' ? reason : (reason?.stack || JSON.stringify(reason));
+        console.error('Captured unhandled rejection:', msg);
+        setClientError(String(msg));
+      } catch (e) {
+        console.error('Error handling onRejection:', e);
+      }
+    };
+
+    window.addEventListener('error', onError);
+    window.addEventListener('unhandledrejection', onRejection as EventListener);
+    return () => {
+      window.removeEventListener('error', onError);
+      window.removeEventListener('unhandledrejection', onRejection as EventListener);
+    };
+  }, []);
 
   useEffect(() => {
     const initSession = async () => {
