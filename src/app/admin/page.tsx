@@ -188,35 +188,22 @@ function AdminContent() {
   const [loginErrorMessage, setLoginErrorMessage] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [clientError, setClientError] = useState<string | null>(null);
+  const [supabaseStatus, setSupabaseStatus] = useState<{ ok: boolean; message: string; sample?: any } | null>(null);
 
   useEffect(() => {
-    const onError = (ev: ErrorEvent) => {
+    let mounted = true;
+    const check = async () => {
       try {
-        const msg = `${ev.message}\n${ev.filename}:${ev.lineno}:${ev.colno}\n${ev.error?.stack || ''}`;
-        console.error('Captured client error:', msg);
-        setClientError(msg);
+        const res = await fetch('/api/supabase/status');
+        const json = await res.json();
+        if (mounted) setSupabaseStatus(json);
       } catch (e) {
-        console.error('Error handling onError:', e);
+        if (mounted) setSupabaseStatus({ ok: false, message: String(e) });
       }
     };
-    const onRejection = (ev: PromiseRejectionEvent) => {
-      try {
-        const reason = ev.reason;
-        const msg = typeof reason === 'string' ? reason : (reason?.stack || JSON.stringify(reason));
-        console.error('Captured unhandled rejection:', msg);
-        setClientError(String(msg));
-      } catch (e) {
-        console.error('Error handling onRejection:', e);
-      }
-    };
-
-    window.addEventListener('error', onError);
-    window.addEventListener('unhandledrejection', onRejection as EventListener);
-    return () => {
-      window.removeEventListener('error', onError);
-      window.removeEventListener('unhandledrejection', onRejection as EventListener);
-    };
+    check();
+    const interval = setInterval(check, 30000);
+    return () => { mounted = false; clearInterval(interval); };
   }, []);
 
   useEffect(() => {
@@ -838,6 +825,11 @@ function AdminContent() {
           </button>
           <div className="serif login-title" style={{ fontSize: '2rem', color: 'var(--navy)', letterSpacing: '-1px' }}>PJL <em>Admin</em></div>
           <p className="premium-label" style={{ color: 'var(--gold)', marginTop: '5px' }}>Acceso Restringido</p>
+          {supabaseStatus && (
+            <div style={{ textAlign: 'center', marginTop: '6px', fontSize: '13px', color: supabaseStatus.ok ? '#16a34a' : '#b91c1c' }}>
+              {supabaseStatus.ok ? 'Supabase: Conectado' : 'Supabase: No disponible'} — {supabaseStatus.message}
+            </div>
+          )}
         </div>
         <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
           <button type="button" className={`btn-premium ${registerMode === 'login' ? 'btn-premium-gold' : 'btn-premium-outline'}`} onClick={() => setRegisterMode('login')} style={{ minWidth: '140px' }}>
