@@ -547,10 +547,16 @@ function AdminContent() {
 
     const inputEmail = resolveEmail();
     const isMaster = normalize(inputUser) === CREDS.user && inputPass === CREDS.pass;
+    const supabaseAvailable = supabaseStatus?.ok !== false;
     let authUser: User | null = null;
 
     try {
       if (inputEmail) {
+        if (!supabaseAvailable && !isMaster) {
+          setLoginErr(true);
+          setLoginErrorMessage('Supabase no está disponible. Usa el usuario maestro admin/admin o intenta más tarde.');
+          return;
+        }
         const { data, error } = await signInProfile(inputEmail, inputPass);
         if (error) {
           const profile = await fetchProfileByEmail(inputEmail);
@@ -667,6 +673,10 @@ function AdminContent() {
     }
     if (registerForm.password !== registerForm.confirmPassword) {
       setRegisterErr('Las contraseñas no coinciden.');
+      return;
+    }
+    if (supabaseStatus?.ok === false) {
+      setRegisterErr('No se puede solicitar acceso porque Supabase no está disponible. Intenta más tarde.');
       return;
     }
 
@@ -839,6 +849,11 @@ function AdminContent() {
             Solicitar acceso
           </button>
         </div>
+        {supabaseStatus?.ok === false && (
+          <div style={{ textAlign: 'center', fontSize: '13px', color: '#b45309', marginBottom: '16px' }}>
+            Supabase está desconectado. Solo el acceso maestro <strong>admin/admin</strong> funcionará hasta que se restablezca la conexión.
+          </div>
+        )}
         {registerMode === 'login' ? (
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {loginErr && <div className="login-alert" style={{ background: '#fee2e2', color: '#b91c1c', padding: '12px', borderRadius: '8px', fontSize: '13px', textAlign: 'center' }}>{loginErrorMessage || 'Usuario o contraseña incorrectos'}</div>}
