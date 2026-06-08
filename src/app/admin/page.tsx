@@ -551,12 +551,23 @@ function AdminContent() {
     let authUser: User | null = null;
 
     try {
-      if (inputEmail) {
-        if (!supabaseAvailable && !isMaster) {
+      if (isMaster) {
+        authUser = {
+          id: 'master',
+          name: 'Desarrollador',
+          email: CREDS.user,
+          role: 'desarrollador',
+          status: 'activo',
+          permissions: NAV_ITEMS.map(n => n.id),
+          lastActive: new Date().toISOString(),
+        };
+      } else if (inputEmail) {
+        if (!supabaseAvailable) {
           setLoginErr(true);
-          setLoginErrorMessage('Supabase no está disponible. Usa el usuario maestro admin/admin o intenta más tarde.');
+          setLoginErrorMessage('Supabase no está disponible. Intenta más tarde.');
           return;
         }
+
         const { data, error } = await signInProfile(inputEmail, inputPass);
         if (error) {
           const profile = await fetchProfileByEmail(inputEmail);
@@ -592,17 +603,6 @@ function AdminContent() {
             };
           }
         }
-      }
-
-      if (!authUser && isMaster) {
-        authUser = {
-          id: 'master',
-          name: 'Desarrollador',
-          email: CREDS.user,
-          role: 'desarrollador',
-          status: 'activo',
-          lastActive: new Date().toISOString(),
-        };
       }
 
       if (authUser) {

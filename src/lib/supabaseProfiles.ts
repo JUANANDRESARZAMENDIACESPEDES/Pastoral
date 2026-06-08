@@ -1,7 +1,10 @@
 import { getSupabaseClient } from './supabase';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { User } from './pjlStore';
 
-const PROFILE_TABLE = 'user_profiles';
+const PROFILE_TABLES = ['user_profiles', 'profiles'] as const;
+type ProfileTableName = (typeof PROFILE_TABLES)[number];
+let cachedProfileTable: ProfileTableName | null = null;
 
 export interface SupabaseProfile {
   id: string;
@@ -14,11 +17,58 @@ export interface SupabaseProfile {
   created_at?: string;
 }
 
+function normalizeError(error: unknown) {
+  if (!error) return '';
+  if (typeof error === 'string') return error.toLowerCase();
+  if (typeof error === 'object' && error !== null) {
+    return (error as any).message?.toString().toLowerCase()
+      || (error as any).details?.toString().toLowerCase()
+      || JSON.stringify(error).toLowerCase();
+  }
+  return String(error).toLowerCase();
+}
+
+function isMissingTableError(error: unknown) {
+  const message = normalizeError(error);
+  return message.includes('could not find the table')
+    || message.includes('schema cache')
+    || message.includes('relation "public.user_profiles" does not exist')
+    || message.includes('relation "public.profiles" does not exist')
+    || message.includes('table does not exist');
+}
+
+async function getProfileTableName(supabase: SupabaseClient): Promise<ProfileTableName> {
+  if (cachedProfileTable) return cachedProfileTable;
+
+  for (const table of PROFILE_TABLES) {
+    const { error } = await supabase.from(table).select('id').limit(1);
+    if (!error) {
+      cachedProfileTable = table;
+      return table;
+    }
+    if (isMissingTableError(error)) {
+      continue;
+    }
+    throw error;
+  }
+
+  throw new Error(
+    `No se encontró ninguna tabla de perfiles válida en Supabase. Crea una tabla llamada ${PROFILE_TABLES.join(' o ')} en tu proyecto Supabase.`
+  );
+}
+
 export async function signUpProfile(name: string, email: string, password: string) {
   const supabase = getSupabaseClient();
 
+  let tableName: ProfileTableName;
+  try {
+    tableName = await getProfileTableName(supabase);
+  } catch (tableError) {
+    return { error: tableError as Error };
+  }
+
   const { data: existingProfile, error: existingError } = await supabase
-    .from(PROFILE_TABLE)
+    .from(tableName)
     .select('id, status')
     .eq('email', email)
     .maybeSingle();
@@ -50,7 +100,7 @@ export async function signUpProfile(name: string, email: string, password: strin
     return { error: new Error('No se obtuvo el UID de Supabase al registrar al usuario.') };
   }
 
-  const { error: profileError } = await supabase.from(PROFILE_TABLE).insert({
+  const { error: profileError } = await supabase.from(tableName).insert({
     auth_uid: authUid,
     email,
     name,
@@ -59,7 +109,14 @@ export async function signUpProfile(name: string, email: string, password: strin
     permissions: ['dashboard'],
   });
 
-  return { error: profileError };
+  if (profileError) {
+    if (isMissingTableError(profileError)) {
+      return { error: new Error('No se encontró la tabla de perfiles en Supabase. Crea la tabla user_profiles o profiles y vuelve a intentar.') };
+    }
+    return { error: profileError };
+  }
+
+  return { error: null };
 }
 
 type SupabaseProfileChangePayload = {
@@ -78,9 +135,10 @@ export function subscribeProfileChanges(
     return () => {};
   }
 
+  const tableName = cachedProfileTable || PROFILE_TABLES[0];
   const channel = (supabase.channel('profile_changes') as any).on(
     'postgres_changes',
-    { event: '*', schema: 'public', table: PROFILE_TABLE },
+    { event: '*', schema: 'public', table: tableName },
     (payload: SupabaseProfileChangePayload) => {
       const profile = payload.new ?? payload.old;
       if (!profile) return;
@@ -118,8 +176,16 @@ export async function signInProfile(email: string, password: string) {
 
 export async function fetchProfileByEmail(email: string): Promise<SupabaseProfile | null> {
   const supabase = getSupabaseClient();
+  let tableName: ProfileTableName;
+  try {
+    tableName = await getProfileTableName(supabase);
+  } catch (error) {
+    console.error('Supabase fetchProfileByEmail error:', error);
+    return null;
+  }
+
   const { data, error } = await supabase
-    .from(PROFILE_TABLE)
+    .from(tableName)
     .select('*')
     .eq('email', email)
     .single();
@@ -134,8 +200,16 @@ export async function fetchProfileByEmail(email: string): Promise<SupabaseProfil
 
 export async function fetchPendingProfiles(): Promise<SupabaseProfile[]> {
   const supabase = getSupabaseClient();
+  let tableName: ProfileTableName;
+  try {
+    tableName = await getProfileTableName(supabase);
+  } catch (error) {
+    console.error('Supabase fetchPendingProfiles error:', error);
+    return [];
+  }
+
   const { data, error } = await supabase
-    .from(PROFILE_TABLE)
+    .from(tableName)
     .select('*')
     .eq('status', 'pendiente')
     .order('created_at', { ascending: true });
@@ -150,8 +224,15 @@ export async function fetchPendingProfiles(): Promise<SupabaseProfile[]> {
 
 export async function approveProfile(profileId: string): Promise<boolean> {
   const supabase = getSupabaseClient();
+  let tableName: ProfileTableName;
+  try {
+    tableName = await getProfileTableName(supabase);
+  } catch (error) {
+    console.error('Supabase approveProfile error:', error);
+    return false;
+  }
   const { error } = await supabase
-    .from(PROFILE_TABLE)
+    .from(tableName)
     .update({ status: 'activo' })
     .eq('id', profileId);
 
@@ -170,7 +251,15 @@ export async function updateAuthUser(email?: string, password?: string) {
 
 export async function fetchAllProfiles(): Promise<SupabaseProfile[]> {
   const supabase = getSupabaseClient();
-  const { data, error } = await supabase.from(PROFILE_TABLE).select('*').order('created_at', { ascending: false });
+  let tableName: ProfileTableName;
+  try {
+    tableName = await getProfileTableName(supabase);
+  } catch (error) {
+    console.error('Supabase fetchAllProfiles error:', error);
+    return [];
+  }
+
+  const { data, error } = await supabase.from(tableName).select('*').order('created_at', { ascending: false });
   if (error) {
     console.error('Supabase fetchAllProfiles error:', error.message);
     return [];
@@ -180,7 +269,15 @@ export async function fetchAllProfiles(): Promise<SupabaseProfile[]> {
 
 export async function updateProfile(profileId: string, updates: Partial<SupabaseProfile>) {
   const supabase = getSupabaseClient();
-  const { error } = await supabase.from(PROFILE_TABLE).update(updates).eq('id', profileId);
+  let tableName: ProfileTableName;
+  try {
+    tableName = await getProfileTableName(supabase);
+  } catch (error) {
+    console.error('Supabase updateProfile error:', error);
+    return false;
+  }
+
+  const { error } = await supabase.from(tableName).update(updates).eq('id', profileId);
   if (error) {
     console.error('Supabase updateProfile error:', error.message);
     return false;
