@@ -306,3 +306,24 @@ export async function deleteProfile(profileId: string, authUid?: string) {
     return { success: false, message: String(error) };
   }
 }
+
+export async function resendVerificationEmail(email: string, redirectTo?: string) {
+  try {
+    const response = await fetch('/api/supabase/resend-verification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, redirectTo: redirectTo || window.location.origin + '/admin?confirmed=true' }),
+    });
+    const result = await response.json();
+
+    if (!response.ok) {
+      console.error('Supabase resendVerificationEmail failed:', result?.message || response.statusText);
+      return { success: false, message: result?.message || 'Error al reenviar el correo de verificación.' };
+    }
+
+    return { success: result?.success === true, message: result?.message || 'Correo de verificación reenviado. Revisa tu bandeja de entrada (y spam).' };
+  } catch (error) {
+    console.error('Supabase resendVerificationEmail failed:', error);
+    return { success: false, message: String(error) };
+  }
+}

@@ -14,7 +14,7 @@ import {
   DEFAULT_STATS, DEFAULT_THEME_PALETTE, DEFAULT_USERS
 } from '@/lib/pjlStore';
 import { fetchStoreValue, upsertStoreValue, subscribeStoreChanges } from '@/lib/supabaseStore';
-import { SupabaseProfile, fetchProfileByEmail, fetchAllProfiles, fetchPendingProfiles, approveProfile, signInProfile, signUpProfile, subscribeProfileChanges, deleteProfile } from '@/lib/supabaseProfiles';
+import { SupabaseProfile, fetchProfileByEmail, fetchAllProfiles, fetchPendingProfiles, approveProfile, signInProfile, signUpProfile, subscribeProfileChanges, deleteProfile, resendVerificationEmail } from '@/lib/supabaseProfiles';
 
 const ZonaMap = dynamic(() => import('@/components/ZonaMap'), { 
   ssr: false,
@@ -680,6 +680,16 @@ function AdminContent() {
       addLog('aprobar cuenta', 'usuarios', `Perfil aprobado: ${profileId}`);
     } else {
       showToast('No se pudo aprobar la cuenta');
+    }
+  };
+
+  const handleResendVerification = async (email: string, name: string) => {
+    const { success, message } = await resendVerificationEmail(email);
+    if (success) {
+      showToast('✉️ Correo reenviado');
+      addLog('reenviar verificación', 'usuarios', `Email reenviado a: ${email}`);
+    } else {
+      alert(message || 'No se pudo reenviar el correo de verificación.');
     }
   };
 
@@ -2926,13 +2936,23 @@ function AdminContent() {
                               <strong>{profile.name}</strong> <span style={{ color: '#666', fontSize: '12px' }}>{profile.email}</span>
                               <div style={{ fontSize: '11px', color: '#777', marginTop: '4px' }}>Registrado el {profile.created_at ? new Date(profile.created_at).toLocaleDateString() : '—'}</div>
                             </div>
-                            <button
-                              className="btn-premium btn-premium-gold"
-                              style={{ padding: '8px 14px', fontSize: '11px' }}
-                              onClick={() => handleApproveProfile(profile.id)}
-                            >
-                              Aprobar cuenta
-                            </button>
+                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                              <button
+                                className="btn-premium btn-premium-outline"
+                                style={{ padding: '8px 14px', fontSize: '11px' }}
+                                onClick={() => void handleResendVerification(profile.email, profile.name)}
+                                title="Reenviar correo de verificación"
+                              >
+                                ✉️ Reenviar
+                              </button>
+                              <button
+                                className="btn-premium btn-premium-gold"
+                                style={{ padding: '8px 14px', fontSize: '11px' }}
+                                onClick={() => handleApproveProfile(profile.id)}
+                              >
+                                Aprobar cuenta
+                              </button>
+                            </div>
                           </div>
                         </div>
                       ))}
