@@ -57,7 +57,7 @@ async function getProfileTableName(supabase: SupabaseClient): Promise<ProfileTab
   );
 }
 
-export async function signUpProfile(name: string, email: string, password: string) {
+export async function signUpProfile(name: string, email: string, password: string, emailRedirectTo?: string) {
   const supabase = getSupabaseClient();
 
   let tableName: ProfileTableName;
@@ -87,7 +87,8 @@ export async function signUpProfile(name: string, email: string, password: strin
     email,
     password,
     options: {
-      data: { name, role: 'viewer', status: 'pendiente' }
+      data: { name, role: 'viewer', status: 'pendiente' },
+      emailRedirectTo: emailRedirectTo || undefined,
     }
   });
 

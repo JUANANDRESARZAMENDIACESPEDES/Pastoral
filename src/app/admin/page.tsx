@@ -161,6 +161,7 @@ function AdminContent() {
   const [registerForm, setRegisterForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [registerErr, setRegisterErr] = useState('');
   const [registerSuccess, setRegisterSuccess] = useState('');
+  const [emailConfirmedMessage, setEmailConfirmedMessage] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
 
   useEffect(() => {
@@ -191,6 +192,25 @@ function AdminContent() {
   const [supabaseStatus, setSupabaseStatus] = useState<{ ok: boolean; message: string; sample?: any } | null>(null);
 
   useEffect(() => {
+    const confirmed = searchParams.get('confirmed');
+    const type = searchParams.get('type');
+    const errorDescription = searchParams.get('error_description') || searchParams.get('error');
+
+    if (confirmed === 'true' || type === 'signup') {
+      setRegisterMode('login');
+      setRegisterSuccess('Correo confirmado. Ya puedes iniciar sesión.');
+      setEmailConfirmedMessage('Tu correo ha sido confirmado con éxito. Inicia sesión para continuar.');
+      router.replace('/admin');
+      return;
+    }
+
+    if (errorDescription) {
+      setLoginErr(true);
+      setLoginErrorMessage(decodeURIComponent(errorDescription));
+      router.replace('/admin');
+      return;
+    }
+
     let mounted = true;
     const check = async () => {
       try {
@@ -204,7 +224,7 @@ function AdminContent() {
     check();
     const interval = setInterval(check, 30000);
     return () => { mounted = false; clearInterval(interval); };
-  }, []);
+  }, [searchParams, router]);
 
   useEffect(() => {
     const initSession = async () => {
@@ -682,7 +702,8 @@ function AdminContent() {
 
     setIsRegistering(true);
     try {
-      const { error } = await signUpProfile(registerForm.name, registerForm.email, registerForm.password);
+      const redirectTo = window.location.origin + '/admin?confirmed=true';
+      const { error } = await signUpProfile(registerForm.name, registerForm.email, registerForm.password, redirectTo);
       if (error) {
         setRegisterErr(error.message || 'Error al solicitar acceso.');
         return;
@@ -856,6 +877,7 @@ function AdminContent() {
         )}
         {registerMode === 'login' ? (
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {emailConfirmedMessage && <div className="login-alert" style={{ background: '#dcfce7', color: '#166534', padding: '12px', borderRadius: '8px', fontSize: '13px', textAlign: 'center' }}>{emailConfirmedMessage}</div>}
             {loginErr && <div className="login-alert" style={{ background: '#fee2e2', color: '#b91c1c', padding: '12px', borderRadius: '8px', fontSize: '13px', textAlign: 'center' }}>{loginErrorMessage || 'Usuario o contraseña incorrectos'}</div>}
             <div className="form-group">
               <label className="premium-label" style={{ marginBottom: '8px', display: 'block' }}>Usuario</label>
