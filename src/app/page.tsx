@@ -246,9 +246,20 @@ function HomeContent() {
   const navigate = (id: string, e?: React.MouseEvent) => {
     if (e) e.preventDefault();
     trackInteraction(id);
+
+    const pageIds = new Set([
+      'home', 'estatuto', 'historia', 'institucional', 'consejo', 'zonas',
+      'agenda', 'noticias', 'contacto', 'faq', 'preguntas'
+    ]);
     
     // Si ya estamos en la página y es 'zonas', reseteamos la selección
     if (id === 'zonas') setSelectedZone(null);
+
+    if (pageIds.has(id)) {
+      router.push(id === 'home' ? '/' : `/?page=${id}`);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     
     // Si es un ID de sección (ancla), desplazamos suavemente
     const section = document.getElementById(id);
@@ -647,19 +658,19 @@ function HomeContent() {
             </section>
 
             {/* INSTITUCIONAL SECTION */}
-            <section className="section-pjl" style={{ overflow: 'hidden' }} id="institucional">
+            <section className="section-pjl identity-feature-section" id="institucional-preview">
               <div className="container">
                 <div className="insti-premium-layout reveal">
                   <div className="insti-text-side">
-                    <div className="section-head" onClick={() => navigate('institucional')} style={{ textAlign: 'left', padding: '0', background: 'none', border: 'none', boxShadow: 'none', margin: '0 0 40px 0', maxWidth: '100%', cursor: 'pointer' }}>
+                    <div className="section-head identity-feature-head" onClick={() => navigate('institucional')} style={{ cursor: 'pointer' }}>
                       <span className="premium-label" style={{ color: 'var(--gold)' }}>HISTORIA Y LEGADO</span>
                       <h3 style={{ fontSize: '2.5rem', marginBottom: '15px' }}>{siteContent.instiTitulo || 'Nuestra Institución'}</h3>
                       <div className="line" style={{ width: '80px', marginLeft: '0' }}></div>
                     </div>
-                    <div className="insti-description" style={{ fontSize: '1.1rem', lineHeight: '1.8', color: 'var(--navy)', marginBottom: '40px', textAlign: 'justify', maxHeight: '400px', overflowY: 'auto', paddingRight: '15px' }}>
+                    <div className="insti-description">
                       {siteContent.instiDesc}
                     </div>
-                    <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                    <div className="identity-feature-actions">
                       <button className="btn-premium btn-premium-gold" onClick={() => navigate('historia')}>NUESTRA TRAYECTORIA</button>
                       <button className="btn-premium btn-premium-outline" onClick={() => navigate('estatuto')}>MARCO LEGAL</button>
                     </div>
@@ -667,7 +678,12 @@ function HomeContent() {
                   <div className="insti-visual-side">
                     <div className="image-frame">
                       <div className="frame-decoration"></div>
-                      <img src={siteContent.instiFoto || 'https://images.unsplash.com/photo-1544427928-c49cdfebf193?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'} alt="Imagen Institucional PJL" className="main-insti-img" />
+                      <img
+                        src={siteContent.instiFoto || 'https://images.unsplash.com/photo-1544427928-c49cdfebf193?ixlib=rb-1.2.1&auto=format&fit=crop&w=900&q=80'}
+                        onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1544427928-c49cdfebf193?ixlib=rb-1.2.1&auto=format&fit=crop&w=900&q=80'; }}
+                        alt="Imagen Institucional PJL"
+                        className="main-insti-img"
+                      />
                       <div className="years-badge">
                         <span className="number">{siteContent.statsAnos || '20'}</span>
                         <span className="label">AÑOS DE FE</span>
