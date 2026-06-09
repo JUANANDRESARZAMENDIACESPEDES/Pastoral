@@ -18,7 +18,7 @@ async function findProfileTable(supabase: any): Promise<ProfileTableName> {
 }
 
 export async function POST(request: Request) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL; 
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -39,10 +39,16 @@ export async function POST(request: Request) {
   });
 
   let deleteAuthError: string | null = null;
-  if (authUid && serviceRoleKey) {
-    const { error } = await supabase.auth.admin.deleteUser(authUid);
-    if (error) {
-      deleteAuthError = error.message;
+  let skipAuthDeletion = false;
+
+  if (authUid) {
+    if (!serviceRoleKey) {
+      skipAuthDeletion = true;
+    } else {
+      const { error } = await supabase.auth.admin.deleteUser(authUid);
+      if (error) {
+        deleteAuthError = error.message;
+      }
     }
   }
 
@@ -60,7 +66,9 @@ export async function POST(request: Request) {
 
   const message = deleteAuthError
     ? `Perfil eliminado de la tabla, pero no se pudo borrar la cuenta de autenticación: ${deleteAuthError}`
-    : 'Usuario eliminado correctamente de Supabase.';
+    : skipAuthDeletion
+      ? 'Perfil eliminado de la tabla de perfiles. No se borró la cuenta de autenticación porque falta SUPABASE_SERVICE_ROLE_KEY.'
+      : 'Usuario eliminado correctamente de Supabase.';
 
   return NextResponse.json({ success: true, message });
 }

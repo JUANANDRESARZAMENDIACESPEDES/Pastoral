@@ -1,0 +1,44 @@
+# Supabase Setup for Pastoral
+
+Este proyecto usa Supabase para:
+- almacenar usuarios pendientes y aprobados en `user_profiles`
+- manejar el estado de conexión con `pjl_store`
+- enviar verificación de correo para nuevas cuentas
+
+## Pasos necesarios
+
+1. En Supabase, abre el SQL editor.
+2. Ejecuta el contenido del archivo `supabase-schema.sql`.
+   - Esto crea las tablas necesarias: `user_profiles` y `pjl_store`.
+
+3. En Vercel, configura las siguientes variables de entorno en tu proyecto:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+
+4. Guarda las variables y fuerza un redeploy del proyecto.
+
+## Qué hace cada tabla
+
+- `user_profiles` almacena solicitudes de acceso y usuarios del panel.
+- `pjl_store` almacena los datos remotos que usa la app para su configuración en vivo.
+
+## Cómo funciona el proceso de registro
+
+- El usuario solicita acceso en el panel.
+- Supabase crea la cuenta con `status = pendiente`.
+- El administrador ve la solicitud en `Solicitudes pendientes`.
+- El administrador puede:
+  - reenviar el correo de verificación,
+  - aprobar la cuenta,
+  - eliminar el usuario.
+
+## Eliminación desde el panel de admin
+
+- Al eliminar un usuario desde el Admin, el sistema elimina:
+  - el registro de `user_profiles` en Supabase,
+  - la cuenta de autenticación en Supabase si `SUPABASE_SERVICE_ROLE_KEY` está configurado.
+
+## Nota
+
+Si no tienes `SUPABASE_SERVICE_ROLE_KEY`, el perfil se elimina de la tabla, pero la cuenta de auth no se puede borrar.
