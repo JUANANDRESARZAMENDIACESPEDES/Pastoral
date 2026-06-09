@@ -338,7 +338,12 @@ function HomeContent() {
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         title="Volver al inicio"
         >
-          <img src={branding.mainLogo} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Logo flotante" />
+          <img
+            src={branding.mainLogo}
+            className="logo-img-circular"
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            alt="Logo flotante"
+          />
         </div>
       )}
 
