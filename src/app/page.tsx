@@ -6,8 +6,10 @@ import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { 
   store, NewsItem, Activity, FaqItem, SiteContent, DocItem, MemberProfile, Chapel, Branding, ThemePalette, TimelineEvent, HeroSlide,
-  DEFAULT_CONTENT, DEFAULT_NEWS, DEFAULT_ACTIVITIES, DEFAULT_FAQ, DEFAULT_SOCIAL, SocialLinks, DEFAULT_BRANDING, DEFAULT_CHAPELS
+  DEFAULT_CONTENT, DEFAULT_NEWS, DEFAULT_ACTIVITIES, DEFAULT_FAQ, DEFAULT_SOCIAL, SocialLinks, DEFAULT_BRANDING, DEFAULT_CHAPELS,
+  DEFAULT_STATS, PageStat, mergePageStats
 } from '@/lib/pjlStore';
+import { fetchStoreValue } from '@/lib/supabaseStore';
 import Link from 'next/link';
 import Script from 'next/script';
 
@@ -61,8 +63,11 @@ const detectDeviceType = () => {
   if (typeof window === 'undefined') return 'desktop' as const;
   const ua = window.navigator.userAgent.toLowerCase();
   const width = window.innerWidth;
+  const platform = window.navigator.platform?.toLowerCase() || '';
+  const maxTouchPoints = window.navigator.maxTouchPoints || 0;
+  const isIPadLike = platform.includes('mac') && maxTouchPoints > 1 && width >= 768;
 
-  if (/ipad|tablet/.test(ua) || (width >= 768 && width <= 1024 && /android/.test(ua))) return 'tablet' as const;
+  if (/ipad|tablet/.test(ua) || isIPadLike || (width >= 768 && width <= 1180 && (/android/.test(ua) || maxTouchPoints > 1))) return 'tablet' as const;
   if (/mobi|iphone|ipod|android/.test(ua) || width < 768) return 'mobile' as const;
   return 'desktop' as const;
 };
@@ -193,11 +198,24 @@ function HomeContent() {
   }, [currentPage, activeZoneTab, activeConsejoTab, selectedZone, globalCommFilter, liveChapels]);
 
   // --- INTERACTION TRACKING ---
-  const updateStat = (id: string, field: 'visits' | 'interactions') => {
+  const updateStat = async (id: string, field: 'visits' | 'interactions') => {
     try {
       const mappedId = id === 'home' ? '/' : id.startsWith('/') ? id : `/${id}`;
       const deviceType = detectDeviceType();
-      const s = [...store.stats.get()];
+      const localStats = store.stats.get();
+      let baseStats = localStats;
+
+      try {
+        const remoteStats = await fetchStoreValue<PageStat[]>('stats');
+        if (Array.isArray(remoteStats)) {
+          baseStats = mergePageStats(localStats, remoteStats);
+        }
+      } catch {
+        baseStats = localStats;
+      }
+
+      baseStats = mergePageStats(store.stats.get(), baseStats);
+      const s = mergePageStats(DEFAULT_STATS, baseStats);
       let existing = s.find(x => x.page === mappedId);
 
       if (!existing) {
@@ -216,13 +234,13 @@ function HomeContent() {
   };
 
   const trackVisit = (id: string) => {
-    updateStat(id, 'visits');
+    void updateStat(id, 'visits');
   };
 
   const trackInteraction = (id: string) => {
     try {
       const mappedId = id === 'home' ? '/' : `/${id}`;
-      updateStat(mappedId, 'interactions');
+      void updateStat(mappedId, 'interactions');
     } catch (e) {}
   };
 

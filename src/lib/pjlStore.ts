@@ -296,6 +296,40 @@ export const DEFAULT_STATS: PageStat[] = [
   { page: '/contacto',     label: 'Contacto',            visits: 0, interactions: 0, desktopVisits: 0, tabletVisits: 0, mobileVisits: 0 },
 ];
 
+export function mergePageStats(base: PageStat[] = [], incoming: PageStat[] = []): PageStat[] {
+  const byPage = new Map<string, PageStat>();
+
+  [...base, ...incoming].forEach((stat) => {
+    if (!stat?.page) return;
+    const current = byPage.get(stat.page);
+    if (!current) {
+      byPage.set(stat.page, {
+        page: stat.page,
+        label: stat.label || stat.page,
+        visits: stat.visits || 0,
+        interactions: stat.interactions || 0,
+        desktopVisits: stat.desktopVisits || 0,
+        tabletVisits: stat.tabletVisits || 0,
+        mobileVisits: stat.mobileVisits || 0,
+      });
+      return;
+    }
+
+    byPage.set(stat.page, {
+      ...current,
+      ...stat,
+      label: stat.label || current.label,
+      visits: Math.max(current.visits || 0, stat.visits || 0),
+      interactions: Math.max(current.interactions || 0, stat.interactions || 0),
+      desktopVisits: Math.max(current.desktopVisits || 0, stat.desktopVisits || 0),
+      tabletVisits: Math.max(current.tabletVisits || 0, stat.tabletVisits || 0),
+      mobileVisits: Math.max(current.mobileVisits || 0, stat.mobileVisits || 0),
+    });
+  });
+
+  return Array.from(byPage.values());
+}
+
 export interface HeroSlide {
   id: string;
   imageUrl: string;
@@ -342,8 +376,17 @@ async function syncRemoteValues() {
     const remoteValues = await fetchAllStoreValues<unknown>(STORE_KEYS);
     Object.entries(remoteValues).forEach(([key, value]) => {
       if (value === null || value === undefined) return;
-      const payload = JSON.stringify(value);
       const current = localStorage.getItem('pjl_' + key);
+      let nextValue = value;
+      if (key === 'stats' && Array.isArray(value)) {
+        try {
+          const localStats = current ? JSON.parse(current) : DEFAULT_STATS;
+          nextValue = mergePageStats(Array.isArray(localStats) ? localStats : DEFAULT_STATS, value as PageStat[]);
+        } catch {
+          nextValue = mergePageStats(DEFAULT_STATS, value as PageStat[]);
+        }
+      }
+      const payload = JSON.stringify(nextValue);
       if (current !== payload) {
         localStorage.setItem('pjl_' + key, payload);
         window.dispatchEvent(new CustomEvent('pjl_store_update', { detail: { key } }));
@@ -360,8 +403,13 @@ function initializeRemoteStoreSync() {
   const unsubscribe = subscribeStoreChanges((key, value) => {
     if (!key) return;
     try {
-      const payload = JSON.stringify(value);
       const current = localStorage.getItem('pjl_' + key);
+      let nextValue = value;
+      if (key === 'stats' && Array.isArray(value)) {
+        const localStats = current ? JSON.parse(current) : DEFAULT_STATS;
+        nextValue = mergePageStats(Array.isArray(localStats) ? localStats : DEFAULT_STATS, value as PageStat[]);
+      }
+      const payload = JSON.stringify(nextValue);
       if (current !== payload) {
         localStorage.setItem('pjl_' + key, payload);
         window.dispatchEvent(new CustomEvent('pjl_store_update', { detail: { key } }));

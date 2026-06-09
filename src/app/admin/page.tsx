@@ -11,7 +11,7 @@ import {
   Branding, ThemePalette, PageStat, Chapel, HeroSlide, User,
   DEFAULT_NEWS, DEFAULT_ACTIVITIES, DEFAULT_FAQ,
   DEFAULT_DOCS, DEFAULT_CONTENT, DEFAULT_SOCIAL, DEFAULT_SECTIONS, DEFAULT_BRANDING,
-  DEFAULT_STATS, DEFAULT_THEME_PALETTE, DEFAULT_USERS
+  DEFAULT_STATS, DEFAULT_THEME_PALETTE, DEFAULT_USERS, mergePageStats
 } from '@/lib/pjlStore';
 import { fetchStoreValue, upsertStoreValue, subscribeStoreChanges } from '@/lib/supabaseStore';
 import { SupabaseProfile, fetchProfileByEmail, fetchAllProfiles, fetchPendingProfiles, approveProfile, signInProfile, signUpProfile, subscribeProfileChanges, deleteProfile, resendVerificationEmail } from '@/lib/supabaseProfiles';
@@ -334,7 +334,8 @@ function AdminContent() {
     const updateStatsFromRemote = (remoteValue: unknown) => {
       if (!remoteValue) return;
       try {
-        const stats = remoteValue as PageStat[];
+        const currentStats = store.stats.get();
+        const stats = mergePageStats(currentStats, remoteValue as PageStat[]);
         setPageStats(stats);
         const serialized = JSON.stringify(stats);
         const current = localStorage.getItem('pjl_stats');
