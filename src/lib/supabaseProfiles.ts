@@ -109,10 +109,11 @@ export async function signUpProfile(name: string, email: string, password: strin
     status: 'pendiente',
     permissions: ['dashboard'],
   });
-
   if (profileError) {
     if (isMissingTableError(profileError)) {
-        return { error: new Error('No se encontró la tabla de perfiles en Supabase. Ejecuta supabase-schema.sql para crear user_profiles o profiles y vuelve a intentar.') };
+      return { error: new Error('No se encontró la tabla de perfiles en Supabase. Ejecuta supabase-schema.sql para crear user_profiles o profiles y vuelve a intentar.') };
+    }
+    return { error: profileError };
   }
 
   return { error: null };

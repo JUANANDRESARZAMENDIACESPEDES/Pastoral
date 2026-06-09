@@ -5,11 +5,7 @@ export const metadata: Metadata = {
   description: 'Confirmación de correo electrónico de Pastoral Juvenil Luqueña.',
 };
 
-interface ConfirmationPageProps {
-  searchParams?: { success?: string; }
-}
-
-export default function ConfirmationPage({ searchParams }: ConfirmationPageProps) {
+export default function ConfirmationPage({ searchParams }: any) {
   const success = searchParams?.success === 'true';
 
   return (
