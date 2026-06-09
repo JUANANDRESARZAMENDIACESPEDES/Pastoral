@@ -1498,6 +1498,17 @@ input, textarea { cursor: text; }
 @media (max-width: 900px) {
   .admin-stats-grid { grid-template-columns: repeat(2, 1fr); }
   .admin-dashboard-grid { grid-template-columns: 1fr; }
+  .admin-dashboard-main-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .admin-dashboard-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 16px !important;
+    margin-bottom: 22px !important;
+  }
+  .admin-dashboard-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1520,9 +1531,68 @@ input, textarea { cursor: text; }
   .sidebar-overlay { display: block !important; }
   .sidebar-hamburger { display: inline-flex !important; }
   .admin-topbar { padding: 0 16px; height: 64px; }
-  .admin-content-area { padding: 20px 16px; }
+  .admin-main,
+  .admin-content,
+  .admin-content-area {
+    width: 100%;
+    max-width: 100vw;
+    min-width: 0;
+  }
+  .admin-content-area {
+    padding: 18px 14px;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
   .admin-stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .admin-dashboard-grid { grid-template-columns: 1fr; }
+  .admin-dashboard-kpi-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+  .admin-dashboard-main-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+  .admin-dashboard-side-grid {
+    gap: 14px !important;
+  }
+  .admin-analytics-card {
+    width: 100%;
+    max-width: 100%;
+    padding: 18px !important;
+    border-radius: 14px !important;
+  }
+  .admin-dashboard-card-head {
+    align-items: flex-start !important;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .admin-dashboard-actions {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    gap: 8px !important;
+  }
+  .admin-dashboard-actions > * {
+    min-height: 44px;
+    padding: 8px 6px !important;
+    text-align: center;
+    justify-content: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .admin-donut-layout {
+    flex-direction: column;
+    align-items: center !important;
+  }
+  .admin-donut-layout svg {
+    width: min(150px, 70vw);
+    height: auto;
+  }
+  .admin-dashboard-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
   .user-info-text { display: none; }
   .pjl-table { min-width: 480px; }
   .pjl-table th, .pjl-table td { padding: 10px 12px; font-size: 12px; }
@@ -1555,6 +1625,15 @@ input, textarea { cursor: text; }
   .admin-stat-card { padding: 16px 12px; }
   .stat-val { font-size: 22px; }
   .admin-content-area { padding: 16px 12px; }
+  .admin-dashboard-summary-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .admin-dashboard-actions {
+    grid-template-columns: 1fr;
+  }
+  .admin-analytics-card h3 {
+    font-size: 15px !important;
+  }
   .admin-login-screen {
     padding: 16px;
     align-items: flex-start;
@@ -1597,6 +1676,34 @@ input, textarea { cursor: text; }
     linear-gradient(180deg, rgba(253, 250, 245, 0.98) 0%, rgba(247, 240, 227, 0.62) 100%);
   border-top: 1px solid rgba(200, 151, 58, 0.12);
   border-bottom: 1px solid rgba(26, 39, 68, 0.08);
+}
+
+@media (max-width: 1024px) and (orientation: landscape) {
+  .admin-content-area {
+    padding: 16px;
+    overflow-x: hidden;
+  }
+  .admin-dashboard-main-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .admin-dashboard-kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 14px !important;
+    margin-bottom: 20px !important;
+  }
+  .admin-analytics-card {
+    padding: 18px !important;
+  }
+  .admin-dashboard-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 720px) and (orientation: landscape) {
+  .admin-dashboard-kpi-grid,
+  .admin-dashboard-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
 }
 
 .identity-feature-section::before {

@@ -63,11 +63,17 @@ const detectDeviceType = () => {
   if (typeof window === 'undefined') return 'desktop' as const;
   const ua = window.navigator.userAgent.toLowerCase();
   const width = window.innerWidth;
+  const height = window.innerHeight;
   const platform = window.navigator.platform?.toLowerCase() || '';
   const maxTouchPoints = window.navigator.maxTouchPoints || 0;
+  const screenWidth = window.screen?.width || width;
+  const screenHeight = window.screen?.height || height;
+  const shortestSide = Math.min(screenWidth, screenHeight, width, height);
+  const longestSide = Math.max(screenWidth, screenHeight, width, height);
   const isIPadLike = platform.includes('mac') && maxTouchPoints > 1 && width >= 768;
+  const isTouchTabletSize = maxTouchPoints > 1 && shortestSide >= 600 && longestSide >= 900;
 
-  if (/ipad|tablet/.test(ua) || isIPadLike || (width >= 768 && width <= 1180 && (/android/.test(ua) || maxTouchPoints > 1))) return 'tablet' as const;
+  if (/ipad|tablet/.test(ua) || isIPadLike || isTouchTabletSize || (width >= 768 && width <= 1180 && (/android/.test(ua) || maxTouchPoints > 1))) return 'tablet' as const;
   if (/mobi|iphone|ipod|android/.test(ua) || width < 768) return 'mobile' as const;
   return 'desktop' as const;
 };

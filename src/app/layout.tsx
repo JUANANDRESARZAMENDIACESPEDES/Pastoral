@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Playfair_Display, DM_Sans, Cormorant_Garamond } from "next/font/google";
 import ThemeLoader from "../components/ThemeLoader";
@@ -25,6 +25,12 @@ const cormorant = Cormorant_Garamond({
 export const metadata: Metadata = {
   title: "Pastoral Juvenil Luqueña | PJL",
   description: "Sitio oficial de la Pastoral Juvenil Luqueña. Comunidad, fe y misión para la juventud de Luque.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({

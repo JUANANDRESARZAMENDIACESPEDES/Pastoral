@@ -1191,7 +1191,7 @@ function AdminContent() {
             <div className="animate-reveal">
 
               {/* TOP KPI CARDS - PREMIUM DESIGN (FOTO 3 STYLE) */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '25px', marginBottom: '40px' }}>
+              <div className="admin-dashboard-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '25px', marginBottom: '40px' }}>
                 <div className="pjl-card hover-lift" style={{ padding: '30px', background: 'linear-gradient(135deg, var(--navy) 0%, #2E3F6B 100%)', border: 'none', color: '#fff' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
@@ -1233,16 +1233,16 @@ function AdminContent() {
               </div>
 
               {/* MAIN ANALYTICS GRID */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '20px', marginBottom: '20px' }}>
+              <div className="admin-dashboard-main-grid" style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '20px', marginBottom: '20px' }}>
 
                 {/* VISITS BY SECTION — HORIZONTAL BARS */}
-                <div style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: '16px', padding: '28px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <div className="admin-analytics-card" style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: '16px', padding: '28px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
+                  <div className="admin-dashboard-card-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                     <div>
                       <h3 style={{ margin: 0, color: 'var(--navy)', fontSize: '16px', fontWeight: 700 }}>📊 Visitas por Sección</h3>
                       <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#888' }}>Visitas e interacciones registradas automáticamente</p>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div className="admin-dashboard-actions" style={{ display: 'flex', gap: '8px' }}>
                       <button onClick={() => { const s = store.stats.get(); const csv = 'Sección,Visitas,Interacciones\n' + s.map(e => `"${e.label}",${e.visits},${e.interactions}`).join('\n'); const a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv); a.download = 'reporte_pjl.csv'; a.click(); showToast('CSV descargado ✔'); }} style={{ fontSize: '10px', padding: '5px 12px', background: 'var(--cream)', border: '1px solid var(--gold-pale)', borderRadius: '6px', cursor: 'pointer', color: 'var(--navy)', fontWeight: 600 }}>📥 CSV</button>
                       <button onClick={resetStats} style={{ fontSize: '10px', padding: '5px 12px', background: '#fff0f0', border: '1px solid #fca5a5', borderRadius: '6px', cursor: 'pointer', color: '#b91c1c', fontWeight: 600 }}>🗑️ Reset</button>
                       <span style={{ fontSize: '10px', background: '#d1fae5', color: '#065f46', padding: '5px 10px', borderRadius: '20px', fontWeight: 700 }}>● Auto-sync</span>
@@ -1290,10 +1290,10 @@ function AdminContent() {
                 </div>
 
                 {/* RIGHT COLUMN */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                <div className="admin-dashboard-side-grid" style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
 
                   {/* DISTRIBUTION DONUT (SVG) */}
-                  <div style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', flex: 1 }}>
+                  <div className="admin-analytics-card" style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', flex: 1 }}>
                     <h3 style={{ margin: '0 0 16px', color: 'var(--navy)', fontSize: '15px', fontWeight: 700 }}>🥧 Distribución por Sección</h3>
                     {(() => {
                       const data = (Array.isArray(pageStats) ? pageStats : []).filter(s => (s?.visits || 0) > 0);
@@ -1310,7 +1310,7 @@ function AdminContent() {
                       const r = 55, cx = 70, cy = 70, strokeW = 22;
                       const circ = 2 * Math.PI * r;
                       return (
-                        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                        <div className="admin-donut-layout" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                           <svg width="140" height="140" viewBox="0 0 140 140" style={{ flexShrink: 0 }}>
                             {segments.map((seg, i) => (
                               <circle
@@ -1343,7 +1343,7 @@ function AdminContent() {
                   </div>
 
                   {/* DISPOSITIVOS */}
-                  <div style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', flex: 1 }}>
+                  <div className="admin-analytics-card" style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', flex: 1 }}>
                     <h3 style={{ margin: '0 0 16px', color: 'var(--navy)', fontSize: '15px', fontWeight: 700 }}>📱 Dispositivos</h3>
                     {(() => {
                       const data = Array.isArray(pageStats) ? pageStats : [];
@@ -1377,7 +1377,7 @@ function AdminContent() {
                   </div>
 
                   {/* QUICK ACTIONS */}
-                  <div style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: '16px', padding: '22px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
+                  <div className="admin-analytics-card" style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: '16px', padding: '22px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
                     <h3 style={{ margin: '0 0 14px', color: 'var(--navy)', fontSize: '15px', fontWeight: 700 }}>⚡ Accesos Rápidos</h3>
                     <div style={{ display: 'grid', gap: '8px' }}>
                       {[
@@ -1396,7 +1396,7 @@ function AdminContent() {
               </div>
 
               {/* STATUS BAR — Content summary */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
+              <div className="admin-dashboard-summary-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
                 {[
                   { label: 'Noticias', total: news.length, active: news.filter(n => n.published).length, icon: '📰', color: '#3B82F6' },
                   { label: 'Eventos', total: activities.length, active: activities.filter(a => a.active).length, icon: '📅', color: '#8B5CF6' },
