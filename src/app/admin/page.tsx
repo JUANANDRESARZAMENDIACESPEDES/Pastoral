@@ -712,7 +712,7 @@ function AdminContent() {
 
     setIsRegistering(true);
     try {
-      const redirectTo = window.location.origin + '/admin?confirmed=true';
+      const redirectTo = window.location.origin + '/confirmation?success=true';
       const { error } = await signUpProfile(registerForm.name, registerForm.email, registerForm.password, redirectTo);
       if (error) {
         setRegisterErr(error.message || 'Error al solicitar acceso.');
@@ -802,10 +802,12 @@ function AdminContent() {
     if (type === 'users') {
       const user = allUsers.find(u => u.id === id);
       if (user) {
-        const { success, message } = await deleteProfile(user.id, user.authUid);
-        if (!success) {
-          alert(message || 'No se pudo eliminar el usuario en Supabase.');
-          return;
+        if (user.authUid) {
+          const { success, message } = await deleteProfile(user.id, user.authUid);
+          if (!success) {
+            alert(message || 'No se pudo eliminar el usuario en Supabase.');
+            return;
+          }
         }
       }
       setAllUsers(allUsers.filter(u => u.id !== id));

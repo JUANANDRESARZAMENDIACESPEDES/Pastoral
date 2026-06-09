@@ -310,7 +310,7 @@ export async function resendVerificationEmail(email: string, redirectTo?: string
     const response = await fetch('/api/supabase/resend-verification', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, redirectTo: redirectTo || window.location.origin + '/admin?confirmed=true' }),
+      body: JSON.stringify({ email, redirectTo: redirectTo || window.location.origin + '/confirmation?success=true' }),
     });
     const result = await response.json();
 
