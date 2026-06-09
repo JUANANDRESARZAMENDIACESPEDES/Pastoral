@@ -325,3 +325,24 @@ export async function resendVerificationEmail(email: string, redirectTo?: string
     return { success: false, message: String(error) };
   }
 }
+
+export async function requestPasswordReset(email: string, redirectTo?: string) {
+  try {
+    const response = await fetch('/api/supabase/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, redirectTo: redirectTo || window.location.origin }),
+    });
+    const result = await response.json();
+
+    if (!response.ok) {
+      console.error('Supabase requestPasswordReset failed:', result?.message || response.statusText);
+      return { success: false, message: result?.message || 'Error al enviar el correo de recuperación.' };
+    }
+
+    return { success: result?.success === true, message: result?.message || 'Correo de recuperación enviado. Revisa tu bandeja de entrada (y spam).' };
+  } catch (error) {
+    console.error('Supabase requestPasswordReset failed:', error);
+    return { success: false, message: String(error) };
+  }
+}

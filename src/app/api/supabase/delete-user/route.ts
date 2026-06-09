@@ -4,6 +4,10 @@ import { createClient } from '@supabase/supabase-js';
 const PROFILE_TABLES = ['user_profiles', 'profiles'] as const;
 type ProfileTableName = (typeof PROFILE_TABLES)[number];
 
+function isValidUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+
 async function findProfileTable(supabase: any): Promise<ProfileTableName> {
   for (const table of PROFILE_TABLES) {
     const { error } = await supabase.from(table).select('id').limit(1);
@@ -32,6 +36,10 @@ export async function POST(request: Request) {
 
   if (!profileId || typeof profileId !== 'string') {
     return NextResponse.json({ success: false, message: 'Falta el ID del perfil a eliminar.' }, { status: 400 });
+  }
+
+  if (!isValidUuid(profileId)) {
+    return NextResponse.json({ success: false, message: 'El ID del perfil no es un UUID válido. No se puede eliminar.', }, { status: 400 });
   }
 
   const supabase = createClient(supabaseUrl, serviceRoleKey || anonKey, {

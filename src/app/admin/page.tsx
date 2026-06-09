@@ -941,6 +941,24 @@ function AdminContent() {
                 />
                 Mostrar contraseña
               </label>
+              <div style={{ textAlign: 'right', marginTop: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => router.push('/reset-password')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--gold)',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    fontSize: '13px',
+                    padding: 0,
+                  }}
+                >
+                  Olvidé mi contraseña
+                </button>
+              </div>
             </div>
             <button type="submit" className="btn-premium btn-premium-gold" style={{ width: '100%', marginTop: '10px' }} disabled={isLoggingIn}>
               {isLoggingIn ? 'Ingresando...' : 'Entrar al Panel'}
