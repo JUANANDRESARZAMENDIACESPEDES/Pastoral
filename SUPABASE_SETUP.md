@@ -10,13 +10,29 @@ Este proyecto usa Supabase para:
 1. En Supabase, abre el SQL editor.
 2. Ejecuta el contenido del archivo `supabase-schema.sql`.
    - Esto crea las tablas necesarias: `user_profiles` y `pjl_store`.
+   - Tambien crea las policies para que la app pueda leer y guardar cambios.
 
-3. En Vercel, configura las siguientes variables de entorno en tu proyecto:
+3. En local, crea `.env.local` usando `.env.example` como referencia:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY`
 
-4. Guarda las variables y fuerza un redeploy del proyecto.
+4. En Vercel, configura las mismas variables de entorno en tu proyecto:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+
+5. Guarda las variables y fuerza un redeploy del proyecto.
+
+6. Para publicar cambios de codigo en Vercel:
+   ```bash
+   git status
+   git add .
+   git commit -m "Actualiza sitio pastoral"
+   git push origin main
+   ```
+
+7. Para sincronizar datos editados desde el panel Admin, verifica que `/api/supabase/status` responda `ok: true` en local y en Vercel.
 
 ## Qué hace cada tabla
 

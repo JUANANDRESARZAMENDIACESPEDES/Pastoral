@@ -254,7 +254,7 @@ export const DEFAULT_SECTIONS: ActiveSections = { zonas: true, consejo: true, ag
 export const DEFAULT_GALLERY: GalleryItem[] = [];
 
 export const DEFAULT_BRANDING: Branding = { 
-  mainLogo: '', 
+  mainLogo: '/pjl-logo.svg', 
   zona1Logo: '', 
   zona2Logo: '', 
   zona3Logo: '', 
