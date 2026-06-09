@@ -1986,30 +1986,151 @@ function AdminContent() {
                 {/* TAB: INSTITUCIONAL */}
                 {activeContentTab === 'institucional' && (
                   <div className="animate-reveal">
-                    <h4 className="serif" style={{ marginBottom: '20px', color: 'var(--navy)' }}>📍 Información Principal</h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '25px' }}>
-                      <div className="form-group">
-                        <label className="premium-label">TÍTULO INTRODUCTORIO</label>
-                        <input className="pjl-input" value={content.instiTitulo || ''} onChange={e => setContent({ ...content, instiTitulo: e.target.value })} placeholder="Ej: Bienvenidos a la Pastoral" />
-                      </div>
-                      <div className="form-group">
-                        <label className="premium-label">SUBTÍTULO / BREVE DESCRIPCIÓN</label>
-                        <textarea className="pjl-input" rows={4} value={content.instiDesc || ''} onChange={e => setContent({ ...content, instiDesc: e.target.value })} />
-                      </div>
-                      <div className="form-group">
-                        <label className="premium-label">FOTO DE PORTADA INSTITUCIONAL</label>
-                        <div style={{ display: 'flex', gap: '20px', alignItems: 'center', background: 'var(--cream)', padding: '20px', borderRadius: '15px' }}>
-                          <div style={{ width: '150px', height: '100px', borderRadius: '12px', background: 'var(--white)', border: '2px solid var(--gold-pale)', overflow: 'hidden' }}>
-                            {content.instiFoto && <img src={content.instiFoto} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px' }}>
+                      <div style={{ display: 'grid', gap: '22px' }}>
+                        <div className="pjl-card" style={{ padding: '24px 28px', background: 'var(--cream)', border: '1px solid var(--gold-pale)', borderRadius: '24px' }}>
+                          <h4 className="serif" style={{ marginBottom: '18px', color: 'var(--navy)' }}>📍 Información Principal</h4>
+                          <div className="form-group">
+                            <label className="premium-label">TÍTULO INTRODUCTORIO</label>
+                            <input className="pjl-input" value={content.instiTitulo || ''} onChange={e => setContent({ ...content, instiTitulo: e.target.value })} placeholder="Ej: Bienvenidos a la Pastoral" />
                           </div>
-                          <div>
-                            <p style={{ fontSize: '12px', marginBottom: '10px', opacity: 0.7 }}>Esta imagen aparece en la sección &quot;Sobre Nosotros&quot;.</p>
-                            <label className="btn-premium btn-premium-gold" style={{ padding: '8px 20px', fontSize: '11px' }}>
-                              SUBIR NUEVA IMAGEN
-                              <input type="file" style={{ display: 'none' }} accept="image/*" onChange={e => handleFileUpload(e, url => setContent({...content, instiFoto: url}))} />
-                            </label>
+                          <div className="form-group">
+                            <label className="premium-label">SUBTÍTULO / RESUMEN</label>
+                            <input className="pjl-input" value={content.instiSubtitle || ''} onChange={e => setContent({ ...content, instiSubtitle: e.target.value })} placeholder="Ej: Una red pastoral joven que hace de la fe una experiencia comunitaria" />
+                          </div>
+                          <div className="form-group">
+                            <label className="premium-label">TEXTO DETALLADO</label>
+                            <textarea className="pjl-input" rows={5} value={content.instiDesc || ''} onChange={e => setContent({ ...content, instiDesc: e.target.value })} placeholder="Describe la estructura, misión y estilo institucional." />
+                          </div>
+                          <div className="form-group">
+                            <label className="premium-label">TEXTO ALT DE LA IMAGEN</label>
+                            <input className="pjl-input" value={content.instiAltText || ''} onChange={e => setContent({ ...content, instiAltText: e.target.value })} placeholder="Texto alternativo de la foto" />
                           </div>
                         </div>
+
+                        <div className="pjl-card" style={{ padding: '24px 28px', background: '#fff', border: '1px solid var(--gold-pale)', borderRadius: '24px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '18px', marginBottom: '16px' }}>
+                            <div>
+                              <h5 className="serif" style={{ color: 'var(--navy)', margin: 0 }}>Idea para mejorar la sección</h5>
+                              <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '8px' }}>Agrega subtítulos, tarjetas breves y un texto más aspiracional para que la zona luzca más estética y profesional.</p>
+                            </div>
+                            <button
+                              className="btn-premium btn-premium-outline"
+                              style={{ padding: '10px 16px', fontSize: '11px' }}
+                              onClick={() => {
+                                setContent({
+                                  ...content,
+                                  instiSubtitle: content.instiSubtitle || 'Una red pastoral joven que hace de la fe una experiencia comunitaria',
+                                  instiDesc: content.instiDesc || 'Nuestra estructura combina liderazgo, acompañamiento espiritual y presencia territorial para impulsar a los jóvenes de Luque a vivir la fe con alegría y compromiso.',
+                                  instiCards: [
+                                    { title: 'Liderazgo Compartido', text: 'Coordinadores, equipos zonales y comunidades trabajan juntos para construir una pastoral fuerte y cercana.', icon: '🤝' },
+                                    { title: 'Presencia Territorial', text: 'Cuatro zonas pastorales con identidad propia, unidas por el servicio, la formación y la misión juvenil.', icon: '📍' },
+                                    { title: 'Firma Pastoral', text: 'Tradición, acompañamiento y alegría en cada acción pastoral que transforma la realidad de Luque.', icon: '🌟' }
+                                  ]
+                                });
+                                showToast('Texto sugerido aplicado ✔');
+                              }}
+                            >Sugerir texto</button>
+                          </div>
+                          <div style={{ display: 'grid', gap: '14px' }}>
+                            <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>Estas tarjetas ayudan a construir una presentación más atractiva y moderna de la estructura institucional.</p>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                              {(content.instiCards || []).slice(0, 3).map((card, idx) => (
+                                <div key={idx} style={{ padding: '16px', background: 'var(--cream)', borderRadius: '16px', border: '1px solid var(--gold-pale)', minHeight: '132px' }}>
+                                  <div style={{ fontSize: '20px', marginBottom: '10px' }}>{card.icon || '✨'}</div>
+                                  <strong style={{ display: 'block', marginBottom: '6px', color: 'var(--navy)' }}>{card.title || `Idea ${idx + 1}`}</strong>
+                                  <p style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>{card.text || 'Texto adicional para enfatizar la ventaja de la estructura.'}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gap: '18px' }}>
+                        <div style={{ padding: '28px', borderRadius: '28px', background: 'linear-gradient(180deg, #ffffff, #fbf8ef)', border: '1px solid rgba(200,151,58,0.2)', boxShadow: '0 20px 40px rgba(0,0,0,0.04)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '18px' }}>
+                            <span style={{ width: '44px', height: '44px', borderRadius: '16px', background: 'var(--gold)', display: 'grid', placeItems: 'center', color: 'var(--navy)', fontSize: '20px' }}>🏛️</span>
+                            <div>
+                              <p className="premium-label" style={{ margin: 0 }}>Previsualización Institucional</p>
+                              <h4 className="serif" style={{ margin: '8px 0 0', color: 'var(--navy)' }}>Estructura más atractiva</h4>
+                            </div>
+                          </div>
+                          <div style={{ display: 'grid', gap: '16px' }}>
+                            <span style={{ color: 'var(--gold)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>{content.instiSubtitle || 'Subtítulo institucional'}</span>
+                            <h3 className="serif" style={{ margin: 0, color: 'var(--navy)', fontSize: '2rem', lineHeight: 1.1 }}>{content.instiTitulo || 'Nuestra Identidad'}</h3>
+                            <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.8 }}>{content.instiDesc || 'Texto descriptivo sobre la estructura institucional y la presencia pastoral.'}</p>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+                              {(content.instiCards || []).slice(0, 2).map((card, idx) => (
+                                <div key={idx} style={{ padding: '16px', background: '#fff', borderRadius: '18px', border: '1px solid var(--gold-pale)' }}>
+                                  <div style={{ fontSize: '18px', marginBottom: '10px' }}>{card.icon || '✨'}</div>
+                                  <strong style={{ display: 'block', marginBottom: '6px', color: 'var(--navy)' }}>{card.title || `Tarjeta ${idx + 1}`}</strong>
+                                  <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)' }}>{card.text || 'Detalle breve de la estructura.'}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ borderRadius: '24px', overflow: 'hidden', background: 'var(--white)', border: '1px solid var(--gold-pale)' }}>
+                          {content.instiFoto ? (
+                            <img src={content.instiFoto} alt={content.instiAltText || 'Imagen institucional'} style={{ width: '100%', height: '320px', objectFit: 'cover' }} />
+                          ) : (
+                            <div style={{ width: '100%', height: '320px', display: 'grid', placeItems: 'center', background: 'linear-gradient(180deg, #fffaf0, #f5f1e4)', color: 'var(--gold)', fontSize: '22px', fontWeight: 700 }}>
+                              Imagen Institucional
+                            </div>
+                          )}
+                          <div style={{ padding: '18px 22px' }}>
+                            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '13px' }}>Esta vista previa muestra cómo el contenido se verá con un estilo más cuidado y editorial.</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pjl-card" style={{ padding: '28px', background: 'var(--cream)', border: '1px solid var(--gold-pale)', borderRadius: '24px' }}>
+                      <h4 className="serif" style={{ marginBottom: '18px', color: 'var(--navy)' }}>Tarjetas de apoyo para la estructura</h4>
+                      <div style={{ display: 'grid', gap: '18px' }}>
+                        {(content.instiCards || []).map((card, idx) => (
+                          <div key={idx} style={{ display: 'grid', gap: '12px', background: '#fff', borderRadius: '18px', border: '1px solid var(--gold-pale)', padding: '18px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
+                              <div>
+                                <p className="premium-label" style={{ marginBottom: '6px' }}>TARJETA {idx + 1}</p>
+                                <input
+                                  className="pjl-input"
+                                  value={card.icon || ''}
+                                  onChange={e => {
+                                    const cards = [...(content.instiCards || [])];
+                                    cards[idx] = { ...cards[idx], icon: e.target.value };
+                                    setContent({ ...content, instiCards: cards });
+                                  }}
+                                  placeholder="Icono (Ej: 🤝, 🌟, 📍)"
+                                />
+                              </div>
+                              <div style={{ flex: 1, display: 'grid', gap: '10px' }}>
+                                <input
+                                  className="pjl-input"
+                                  value={card.title || ''}
+                                  onChange={e => {
+                                    const cards = [...(content.instiCards || [])];
+                                    cards[idx] = { ...cards[idx], title: e.target.value };
+                                    setContent({ ...content, instiCards: cards });
+                                  }}
+                                  placeholder="Título de la tarjeta"
+                                />
+                                <textarea
+                                  className="pjl-input"
+                                  rows={2}
+                                  value={card.text || ''}
+                                  onChange={e => {
+                                    const cards = [...(content.instiCards || [])];
+                                    cards[idx] = { ...cards[idx], text: e.target.value };
+                                    setContent({ ...content, instiCards: cards });
+                                  }}
+                                  placeholder="Texto breve de apoyo"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>

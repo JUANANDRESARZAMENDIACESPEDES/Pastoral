@@ -71,8 +71,11 @@ export interface SiteContent  {
   googleCalendarUrl: string;
   historiaTimeline: TimelineEvent[];
   instiTitulo: string;
+  instiSubtitle: string;
   instiDesc: string;
+  instiAltText: string;
   instiFoto: string;
+  instiCards: { title: string; text: string; icon: string }[];
   heroTag: string;
   heroTitle: string;
   heroText: string;
@@ -213,8 +216,15 @@ export const DEFAULT_CONTENT: SiteContent = {
     { id: '2', title: 'Presente', text: 'Hoy en día, la PJL Luque se consolida como un referente diocesano de organización y fe activa.', accentColor: '#1A2744' }
   ],
   instiTitulo: 'Nuestra Identidad',
+  instiSubtitle: 'Una red pastoral joven que hace de la fe una experiencia comunitaria',
   instiDesc: 'Somos una pastoral joven que camina de la mano de María, buscando ser luz en el mundo.',
+  instiAltText: 'Jóvenes en comunidad pastoral conocedores y comprometidos',
   instiFoto: '',
+  instiCards: [
+    { title: 'Liderazgo Compartido', text: 'Coordinadores, equipos zonales y comunidades trabajan juntos para construir una pastoral fuerte y cercana.', icon: '🤝' },
+    { title: 'Presencia Territorial', text: 'Cuatro zonas pastorales con identidad propia, unidas por el servicio, la formación y la misión juvenil.', icon: '📍' },
+    { title: 'Firma Pastoral', text: 'Tradición, acompañamiento y alegría en cada acción pastoral que transforma la realidad de Luque.', icon: '🌟' }
+  ],
   heroTag: 'Diócesis de San Lorenzo',
   heroTitle: 'Caminando con la <br/> <span style="color: var(--gold)">Juventud Luqueña</span>',
   heroText: 'Somos una comunidad de jóvenes comprometidos con el anuncio del Evangelio y la transformación social a través de la fe, la esperanza y la caridad.',
