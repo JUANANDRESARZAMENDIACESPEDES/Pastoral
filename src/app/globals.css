@@ -189,14 +189,14 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
   position: sticky;
   top: 0;
   z-index: 99999;
-  background: linear-gradient(180deg, rgba(253, 250, 245, 0.98) 0%, rgba(245, 240, 232, 0.96) 100%);
-  backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(200, 151, 58, 0.18);
-  box-shadow: 0 10px 30px rgba(26, 39, 68, 0.08);
+  background: linear-gradient(180deg, rgba(253, 250, 245, 0.99) 0%, rgba(247, 242, 235, 0.97) 100%);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(200, 151, 58, 0.16);
+  box-shadow: 0 8px 26px rgba(26, 39, 68, 0.08);
   height: 92px;
   display: flex;
   align-items: center;
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  transition: box-shadow 0.3s ease;
 }
 
 .nav-content {
@@ -226,8 +226,9 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
 
 .nav-links {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
+  flex-wrap: nowrap;
 }
 .nav-item {
   position: relative;
@@ -235,44 +236,59 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
   font-size: 15px;
   color: var(--navy) !important;
 }
+.nav-item::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: -2px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(200, 151, 58, 0.35), transparent);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.nav-item:hover::after {
+  opacity: 1;
+}
 .nav-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 14px;
+  padding: 10px 13px;
   border-radius: 12px;
   font-weight: 700;
   color: var(--navy);
-  background: rgba(255, 255, 255, 0.62);
-  border: 1px solid rgba(200, 151, 58, 0.18);
-  box-shadow: 0 4px 12px rgba(26, 39, 68, 0.04);
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(200, 151, 58, 0.14);
+  box-shadow: 0 3px 10px rgba(26, 39, 68, 0.04);
   transition: all 0.25s ease;
 }
 .nav-btn:hover {
-  background: linear-gradient(135deg, rgba(26, 39, 68, 0.98), rgba(45, 62, 102, 0.98));
+  background: linear-gradient(135deg, rgba(26, 39, 68, 0.98), rgba(43, 57, 96, 0.98));
   color: var(--gold);
-  border-color: rgba(200, 151, 58, 0.45);
-  transform: translateY(-2px);
+  border-color: rgba(200, 151, 58, 0.35);
+  transform: translateY(-1px);
   box-shadow: 0 10px 18px rgba(26, 39, 68, 0.14);
 }
 
 .dropdown-pjl {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 10px);
   left: 0;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 244, 238, 0.98) 100%);
   min-width: 240px;
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
-  border: 1px solid rgba(200, 151, 58, 0.18);
+  border: 1px solid rgba(200, 151, 58, 0.16);
   border-radius: 16px;
-  padding: 12px;
+  padding: 10px;
   z-index: 999999;
   opacity: 0;
   visibility: hidden;
-  transform: translateY(8px);
+  transform: translateY(10px);
   transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 .nav-item:hover .dropdown-pjl {
   opacity: 1;
@@ -282,14 +298,18 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
 .dropdown-link {
   font-size: 14px;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: 12px;
   color: var(--navy);
   transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 .dropdown-link:hover {
-  background: linear-gradient(135deg, rgba(200, 151, 58, 0.14), rgba(26, 39, 68, 0.06));
+  background: linear-gradient(135deg, rgba(200, 151, 58, 0.12), rgba(26, 39, 68, 0.05));
   color: var(--gold);
   transform: translateX(2px);
+}
+.dropdown-link:focus-visible {
+  outline: 2px solid rgba(200, 151, 58, 0.35);
+  outline-offset: 1px;
 }
 
 /* HERO */
