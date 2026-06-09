@@ -252,8 +252,7 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
   transform: scaleX(0.6);
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
-.nav-item:hover::after,
-.nav-item:focus-within::after {
+.nav-item:hover::after {
   opacity: 1;
   transform: scaleX(1);
 }
@@ -273,8 +272,7 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
   transition: color 0.22s ease, background 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
 }
 .nav-btn:hover,
-.nav-btn:focus-visible,
-.nav-item:focus-within > .nav-btn {
+.nav-btn:focus-visible {
   background: linear-gradient(135deg, rgba(26, 39, 68, 0.98), rgba(36, 50, 85, 0.98));
   color: var(--gold);
   border-color: rgba(200, 151, 58, 0.5);
@@ -325,8 +323,7 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
 .dropdown-pjl-featured {
   min-width: 266px;
 }
-.nav-item:hover .dropdown-pjl,
-.nav-item:focus-within .dropdown-pjl {
+.nav-item:hover .dropdown-pjl {
   opacity: 1;
   visibility: visible;
   transform: translateY(0) scale(1);
