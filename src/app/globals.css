@@ -285,7 +285,7 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
 
 .dropdown-pjl {
   position: absolute;
-  top: calc(100% + 14px);
+  top: calc(100% + 8px);
   left: 0;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(250, 246, 239, 0.99) 100%);
   min-width: 252px;
@@ -301,6 +301,14 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
   display: grid;
   gap: 6px;
   pointer-events: none;
+}
+.dropdown-pjl::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -14px;
+  height: 14px;
 }
 .dropdown-pjl::before {
   content: '';
