@@ -399,38 +399,38 @@ function HomeContent() {
             <li className="nav-item">
               <Link href="/" onClick={(e) => navigate('home', e)} className="nav-btn">🏠 Inicio</Link>
             </li>
-            <li className="nav-item">
-              <a href="#" className="nav-btn">📖 Nosotros ▾</a>
-              <div className="dropdown-pjl">
-                <Link href="/" onClick={(e) => navigate('estatuto', e)} className="dropdown-link">Estatuto</Link>
-                <Link href="/" onClick={(e) => navigate('historia', e)} className="dropdown-link">Nuestra Historia</Link>
-                <Link href="/" onClick={(e) => navigate('institucional', e)} className="dropdown-link">Institucional</Link>
+            <li className="nav-item nav-item-featured">
+              <Link href="/?page=institucional" onClick={(e) => navigate('institucional', e)} className="nav-btn">📖 Nosotros ▾</Link>
+              <div className="dropdown-pjl dropdown-pjl-featured">
+                <Link href="/?page=estatuto" onClick={(e) => navigate('estatuto', e)} className="dropdown-link">Estatuto</Link>
+                <Link href="/?page=historia" onClick={(e) => navigate('historia', e)} className="dropdown-link">Nuestra Historia</Link>
+                <Link href="/?page=institucional" onClick={(e) => navigate('institucional', e)} className="dropdown-link">Institucional</Link>
               </div>
             </li>
             <li className="nav-item">
-              <a href="#" onClick={(e) => navigate('consejo', e)} className="nav-btn" data-tooltip="Conoce la estructura y líderes">👥 Consejo PJL ▾</a>
+              <Link href="/?page=consejo" onClick={(e) => navigate('consejo', e)} className="nav-btn" data-tooltip="Conoce la estructura y líderes">👥 Consejo PJL ▾</Link>
               <div className="dropdown-pjl">
                 {councilTabs.map(t => (
-                  <Link key={t.id} href="/" onClick={(e) => { navigate('consejo', e); setActiveConsejoTab(t.id); }} className="dropdown-link">{t.label}</Link>
+                  <Link key={t.id} href="/?page=consejo" onClick={(e) => { navigate('consejo', e); setActiveConsejoTab(t.id); }} className="dropdown-link">{t.label}</Link>
                 ))}
               </div>
             </li>
             <li className="nav-item">
-              <a href="#" onClick={(e) => navigate('zonas', e)} className="nav-btn" data-tooltip="Explorar nuestras comunidades">🗺️ Zonas ▾</a>
+              <Link href="/?page=zonas" onClick={(e) => navigate('zonas', e)} className="nav-btn" data-tooltip="Explorar nuestras comunidades">🗺️ Zonas ▾</Link>
               <div className="dropdown-pjl">
                 {zonasInfo.map(z => (
-                  <Link key={z.id} href="/" onClick={(e) => { setSelectedZone(z.id); navigate('zonas', e); }} className="dropdown-link">Zona {z.id} – {z.name}</Link>
+                  <Link key={z.id} href="/?page=zonas" onClick={(e) => { navigate('zonas', e); setActiveZoneTab('capillas'); setSelectedZone(z.id); }} className="dropdown-link">Zona {z.id} – {z.name}</Link>
                 ))}
               </div>
             </li>
             <li className="nav-item">
-              <Link href="/" onClick={(e) => navigate('agenda', e)} className="nav-btn">📅 Agenda</Link>
+              <Link href="/?page=agenda" onClick={(e) => navigate('agenda', e)} className="nav-btn">📅 Agenda</Link>
             </li>
             <li className="nav-item">
-              <Link href="/" onClick={(e) => navigate('noticias', e)} className="nav-btn">📰 Noticias</Link>
+              <Link href="/?page=noticias" onClick={(e) => navigate('noticias', e)} className="nav-btn">📰 Noticias</Link>
             </li>
             <li className="nav-item">
-              <Link href="/" onClick={(e) => navigate('contacto', e)} className="nav-btn">✉️ Contacto</Link>
+              <Link href="/?page=contacto" onClick={(e) => navigate('contacto', e)} className="nav-btn">✉️ Contacto</Link>
             </li>
 
             <li className="nav-item">
@@ -473,13 +473,13 @@ function HomeContent() {
               {mobileSubmenuOpen['nosotros'] && (
                 <ul className="drawer-sublinks">
                   <li>
-                    <Link href="/" onClick={(e) => { navigate('estatuto', e); setIsMobileMenuOpen(false); }} className="drawer-sublink">Estatuto</Link>
+                    <Link href="/?page=estatuto" onClick={(e) => { navigate('estatuto', e); setIsMobileMenuOpen(false); }} className="drawer-sublink">Estatuto</Link>
                   </li>
                   <li>
-                    <Link href="/" onClick={(e) => { navigate('historia', e); setIsMobileMenuOpen(false); }} className="drawer-sublink">Nuestra Historia</Link>
+                    <Link href="/?page=historia" onClick={(e) => { navigate('historia', e); setIsMobileMenuOpen(false); }} className="drawer-sublink">Nuestra Historia</Link>
                   </li>
                   <li>
-                    <Link href="/" onClick={(e) => { navigate('institucional', e); setIsMobileMenuOpen(false); }} className="drawer-sublink">Institucional</Link>
+                    <Link href="/?page=institucional" onClick={(e) => { navigate('institucional', e); setIsMobileMenuOpen(false); }} className="drawer-sublink">Institucional</Link>
                   </li>
                 </ul>
               )}
@@ -494,7 +494,7 @@ function HomeContent() {
                 <ul className="drawer-sublinks">
                   {councilTabs.map(t => (
                     <li key={t.id}>
-                      <Link href="/" onClick={(e) => { navigate('consejo', e); setActiveConsejoTab(t.id); setIsMobileMenuOpen(false); }} className="drawer-sublink">{t.label}</Link>
+                      <Link href="/?page=consejo" onClick={(e) => { navigate('consejo', e); setActiveConsejoTab(t.id); setIsMobileMenuOpen(false); }} className="drawer-sublink">{t.label}</Link>
                     </li>
                   ))}
                 </ul>
@@ -510,7 +510,7 @@ function HomeContent() {
                 <ul className="drawer-sublinks">
                   {zonasInfo.map(z => (
                     <li key={z.id}>
-                      <Link href="/" onClick={(e) => { setSelectedZone(z.id); navigate('zonas', e); setIsMobileMenuOpen(false); }} className="drawer-sublink">Zona {z.id} – {z.name}</Link>
+                      <Link href="/?page=zonas" onClick={(e) => { navigate('zonas', e); setActiveZoneTab('capillas'); setSelectedZone(z.id); setIsMobileMenuOpen(false); }} className="drawer-sublink">Zona {z.id} – {z.name}</Link>
                     </li>
                   ))}
                 </ul>
@@ -518,13 +518,13 @@ function HomeContent() {
             </li>
 
             <li>
-              <Link href="/" onClick={(e) => { navigate('agenda', e); setIsMobileMenuOpen(false); }} className="drawer-btn">📅 Agenda</Link>
+              <Link href="/?page=agenda" onClick={(e) => { navigate('agenda', e); setIsMobileMenuOpen(false); }} className="drawer-btn">📅 Agenda</Link>
             </li>
             <li>
-              <Link href="/" onClick={(e) => { navigate('noticias', e); setIsMobileMenuOpen(false); }} className="drawer-btn">📰 Noticias</Link>
+              <Link href="/?page=noticias" onClick={(e) => { navigate('noticias', e); setIsMobileMenuOpen(false); }} className="drawer-btn">📰 Noticias</Link>
             </li>
             <li>
-              <Link href="/" onClick={(e) => { navigate('contacto', e); setIsMobileMenuOpen(false); }} className="drawer-btn">✉️ Contacto</Link>
+              <Link href="/?page=contacto" onClick={(e) => { navigate('contacto', e); setIsMobileMenuOpen(false); }} className="drawer-btn">✉️ Contacto</Link>
             </li>
 
             <li>
