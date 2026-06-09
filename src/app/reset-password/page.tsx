@@ -1,14 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  const [cooldown, setCooldown] = useState<number>(0);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (cooldown > 0) return;
     setStatus('sending');
     setMessage('');
 
@@ -22,17 +24,33 @@ export default function ResetPasswordPage() {
 
       if (!response.ok || !result.success) {
         setStatus('error');
-        setMessage(result.message || 'No se pudo enviar el correo. Intenta de nuevo.');
+        // Detect rate-limit style messages and show friendly message with cooldown
+        const lower = String(result.message || '').toLowerCase();
+        if (lower.includes('rate') || lower.includes('limit') || lower.includes('too many requests')) {
+          setMessage('Se han enviado demasiadas solicitudes. Intenta nuevamente en unos minutos.');
+          // start client-side cooldown to discourage immediate retries
+          setCooldown(60);
+        } else {
+          setMessage(result.message || 'No se pudo enviar el correo. Intenta de nuevo.');
+        }
         return;
       }
 
       setStatus('success');
       setMessage('Correo enviado. Revisa tu bandeja de entrada (y spam).');
+      setCooldown(60);
     } catch (error) {
       setStatus('error');
       setMessage('Ocurrió un error. Intenta nuevamente más tarde.');
     }
   };
+
+  // Cooldown ticker
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setInterval(() => setCooldown(c => Math.max(0, c - 1)), 1000);
+    return () => clearInterval(t);
+  }, [cooldown]);
 
   return (
     <main style={mainStyle}>
@@ -59,8 +77,8 @@ export default function ResetPasswordPage() {
               style={inputStyle}
             />
 
-            <button type="submit" style={buttonStyle} disabled={status === 'sending'}>
-              {status === 'sending' ? 'Enviando enlace...' : 'Enviar enlace de recuperación'}
+            <button type="submit" style={buttonStyle} disabled={status === 'sending' || cooldown > 0}>
+              {status === 'sending' ? 'Enviando enlace...' : cooldown > 0 ? `Reintentar en ${cooldown}s` : 'Enviar enlace de recuperación'}
             </button>
           </form>
 
