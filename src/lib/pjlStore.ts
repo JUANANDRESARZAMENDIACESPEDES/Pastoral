@@ -96,6 +96,20 @@ export interface ActiveSections { zonas: boolean; consejo: boolean; agenda: bool
 export interface Branding { 
   [key: string]: string | boolean | number | [number, number][] | undefined;
   mainLogo: string;
+  adminIconDashboard: string;
+  adminIconIdentidad: string;
+  adminIconCarrusel: string;
+  adminIconApariencia: string;
+  adminIconContenido: string;
+  adminIconNoticias: string;
+  adminIconActividades: string;
+  adminIconCapillas: string;
+  adminIconPerfiles: string;
+  adminIconDocumentos: string;
+  adminIconUsuarios: string;
+  adminIconLogs: string;
+  adminIconConfiguracion: string;
+  adminIconAsistente: string;
   zona1Logo: string;
   zona2Logo: string;
   zona3Logo: string; 
@@ -255,6 +269,20 @@ export const DEFAULT_GALLERY: GalleryItem[] = [];
 
 export const DEFAULT_BRANDING: Branding = { 
   mainLogo: '/pjl-logo.svg', 
+  adminIconDashboard: '📊',
+  adminIconIdentidad: '🎨',
+  adminIconCarrusel: '🖼️',
+  adminIconApariencia: '✨',
+  adminIconContenido: '📝',
+  adminIconNoticias: '📰',
+  adminIconActividades: '📅',
+  adminIconCapillas: '⛪',
+  adminIconPerfiles: '👤',
+  adminIconDocumentos: '📁',
+  adminIconUsuarios: '👥',
+  adminIconLogs: '📜',
+  adminIconConfiguracion: '⚙️',
+  adminIconAsistente: '🤖',
   zona1Logo: '', 
   zona2Logo: '', 
   zona3Logo: '', 

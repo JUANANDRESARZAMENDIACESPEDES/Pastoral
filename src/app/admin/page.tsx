@@ -28,21 +28,20 @@ type Module = 'dashboard' | 'identidad' | 'apariencia' | 'contenido' | 'activida
 const CREDS = { user: 'admin', pass: 'admin' };
 
 const NAV_ITEMS = [
-  { id: 'dashboard',      icon: '📊', label: 'Dashboard' },
-  { id: 'identidad',      icon: '🎨', label: 'Identidad' },
-  { id: 'carrusel',       icon: '🖼️', label: 'Carrusel Hero' },
-  { id: 'apariencia',     icon: '✨', label: 'Apariencia' },
-  { id: 'contenido',      icon: '📝', label: 'Contenido' },
-  { id: 'noticias',       icon: '📰', label: 'Noticias' },
-  { id: 'actividades',    icon: '📅', label: 'Actividades' },
-  { id: 'capillas',       icon: '⛪', label: 'Capillas' },
-  { id: 'territorio',     icon: '🗺️', label: 'Territorio' },
-  { id: 'perfiles',       icon: '👤', label: 'Currículos' },
-  { id: 'documentos',     icon: '📁', label: 'Documentos' },
-  { id: 'usuarios',       icon: '👥', label: 'Usuarios' },
-  { id: 'logs',           icon: '📜', label: 'Historial' },
-  { id: 'configuracion',  icon: '⚙️', label: 'Configuración' },
-  { id: 'asistente',      icon: '🤖', label: 'Asistente IA' },
+  { id: 'dashboard',      iconKey: 'adminIconDashboard', label: 'Dashboard', defaultIcon: '📊' },
+  { id: 'identidad',      iconKey: 'adminIconIdentidad', label: 'Identidad', defaultIcon: '🎨' },
+  { id: 'carrusel',       iconKey: 'adminIconCarrusel', label: 'Carrusel Hero', defaultIcon: '🖼️' },
+  { id: 'apariencia',     iconKey: 'adminIconApariencia', label: 'Apariencia', defaultIcon: '✨' },
+  { id: 'contenido',      iconKey: 'adminIconContenido', label: 'Contenido', defaultIcon: '📝' },
+  { id: 'noticias',       iconKey: 'adminIconNoticias', label: 'Noticias', defaultIcon: '📰' },
+  { id: 'actividades',    iconKey: 'adminIconActividades', label: 'Actividades', defaultIcon: '📅' },
+  { id: 'capillas',       iconKey: 'adminIconCapillas', label: 'Capillas', defaultIcon: '⛪' },
+  { id: 'perfiles',       iconKey: 'adminIconPerfiles', label: 'Currículos', defaultIcon: '👤' },
+  { id: 'documentos',     iconKey: 'adminIconDocumentos', label: 'Documentos', defaultIcon: '📁' },
+  { id: 'usuarios',       iconKey: 'adminIconUsuarios', label: 'Usuarios', defaultIcon: '👥' },
+  { id: 'logs',           iconKey: 'adminIconLogs', label: 'Historial', defaultIcon: '📜' },
+  { id: 'configuracion',  iconKey: 'adminIconConfiguracion', label: 'Configuración', defaultIcon: '⚙️' },
+  { id: 'asistente',      iconKey: 'adminIconAsistente', label: 'Asistente IA', defaultIcon: '🤖' },
 ];
 
 const ADMIN_RESTRICTED_MODULES: Module[] = ['identidad', 'apariencia', 'usuarios', 'configuracion'];
@@ -296,17 +295,20 @@ function AdminContent() {
     if (currentUser.role === 'desarrollador') return true;
     if (m === 'dashboard' && action === 'view') return true;
 
+    const permissionKeys = m === 'territorio' ? ['capillas', 'territorio'] : [m];
     const explicitPermissions = currentUser.permissions || [];
     const hasExplicitRules = explicitPermissions.length > 0;
 
     if (currentUser.role === 'editor') {
       if (ADMIN_RESTRICTED_MODULES.includes(m)) return false;
-      if (hasExplicitRules) return explicitPermissions.includes(m);
+      if (hasExplicitRules) return permissionKeys.some(key => explicitPermissions.includes(key));
       return true;
     }
     if (currentUser.role === 'viewer') {
       if (action !== 'view' || ADMIN_RESTRICTED_MODULES.includes(m)) return false;
-      return hasExplicitRules ? explicitPermissions.includes(m) : ['dashboard', 'logs', 'noticias', 'actividades', 'documentos', 'capillas', 'perfiles', 'territorio'].includes(m);
+      return hasExplicitRules
+        ? permissionKeys.some(key => explicitPermissions.includes(key))
+        : ['dashboard', 'logs', 'noticias', 'actividades', 'documentos', 'capillas', 'perfiles', 'territorio'].includes(m);
     }
     return false;
   };
@@ -386,7 +388,9 @@ function AdminContent() {
   };
 
   // --- LOCAL UI STATE ---
-  const [mod, setMod] = useState<Module>(modParam);
+  const tabParam = searchParams.get('tab') === 'territorio' ? 'territorio' : 'capillas';
+  const [mod, setMod] = useState<Module>(modParam === 'territorio' ? 'capillas' : modParam);
+  const [capillasView, setCapillasView] = useState<'capillas' | 'territorio'>(tabParam);
   const [toast, setToast] = useState('');
   const [modal, setModal] = useState<null | Module>(null);
   const [editId, setEditId] = useState<number | string | null>(null);
@@ -473,7 +477,11 @@ function AdminContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { setMod(modParam); }, [modParam]);
+  useEffect(() => {
+    const normalizedMod = modParam === 'territorio' ? 'capillas' : modParam;
+    setMod(normalizedMod);
+    setCapillasView(modParam === 'territorio' ? 'territorio' : tabParam);
+  }, [modParam, tabParam]);
   useEffect(() => { setNavyHex(theme.navy); }, [theme.navy]);
   useEffect(() => { setGoldHex(theme.gold); }, [theme.gold]);
 
@@ -730,8 +738,9 @@ function AdminContent() {
     }
   };
 
-  const navigateMod = (m: Module) => {
-    router.push(`/admin?mod=${m}`);
+  const navigateMod = (m: Module, section?: 'capillas' | 'territorio') => {
+    const sectionQuery = section ? `&tab=${section}` : '';
+    router.push(`/admin?mod=${m}${sectionQuery}`);
     setSidebarOpen(false);
   };
 
@@ -1056,6 +1065,7 @@ function AdminContent() {
         <nav className="sidebar-nav">
           {NAV_ITEMS.map(n => {
             const allowed = hasPermission(n.id as Module);
+            const icon = (branding[n.iconKey as keyof Branding] as string) || n.defaultIcon;
             return (
               <button
                 key={n.id}
@@ -1067,7 +1077,7 @@ function AdminContent() {
                 style={!allowed ? { opacity: 0.45, filter: 'grayscale(0.15)' } : undefined}
                 title={allowed ? n.label : `${n.label} (sin permiso)`}
               >
-                <span className="nav-icon">{n.icon}</span>
+                <span className="nav-icon">{icon}</span>
                 <span className="nav-label">{n.label}</span>
                 {!allowed && <span style={{ marginLeft: 'auto', fontSize: '12px', opacity: 0.9 }}>🔒</span>}
               </button>
@@ -1751,6 +1761,70 @@ function AdminContent() {
                 )}
               </div>
 
+              <div style={{ borderTop: '1px solid var(--gold-pale)', margin: '0 0 28px', paddingTop: '28px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '14px', flexWrap: 'wrap', marginBottom: '16px' }}>
+                  <div>
+                    <label className="premium-label" style={{ display: 'block', marginBottom: '6px' }}>ICONOS DEL PANEL ADMIN</label>
+                    <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0, maxWidth: '640px' }}>
+                      Cambiá el icono de cada botón del menú lateral sin afectar el frontend público.
+                    </p>
+                  </div>
+                  <button
+                    className="btn-premium btn-premium-outline"
+                    style={{ padding: '8px 14px', fontSize: '11px' }}
+                    onClick={() => {
+                      setBranding({
+                        ...branding,
+                        adminIconDashboard: '📊',
+                        adminIconIdentidad: '🎨',
+                        adminIconCarrusel: '🖼️',
+                        adminIconApariencia: '✨',
+                        adminIconContenido: '📝',
+                        adminIconNoticias: '📰',
+                        adminIconActividades: '📅',
+                        adminIconCapillas: '⛪',
+                        adminIconPerfiles: '👤',
+                        adminIconDocumentos: '📁',
+                        adminIconUsuarios: '👥',
+                        adminIconLogs: '📜',
+                        adminIconConfiguracion: '⚙️',
+                        adminIconAsistente: '🤖',
+                      });
+                      showToast('Iconos restaurados ✔');
+                    }}
+                  >
+                    Restaurar iconos
+                  </button>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+                  {NAV_ITEMS.map(item => {
+                    const currentIcon = (branding[item.iconKey as keyof Branding] as string) || item.defaultIcon;
+                    return (
+                      <div key={item.id} style={{ padding: '16px', borderRadius: '16px', background: '#fff', border: '1px solid var(--gold-pale)', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '10px' }}>
+                          <div>
+                            <p className="premium-label" style={{ marginBottom: '4px' }}>{item.label}</p>
+                            <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Icono del botón del menú</p>
+                          </div>
+                          <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--cream)', border: '1px solid var(--gold-pale)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>
+                            {currentIcon}
+                          </div>
+                        </div>
+                        <input
+                          type="text"
+                          className="pjl-input"
+                          value={currentIcon}
+                          maxLength={4}
+                          onChange={(e) => setBranding({ ...branding, [item.iconKey]: e.target.value })}
+                          placeholder={item.defaultIcon}
+                          style={{ textAlign: 'center', fontSize: '20px', padding: '10px 12px', minHeight: '48px' }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div style={{ display: 'flex', gap: '14px' }}>
                 <button
                   onClick={() => {
@@ -2329,8 +2403,24 @@ function AdminContent() {
           )}
 
           {/* TERRITORIO */}
-          {mod === 'territorio' && (
+          {mod === 'capillas' && capillasView === 'territorio' && (
             <div className="animate-reveal pjl-card" style={{ padding: '40px' }}>
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '24px', flexWrap: 'wrap' }}>
+                <button
+                  className={`btn-premium ${capillasView === 'capillas' ? 'btn-premium-gold' : 'btn-premium-outline'}`}
+                  onClick={() => navigateMod('capillas', 'capillas')}
+                  style={{ padding: '8px 14px', fontSize: '11px' }}
+                >
+                  ⛪ Gestión de Capillas
+                </button>
+                <button
+                  className={`btn-premium ${capillasView === 'territorio' ? 'btn-premium-gold' : 'btn-premium-outline'}`}
+                  onClick={() => navigateMod('capillas', 'territorio')}
+                  style={{ padding: '8px 14px', fontSize: '11px' }}
+                >
+                  🗺️ Gestión de Territorio
+                </button>
+              </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
                 <div>
                   <h3 className="serif" style={{ fontSize: '2rem', color: 'var(--navy)', margin: 0 }}>Gestión de Territorio</h3>
@@ -2692,6 +2782,24 @@ function AdminContent() {
           {/* CAPILLAS */}
           {mod === 'capillas' && (
             <div className="animate-reveal pjl-card" style={{ padding: '40px' }}>
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '24px', flexWrap: 'wrap' }}>
+                <button
+                  className={`btn-premium ${capillasView === 'capillas' ? 'btn-premium-gold' : 'btn-premium-outline'}`}
+                  onClick={() => navigateMod('capillas', 'capillas')}
+                  style={{ padding: '8px 14px', fontSize: '11px' }}
+                >
+                  ⛪ Gestión de Capillas
+                </button>
+                <button
+                  className={`btn-premium ${capillasView === 'territorio' ? 'btn-premium-gold' : 'btn-premium-outline'}`}
+                  onClick={() => navigateMod('capillas', 'territorio')}
+                  style={{ padding: '8px 14px', fontSize: '11px' }}
+                >
+                  🗺️ Gestión de Territorio
+                </button>
+              </div>
+              {capillasView === 'capillas' && (
+              <>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '15px' }}>
                 <h3 className="serif" style={{ margin: 0 }}>Gestión de Capillas y Comunidades</h3>
                 <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
@@ -2763,6 +2871,8 @@ function AdminContent() {
                    />
                 </div>
               </div>
+              </>
+              )}
             </div>
           )}
           {/* ACTIVIDADES */}
