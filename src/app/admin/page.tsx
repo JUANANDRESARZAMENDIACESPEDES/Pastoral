@@ -2407,7 +2407,7 @@ function AdminContent() {
             <div className="animate-reveal pjl-card" style={{ padding: '40px' }}>
               <div style={{ display: 'flex', gap: '10px', marginBottom: '24px', flexWrap: 'wrap' }}>
                 <button
-                  className={`btn-premium ${capillasView === 'capillas' ? 'btn-premium-gold' : 'btn-premium-outline'}`}
+                  className="btn-premium btn-premium-outline"
                   onClick={() => navigateMod('capillas', 'capillas')}
                   style={{ padding: '8px 14px', fontSize: '11px' }}
                 >
@@ -3658,7 +3658,9 @@ function AdminContent() {
                       borderRadius: '16px', 
                       border: '1px solid var(--gold-pale)' 
                     }}>
-                      {NAV_ITEMS.filter(n => !['usuarios', 'configuracion'].includes(n.id)).map(n => (
+                      {NAV_ITEMS.filter(n => !['usuarios', 'configuracion'].includes(n.id)).map(n => {
+                        const icon = (branding[n.iconKey as keyof Branding] as string) || n.defaultIcon;
+                        return (
                         <label key={n.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', background: '#fff', padding: '10px', borderRadius: '10px', border: '1px solid #eee', transition: '0.2s' }} className="hover-lift">
                           <input 
                             type="checkbox" 
@@ -3670,9 +3672,10 @@ function AdminContent() {
                               else setForm({...form, permissions: perms.filter((p: string) => p !== n.id)});
                             }}
                           />
-                          <span>{n.icon} {n.label}</span>
+                          <span>{icon} {n.label}</span>
                         </label>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
