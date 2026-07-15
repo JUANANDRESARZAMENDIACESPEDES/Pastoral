@@ -30,11 +30,6 @@ export default function NewsAdminPage() {
     setSelectedArticle(null);
   };
 
-  const handleCreateEvent = (article: NewsArticleWithDetails) => {
-    setSelectedArticle(article);
-    setCurrentView('event');
-  };
-
   const handleSaveEvent = () => {
     setCurrentView('list');
     setSelectedArticle(null);
@@ -185,7 +180,7 @@ export default function NewsAdminPage() {
         {currentView === 'event' && selectedArticle && (
           <div className="content">
             <div className="form-container">
-              <h2 style={{ marginTop: 0 }}>Agregar Evento a: "{selectedArticle.title}"</h2>
+              <h2 style={{ marginTop: 0 }}>Agregar Evento a: &quot;{selectedArticle.title}&quot;</h2>
               <NewsEventForm
                 articleId={selectedArticle.id}
                 event={selectedArticle.event}

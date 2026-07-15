@@ -1,6 +1,5 @@
 import { getSupabaseClient } from './supabase';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { User } from './pjlStore';
 
 const PROFILE_TABLES = ['user_profiles', 'profiles'] as const;
 type ProfileTableName = (typeof PROFILE_TABLES)[number];

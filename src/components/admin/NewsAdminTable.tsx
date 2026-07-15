@@ -6,7 +6,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { NewsArticleWithDetails } from '@/lib/newsTypes';
 
 interface NewsAdminTableProps {
