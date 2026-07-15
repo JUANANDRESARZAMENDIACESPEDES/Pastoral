@@ -210,7 +210,10 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
   display: flex;
   align-items: center;
   gap: 15px;
+  flex: 0 0 auto;
   min-width: 0;
+  position: relative;
+  z-index: 2;
 }
 .logo-area h1 {
   font-size: 24px;
@@ -232,6 +235,7 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
   gap: 10px;
   align-items: center;
   flex-wrap: nowrap;
+  margin-left: auto;
 }
 .nav-item {
   position: relative;
@@ -3016,7 +3020,7 @@ input:checked + .pjl-slider:before {
    ========================================================================== */
 
 /* Tablets (768px - 1100px) */
-@media (max-width: 1100px) {
+@media (max-width: 1280px) {
   .nav-links {
     display: none !important;
   }

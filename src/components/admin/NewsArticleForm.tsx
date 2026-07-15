@@ -113,7 +113,6 @@ export function NewsArticleForm({ article, onSave, onCancel }: NewsArticleFormPr
           display: flex;
           align-items: center;
           gap: 14px;
-          flex-wrap: wrap;
           margin-bottom: 20px;
         }
         .naf-back-btn {
@@ -134,11 +133,11 @@ export function NewsArticleForm({ article, onSave, onCancel }: NewsArticleFormPr
         .naf-header {
           background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
           padding: 28px 32px;
-          border-radius: 16px 16px 0 0;
+          border-radius: 16px;
           display: flex;
           align-items: center;
           gap: 16px;
-          margin: -20px -20px 0 -20px;
+          min-width: 0;
         }
         .naf-header-icon {
           width: 48px;
@@ -201,9 +200,9 @@ export function NewsArticleForm({ article, onSave, onCancel }: NewsArticleFormPr
         }
         @media (max-width: 600px) {
           .naf-row { grid-template-columns: 1fr; }
-          .naf-topbar { align-items: stretch; }
+          .naf-topbar { align-items: stretch; flex-direction: column; }
           .naf-back-btn { width: 100%; justify-content: center; }
-          .naf-header { margin: -20px -12px 0; padding: 20px 16px; }
+          .naf-header { padding: 20px 16px; }
         }
         .naf-field {
           margin-bottom: 16px;
