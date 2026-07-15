@@ -72,6 +72,32 @@ export function NewsArticleForm({ article, onSave, onCancel }: NewsArticleFormPr
     });
   };
 
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError('El archivo seleccionado debe ser una imagen.');
+      return;
+    }
+
+    if (file.size > 1.5 * 1024 * 1024) {
+      setError('La imagen no puede superar 1.5 MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setFormData(prev => ({
+        ...prev,
+        featured_image_url: String(reader.result || ''),
+      }));
+      setError(null);
+    };
+    reader.onerror = () => setError('No se pudo leer la imagen seleccionada.');
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -417,6 +443,45 @@ export function NewsArticleForm({ article, onSave, onCancel }: NewsArticleFormPr
         .naf-link-input-wrap .naf-input {
           padding-left: 36px;
         }
+        .naf-image-actions {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+          margin-top: 10px;
+        }
+        .naf-image-upload-btn,
+        .naf-image-clear-btn {
+          border-radius: 10px;
+          padding: 9px 14px;
+          font-size: 0.82rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .naf-image-upload-btn {
+          background: #fffaf0;
+          color: #92630a;
+          border: 1px solid rgba(200, 151, 58, 0.35);
+        }
+        .naf-image-clear-btn {
+          background: #fff;
+          color: #6b7280;
+          border: 1px solid #e5e7eb;
+        }
+        .naf-image-preview {
+          margin-top: 14px;
+          border-radius: 14px;
+          overflow: hidden;
+          border: 1px solid #e8eaf0;
+          background: #fff;
+          max-width: 360px;
+        }
+        .naf-image-preview img {
+          display: block;
+          width: 100%;
+          aspect-ratio: 16 / 9;
+          object-fit: cover;
+        }
         .naf-badge {
           display: inline-flex;
           align-items: center;
@@ -566,14 +631,39 @@ export function NewsArticleForm({ article, onSave, onCancel }: NewsArticleFormPr
                     <input
                       className="naf-input"
                       id="featured_image_url"
-                      type="url"
+                      type="text"
                       name="featured_image_url"
                       value={formData.featured_image_url}
                       onChange={handleChange}
-                      placeholder="https://ejemplo.com/imagen.jpg"
+                      placeholder="https://ejemplo.com/imagen.jpg o sube una imagen"
                     />
                   </div>
-                  <div className="naf-hint">📸 Imagen principal que aparece en la tarjeta de la noticia</div>
+                  <div className="naf-image-actions">
+                    <label className="naf-image-upload-btn">
+                      Subir desde la computadora
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageFileChange}
+                        style={{ display: 'none' }}
+                      />
+                    </label>
+                    {formData.featured_image_url && (
+                      <button
+                        type="button"
+                        className="naf-image-clear-btn"
+                        onClick={() => setFormData(prev => ({ ...prev, featured_image_url: '' }))}
+                      >
+                        Quitar imagen
+                      </button>
+                    )}
+                  </div>
+                  <div className="naf-hint">📸 Imagen principal que aparece en la tarjeta y al abrir la noticia</div>
+                  {formData.featured_image_url && (
+                    <div className="naf-image-preview">
+                      <img src={formData.featured_image_url} alt="Previsualización de imagen destacada" />
+                    </div>
+                  )}
                 </div>
 
                 <div className="naf-field">

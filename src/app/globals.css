@@ -209,7 +209,7 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
 .logo-area {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 18px;
   flex: 0 0 auto;
   min-width: 0;
   position: relative;
@@ -2146,7 +2146,7 @@ input, textarea { cursor: text; }
   .logo-area {
     display: flex !important;
     align-items: center !important;
-    gap: 10px !important;
+    gap: 12px !important;
   }
 
   .logo-area .logo-img-circular {

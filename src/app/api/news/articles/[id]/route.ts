@@ -15,6 +15,17 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+function isValidImageSource(value: string) {
+  if (value.startsWith('data:image/')) return true;
+
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
@@ -124,7 +135,13 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
 
     if (body.featured_image_url !== undefined) {
-      updateData.featured_image_url = body.featured_image_url;
+      if (body.featured_image_url && !isValidImageSource(body.featured_image_url)) {
+        return NextResponse.json(
+          { success: false, error: 'featured_image_url: URL o imagen inválida' },
+          { status: 400 }
+        );
+      }
+      updateData.featured_image_url = body.featured_image_url || null;
     }
 
     if (body.featured_on_homepage !== undefined) {

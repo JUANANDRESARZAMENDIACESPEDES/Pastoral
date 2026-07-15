@@ -24,6 +24,14 @@ type PublicNewsItem = Omit<NewsItem, 'id'> & {
   event_location?: string | null;
 };
 
+type NewsResource = {
+  href: string;
+  label: string;
+  detail: string;
+  icon: string;
+  tone: 'gold' | 'blue' | 'neutral';
+};
+
 const ZonaMap = dynamic(() => import('@/components/ZonaMap'), { ssr: false, loading: () => <div style={{ height: '500px', background: 'var(--cream)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>Cargando mapa...</div> });
 
 const STAT_LABELS: Record<string, string> = {
@@ -119,6 +127,68 @@ function TextWithLinks({ text }: { text: string }) {
     </>
   );
 }
+
+const extractUrls = (text: string) => Array.from(new Set(text.match(/https?:\/\/[^\s]+/gi) || []));
+
+const resourceDetail = (href: string) => {
+  try {
+    return new URL(href).hostname.replace(/^www\./, '');
+  } catch {
+    return 'Abrir recurso';
+  }
+};
+
+const getNewsResources = (news: PublicNewsItem): NewsResource[] => {
+  const resources: NewsResource[] = [];
+  const used = new Set<string>();
+  const addResource = (resource: NewsResource) => {
+    if (!resource.href || used.has(resource.href)) return;
+    used.add(resource.href);
+    resources.push(resource);
+  };
+
+  if (news.inscription_url) {
+    addResource({
+      href: news.inscription_url,
+      label: 'Formulario de inscripción',
+      detail: resourceDetail(news.inscription_url),
+      icon: '✍️',
+      tone: 'gold',
+    });
+  }
+
+  if (news.google_drive_url) {
+    addResource({
+      href: news.google_drive_url,
+      label: 'Fotos o archivos en Drive',
+      detail: resourceDetail(news.google_drive_url),
+      icon: '📂',
+      tone: 'blue',
+    });
+  }
+
+  if (news.external_link) {
+    addResource({
+      href: news.external_link,
+      label: 'Más información',
+      detail: resourceDetail(news.external_link),
+      icon: '🌐',
+      tone: 'neutral',
+    });
+  }
+
+  extractUrls(news.body).forEach((href, index) => {
+    addResource({
+      href,
+      label: index === 0 ? 'Link citado en la noticia' : `Link citado ${index + 1}`,
+      detail: resourceDetail(href),
+      icon: '🔗',
+      tone: 'neutral',
+    });
+  });
+
+  return resources;
+};
 
 
 function HomeContent() {
@@ -2240,10 +2310,13 @@ function HomeContent() {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: '20px',
             animation: 'fadeOverlay 0.3s ease both',
+            pointerEvents: 'auto',
+            overscrollBehavior: 'contain',
           }}
         >
           <div
             onClick={e => e.stopPropagation()}
+            onWheel={e => e.stopPropagation()}
             style={{
               background: '#fff',
               borderRadius: '24px',
@@ -2263,6 +2336,15 @@ function HomeContent() {
               onClick={() => setSelectedNews(null)}
               style={{ position: 'absolute', top: '24px', right: '24px', background: 'var(--cream)', border: 'none', borderRadius: '50%', width: '40px', height: '40px', color: 'var(--navy)', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.2s' }}
             >×</button>
+            {selectedNews.featured_image_url && (
+              <div style={{ margin: '-20px -10px 32px', borderRadius: '20px', overflow: 'hidden', border: '1px solid rgba(200, 151, 58, 0.22)', background: 'var(--cream)' }}>
+                <img
+                  src={selectedNews.featured_image_url}
+                  alt={selectedNews.title}
+                  style={{ display: 'block', width: '100%', maxHeight: '320px', objectFit: 'cover' }}
+                />
+              </div>
+            )}
             <div style={{ textAlign: 'center' }}>
               <span style={{ color: 'var(--gold)', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '3px', display: 'block', marginBottom: '15px' }}>{new Date(selectedNews.date).toLocaleDateString('es-PY', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
               <h2 className="serif" style={{ fontSize: '2.5rem', color: 'var(--navy)', marginBottom: selectedNews.subtitle ? '18px' : '30px', lineHeight: 1.2 }}>{selectedNews.title}</h2>
@@ -2286,28 +2368,44 @@ function HomeContent() {
               <div style={{ color: 'var(--navy)', lineHeight: '1.8', fontSize: '1.1rem', textAlign: 'justify', whiteSpace: 'pre-wrap', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
                 <TextWithLinks text={selectedNews.body} />
               </div>
-              {(selectedNews.inscription_url || selectedNews.google_drive_url || selectedNews.external_link) && (
-                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '28px' }}>
-                  {selectedNews.inscription_url && (
-                    <a href={selectedNews.inscription_url} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 18px', borderRadius: '12px', background: 'linear-gradient(135deg, #C8973A, #e8b84a)', color: '#fff', fontWeight: 700, textDecoration: 'none' }}>
-                      <span>✍️</span>
-                      <span>Inscribirse</span>
-                    </a>
-                  )}
-                  {selectedNews.google_drive_url && (
-                    <a href={selectedNews.google_drive_url} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 18px', borderRadius: '12px', background: '#eef4ff', color: '#1d4ed8', fontWeight: 700, textDecoration: 'none' }}>
-                      <span>📂</span>
-                      <span>Ver fotos</span>
-                    </a>
-                  )}
-                  {selectedNews.external_link && (
-                    <a href={selectedNews.external_link} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 18px', borderRadius: '12px', background: '#f5f5f5', color: 'var(--navy)', fontWeight: 700, textDecoration: 'none' }}>
-                      <span>🌐</span>
-                      <span>Más información</span>
-                    </a>
-                  )}
-                </div>
-              )}
+              {(() => {
+                const resources = getNewsResources(selectedNews);
+                if (resources.length === 0) return null;
+
+                return (
+                  <div style={{ marginTop: '34px', padding: '22px', borderRadius: '18px', background: 'var(--cream)', border: '1px solid rgba(200, 151, 58, 0.2)', textAlign: 'left' }}>
+                    <h3 className="serif" style={{ margin: '0 0 14px', color: 'var(--navy)', fontSize: '1.25rem' }}>Recursos de la noticia</h3>
+                    <div style={{ display: 'grid', gap: '10px' }}>
+                      {resources.map((resource) => (
+                        <a
+                          key={resource.href}
+                          href={resource.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            padding: '13px 14px',
+                            borderRadius: '14px',
+                            background: '#fff',
+                            border: resource.tone === 'gold' ? '1px solid rgba(200, 151, 58, 0.35)' : resource.tone === 'blue' ? '1px solid rgba(29, 78, 216, 0.2)' : '1px solid rgba(26, 39, 68, 0.1)',
+                            color: 'var(--navy)',
+                            textDecoration: 'none',
+                          }}
+                        >
+                          <span style={{ width: '38px', height: '38px', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: resource.tone === 'gold' ? 'rgba(200, 151, 58, 0.14)' : resource.tone === 'blue' ? '#eef4ff' : '#f5f5f5', flexShrink: 0 }}>{resource.icon}</span>
+                          <span style={{ minWidth: 0, flex: 1 }}>
+                            <strong style={{ display: 'block', fontSize: '0.95rem' }}>{resource.label}</strong>
+                            <span style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.8rem', overflowWrap: 'break-word' }}>{resource.detail}</span>
+                          </span>
+                          <span style={{ color: resource.tone === 'gold' ? 'var(--gold)' : resource.tone === 'blue' ? '#1d4ed8' : 'var(--text-muted)', fontWeight: 800 }}>→</span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>

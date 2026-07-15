@@ -16,6 +16,17 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+function isValidImageSource(value: string) {
+  if (value.startsWith('data:image/')) return true;
+
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 // Helper: Validar entrada
 function validateArticleInput(body: unknown) {
   if (!body || typeof body !== 'object') {
@@ -38,10 +49,8 @@ function validateArticleInput(body: unknown) {
   }
 
   if (b.featured_image_url && typeof b.featured_image_url === 'string') {
-    try {
-      new URL(b.featured_image_url);
-    } catch {
-      errors.push('featured_image_url: URL inválida');
+    if (!isValidImageSource(b.featured_image_url)) {
+      errors.push('featured_image_url: URL o imagen inválida');
     }
   }
 
