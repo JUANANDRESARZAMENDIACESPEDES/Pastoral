@@ -21,6 +21,12 @@ const ZonaMap = dynamic(() => import('@/components/ZonaMap'), {
   loading: () => <div style={{ height: '400px', background: 'var(--cream)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '25px', border: '1px solid var(--gold-pale)' }}>Cargando mapa interactivo...</div>
 });
 
+import { NewsArticleWithDetails } from '@/lib/newsTypes';
+
+const NewsAdminTable = dynamic(() => import('@/components/admin/NewsAdminTable').then(mod => ({ default: mod.NewsAdminTable })), { loading: () => <div>Cargando tabla...</div> });
+const NewsArticleForm = dynamic(() => import('@/components/admin/NewsArticleForm').then(mod => ({ default: mod.NewsArticleForm })), { loading: () => <div>Cargando formulario...</div> });
+const NewsEventForm = dynamic(() => import('@/components/admin/NewsEventForm').then(mod => ({ default: mod.NewsEventForm })), { loading: () => <div>Cargando formulario de eventos...</div> });
+
 type Module = 'dashboard' | 'identidad' | 'apariencia' | 'contenido' | 'actividades' | 'noticias' | 'usuarios' | 'documentos' | 'configuracion' | 'perfiles' | 'capillas' | 'asistente' | 'carrusel' | 'territorio' | 'logs';
 
 // Read PageStat from pjlStore
@@ -440,6 +446,10 @@ function AdminContent() {
   const [form, setForm] = useState<any>({});
   const [activeProfileTeam, setActiveProfileTeam] = useState('coordinacion');
   const [activeContentTab, setActiveContentTab] = useState('institucional');
+
+  // --- NEWS VIEW STATE ---
+  const [newsView, setNewsView] = useState<'list' | 'article' | 'event'>('list');
+  const [selectedArticle, setSelectedArticle] = useState<NewsArticleWithDetails | null>(null);
 
   // --- AI STATE ---
   const [aiPrompt, setAiPrompt] = useState('');
@@ -2635,43 +2645,87 @@ function AdminContent() {
           {/* NOTICIAS */}
           {mod === 'noticias' && (
             <div className="animate-reveal pjl-card" style={{ padding: '40px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                <h3 className="serif">Gestión de Noticias</h3>
-                <button className="btn-premium btn-premium-gold" onClick={() => openNew('noticias')}>+ PUBLICAR NOTICIA</button>
-              </div>
-              <div className="news-admin-grid">
-                <div style={{ display: 'grid', gap: '20px', alignContent: 'start' }}>
-                  {news.map(n => (
-                    <div key={n.id} style={{ display: 'flex', alignItems: 'center', padding: '20px 25px', background: 'var(--cream)', borderRadius: '15px', border: '1px solid var(--gold-pale)', gap: '20px', transition: 'all 0.3s ease', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }} className="hover-lift news-admin-card">
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                          <h4 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--navy)', fontWeight: 800 }}>{n.title}</h4>
-                          <span className="premium-label" style={{ fontSize: '0.7rem', padding: '4px 12px', background: n.published ? 'rgba(34,197,94,0.1)' : 'rgba(200,151,58,0.1)', color: n.published ? 'var(--green)' : 'var(--gold)', border: `1px solid ${n.published ? 'rgba(34,197,94,0.3)' : 'var(--gold-pale)'}` }}>
-                            {n.published ? 'PUBLICADO' : 'BORRADOR'}
-                          </span>
-                        </div>
-                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>📅 {n.date}</p>
+              {newsView === 'list' && (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                    <h3 className="serif">Gestión de Noticias</h3>
+                    <button className="btn-premium btn-premium-gold" onClick={() => { setSelectedArticle(null); setNewsView('article'); }}>+ PUBLICAR NOTICIA</button>
+                  </div>
+                  <div className="news-admin-grid">
+                    <div>
+                      <NewsAdminTable
+                        onEdit={(art) => {
+                          setSelectedArticle(art);
+                          setNewsView('article');
+                        }}
+                        onDelete={() => {}}
+                        onEvent={(art) => {
+                          setSelectedArticle(art);
+                          setNewsView('event');
+                        }}
+                      />
+                    </div>
+
+                    {/* SIDE WIDGET - VATICAN NEWS */}
+                    <div className="vatican-news-sidebar" style={{ position: 'sticky', top: '20px' }}>
+                      <div className="pjl-card" style={{ padding: '20px', background: 'var(--cream)', border: '1px solid var(--gold-pale)' }}>
+                        <h4 className="serif" style={{ color: 'var(--navy)', marginBottom: '15px', fontSize: '1rem', borderBottom: '1px solid var(--gold-pale)', paddingBottom: '10px' }}>🇻🇦 Vaticano al Día</h4>
+                        {/* @ts-ignore */}
+                        <vaticannews-widget lang="es" fontSize="18"></vaticannews-widget>
                       </div>
-                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                        <button onClick={() => openEdit('noticias', n)} className="btn-premium btn-premium-outline" style={{ padding: '8px 20px', fontSize: '0.8rem' }}>EDITAR</button>
-                        <button onClick={() => deleteItem('news', n.id)} className="btn-premium" style={{ color: '#ef4444', padding: '8px 20px', fontSize: '0.8rem', background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.2)' }}>ELIMINAR</button>
+                      <div className="pjl-card" style={{ padding: '20px', background: 'var(--navy)', color: '#fff', marginTop: '20px', border: '1px solid var(--gold)' }}>
+                        <p style={{ fontSize: '11px', lineHeight: '1.5', opacity: 0.8 }}>Mantente conectado con las noticias oficiales de la Santa Sede directamente desde tu panel.</p>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                </>
+              )}
 
-                {/* SIDE WIDGET - VATICAN NEWS */}
-                <div className="vatican-news-sidebar" style={{ position: 'sticky', top: '20px' }}>
-                  <div className="pjl-card" style={{ padding: '20px', background: 'var(--cream)', border: '1px solid var(--gold-pale)' }}>
-                    <h4 className="serif" style={{ color: 'var(--navy)', marginBottom: '15px', fontSize: '1rem', borderBottom: '1px solid var(--gold-pale)', paddingBottom: '10px' }}>🇻🇦 Vaticano al Día</h4>
-                    {/* @ts-ignore */}
-                    <vaticannews-widget lang="es" fontSize="18"></vaticannews-widget>
+              {newsView === 'article' && (
+                <div>
+                  <div style={{ marginBottom: '20px' }}>
+                    <button className="btn-premium btn-premium-outline" onClick={() => { setNewsView('list'); setSelectedArticle(null); }}>
+                      ← Volver a la lista
+                    </button>
                   </div>
-                  <div className="pjl-card" style={{ padding: '20px', background: 'var(--navy)', color: '#fff', marginTop: '20px', border: '1px solid var(--gold)' }}>
-                    <p style={{ fontSize: '11px', lineHeight: '1.5', opacity: 0.8 }}>Mantente conectado con las noticias oficiales de la Santa Sede directamente desde tu panel.</p>
-                  </div>
+                  <NewsArticleForm
+                    article={selectedArticle || undefined}
+                    onSave={() => {
+                      setNewsView('list');
+                      setSelectedArticle(null);
+                      showToast('Noticia guardada con éxito ✔');
+                    }}
+                    onCancel={() => {
+                      setNewsView('list');
+                      setSelectedArticle(null);
+                    }}
+                  />
                 </div>
-              </div>
+              )}
+
+              {newsView === 'event' && selectedArticle && (
+                <div>
+                  <div style={{ marginBottom: '20px' }}>
+                    <button className="btn-premium btn-premium-outline" onClick={() => { setNewsView('list'); setSelectedArticle(null); }}>
+                      ← Volver a la lista
+                    </button>
+                  </div>
+                  <h3 className="serif" style={{ marginBottom: '20px' }}>Agregar/Editar Evento para: &quot;{selectedArticle.title}&quot;</h3>
+                  <NewsEventForm
+                    articleId={selectedArticle.id}
+                    event={selectedArticle.event}
+                    onSave={() => {
+                      setNewsView('list');
+                      setSelectedArticle(null);
+                      showToast('Evento guardado con éxito ✔');
+                    }}
+                    onCancel={() => {
+                      setNewsView('list');
+                      setSelectedArticle(null);
+                    }}
+                  />
+                </div>
+              )}
 
               <Script src="https://www.vaticannews.va/widget.js" strategy="lazyOnload" />
             </div>

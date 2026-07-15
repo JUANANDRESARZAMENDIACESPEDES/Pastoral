@@ -11,9 +11,10 @@ import { NewsArticleWithDetails } from '@/lib/newsTypes';
 interface NewsAdminTableProps {
   onEdit?: (article: NewsArticleWithDetails) => void;
   onDelete?: (id: string) => void;
+  onEvent?: (article: NewsArticleWithDetails) => void;
 }
 
-export function NewsAdminTable({ onEdit, onDelete }: NewsAdminTableProps) {
+export function NewsAdminTable({ onEdit, onDelete, onEvent }: NewsAdminTableProps) {
   const [articles, setArticles] = useState<NewsArticleWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -305,6 +306,13 @@ export function NewsAdminTable({ onEdit, onDelete }: NewsAdminTableProps) {
                         title="Editar"
                       >
                         ✏️
+                      </button>
+                      <button
+                        className="action-btn"
+                        onClick={() => onEvent?.(article)}
+                        title="Programar Evento"
+                      >
+                        📅
                       </button>
                       {!article.published && (
                         <button

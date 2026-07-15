@@ -154,7 +154,14 @@ export default function NewsAdminPage() {
 
         {currentView === 'list' && (
           <div className="content">
-            <NewsSection />
+            <NewsAdminTable
+              onEdit={handleEditArticle}
+              onDelete={() => {}}
+              onEvent={(art) => {
+                setSelectedArticle(art);
+                setCurrentView('event');
+              }}
+            />
           </div>
         )}
 
