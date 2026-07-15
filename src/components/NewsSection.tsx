@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 interface NewsArticle {
   id: string;
@@ -80,7 +81,7 @@ export function NewsSection() {
           marginTop: '40px'
         }}>
           {articles.slice(0, 6).map((article, index) => (
-            <a
+            <Link
               key={article.id}
               href={`/noticias/${article.slug}`}
               className="reveal"
@@ -226,13 +227,13 @@ export function NewsSection() {
                   </div>
                 </div>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
 
         {/* Ver todas las noticias */}
         <div style={{ textAlign: 'center', marginTop: '50px' }}>
-          <a
+          <Link
             href="/noticias"
             style={{
               display: 'inline-block',
@@ -254,7 +255,7 @@ export function NewsSection() {
             }}
           >
             Ver todas las noticias →
-          </a>
+          </Link>
         </div>
       </div>
     </section>
