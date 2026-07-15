@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS public.news_events (
 
 CREATE INDEX IF NOT EXISTS idx_news_events_article ON public.news_events(article_id);
 CREATE INDEX IF NOT EXISTS idx_news_events_date ON public.news_events(start_date);
-CREATE INDEX IF NOT EXISTS idx_news_events_upcoming ON public.news_events(start_date ASC) WHERE start_date >= CURRENT_DATE;
+CREATE INDEX IF NOT EXISTS idx_news_events_upcoming ON public.news_events(start_date ASC);
 
 -- ============================================================================
 -- 5. TABLA: news_images
