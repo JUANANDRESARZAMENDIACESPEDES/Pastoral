@@ -56,9 +56,17 @@ body {
   line-height: 1.6;
   overflow-x: hidden;
   width: 100%;
+  max-width: 100%;
+  min-width: 320px;
   position: relative;
   transition: background 0.5s ease, color 0.5s ease;
   -webkit-font-smoothing: antialiased;
+}
+
+html {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .container {
@@ -2354,7 +2362,12 @@ input, textarea { cursor: text; }
   }
 
   /* OVERFLOW PREVENTION */
-  html, body { width: 100vw; overflow-x: hidden; scroll-behavior: smooth; }
+  html, body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+  }
 }
 
 @media (max-width: 480px) {
@@ -3180,5 +3193,108 @@ input:checked + .pjl-slider:before {
 
   .hero-pjl h2 {
     font-size: 32px !important;
+  }
+}
+
+/* =====================================================================
+   MOBILE / TABLET STABILITY OVERRIDES
+   Keep layout inside the viewport during rotation and on narrow screens.
+   ===================================================================== */
+@media (max-width: 1024px) {
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .container,
+  .top-nav .container,
+  .hero-pjl .container,
+  .section-head,
+  .drawer-header,
+  .drawer-body,
+  .admin-content-area {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .container {
+    padding-left: clamp(16px, 3vw, 24px);
+    padding-right: clamp(16px, 3vw, 24px);
+  }
+
+  .section-head {
+    padding-left: clamp(18px, 3vw, 32px);
+    padding-right: clamp(18px, 3vw, 32px);
+  }
+
+  .hero-pjl .container {
+    padding-left: clamp(16px, 3vw, 24px);
+    padding-right: clamp(16px, 3vw, 24px);
+  }
+
+  .hero-cta-group,
+  .hero-controls,
+  .filter-container,
+  .btn-group,
+  .news-admin-card > div:last-child {
+    flex-wrap: wrap;
+  }
+
+  .hero-primary-cta,
+  .hero-secondary-cta,
+  .filter-container button,
+  .btn-group button,
+  .drawer-links a,
+  .admin-nav-item,
+  .dropdown-link {
+    min-width: 0;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .section-head h3,
+  .hero-pjl h2,
+  .zone-hero h2,
+  .login-title {
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  .hero-pjl {
+    min-height: min(600px, 100dvh);
+  }
+
+  .drawer-backdrop,
+  .mobile-nav-drawer {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) and (orientation: landscape) {
+  .section-pjl {
+    padding-top: 48px !important;
+    padding-bottom: 48px !important;
+  }
+
+  .hero-pjl {
+    min-height: auto !important;
+  }
+
+  .hero-pjl .container {
+    padding-top: 48px !important;
+    padding-bottom: 56px !important;
+  }
+
+  .top-nav {
+    height: auto !important;
+  }
+
+  .calendar-wrapper {
+    height: 360px !important;
   }
 }
