@@ -1800,23 +1800,30 @@ input, textarea { cursor: text; }
   position: absolute;
   bottom: 28px;
   right: 8px;
-  background: var(--navy);
+  background: rgba(26, 39, 68, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   color: #fff;
   min-width: 134px;
-  padding: 22px 18px;
+  padding: 20px 18px;
   border-radius: 24px;
-  border: 2px solid var(--gold);
-  box-shadow: 0 18px 42px rgba(26, 39, 68, 0.22);
+  border: 1px solid rgba(200, 151, 58, 0.6);
+  box-shadow: 0 15px 35px rgba(200, 151, 58, 0.15), 0 8px 20px rgba(26, 39, 68, 0.35);
   text-align: center;
   z-index: 5;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.years-badge:hover {
+  transform: scale(1.06) rotate(2deg);
 }
 
 .years-badge .number {
   display: block;
-  font-size: 32px;
+  font-size: 38px;
   font-weight: 900;
   color: var(--gold);
   line-height: 1;
+  text-shadow: 0 2px 10px rgba(200, 151, 58, 0.4);
 }
 
 .years-badge .label {
@@ -1824,6 +1831,7 @@ input, textarea { cursor: text; }
   letter-spacing: 2px;
   text-transform: uppercase;
   font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 /* Zone stats fixes */
@@ -2836,4 +2844,275 @@ input:checked + .pjl-slider:before {
   border-color: rgba(200, 151, 58, 0.3) !important; /* Cambia color sin mover la estructura */
   padding-left: 18px !important; /* Bloquea el intento de estirarse a 22px */
   transform: translateX(4px) !important; /* Desplazamiento visual aislado y fluido */
+}
+
+/* ==========================================================================
+   INSTITUCIONAL PREVIEW - PREMIUM LAYOUT
+   ========================================================================== */
+
+.insti-premium-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+
+.insti-text-side {
+  display: flex;
+  flex-direction: column;
+}
+
+.insti-visual-side {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 20px 40px 20px; /* extra bottom for badge overflow */
+}
+
+/* ==========================================================================
+   MOBILE NAVIGATION DRAWER
+   ========================================================================== */
+
+.mobile-menu-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 42px;
+  height: 42px;
+  background: rgba(26, 39, 68, 0.06);
+  border: 1px solid rgba(200, 151, 58, 0.2);
+  border-radius: 10px;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s ease;
+  z-index: 100;
+  flex-shrink: 0;
+}
+
+.mobile-menu-toggle span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: var(--navy);
+  border-radius: 2px;
+  transition: all 0.3s ease;
+  transform-origin: center;
+}
+
+.mobile-menu-toggle.active span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.mobile-menu-toggle.active span:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+.mobile-menu-toggle.active span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+.mobile-nav-drawer {
+  position: fixed;
+  top: 0;
+  left: -100%;
+  width: min(85vw, 320px);
+  height: 100dvh;
+  background: linear-gradient(180deg, var(--navy) 0%, #0e1828 100%);
+  z-index: 99998;
+  display: flex;
+  flex-direction: column;
+  transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  box-shadow: 8px 0 40px rgba(0,0,0,0.4);
+}
+
+.mobile-nav-drawer.open {
+  left: 0;
+}
+
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 99997;
+  animation: fadeOverlay 0.3s ease both;
+}
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px;
+  border-bottom: 1px solid rgba(200, 151, 58, 0.15);
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   RESPONSIVE: MAIN PAGE (Mobile & Tablet)
+   ========================================================================== */
+
+/* Tablets (768px - 1100px) */
+@media (max-width: 1100px) {
+  .nav-links {
+    display: none !important;
+  }
+
+  .mobile-menu-toggle {
+    display: flex !important;
+  }
+
+  .container {
+    padding: 0 24px !important;
+  }
+
+  .insti-premium-layout {
+    grid-template-columns: 1fr;
+    gap: 50px;
+  }
+
+  .insti-visual-side {
+    padding: 10px 10px 40px;
+    max-width: 480px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .mvv-grid {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+
+  .zone-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .agenda-split {
+    grid-template-columns: 1fr !important;
+    gap: 40px;
+  }
+}
+
+/* Mobile phones (up to 768px) */
+@media (max-width: 768px) {
+  .section-pjl {
+    padding: 70px 0 !important;
+  }
+
+  .section-head {
+    padding: 24px 20px !important;
+    margin-bottom: 40px !important;
+  }
+
+  .section-head h3 {
+    font-size: 28px !important;
+  }
+
+  .hero-pjl {
+    min-height: 500px !important;
+  }
+
+  .hero-pjl .container {
+    padding: 80px 20px 100px !important;
+  }
+
+  .hero-pjl h2 {
+    font-size: 38px !important;
+    line-height: 1.15 !important;
+  }
+
+  .hero-pjl p {
+    font-size: 1rem !important;
+  }
+
+  .hero-controls {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    margin-top: 30px !important;
+  }
+
+  .top-nav {
+    height: 70px !important;
+  }
+
+  .logo-area h1 {
+    font-size: 18px !important;
+  }
+
+  .logo-area p {
+    font-size: 11px !important;
+  }
+
+  .logo-area img {
+    height: 44px !important;
+    width: 44px !important;
+  }
+
+  .a11y-bar .container {
+    gap: 12px;
+    font-size: 11px;
+  }
+
+  .a11y-btn {
+    font-size: 11px !important;
+  }
+
+  .contact-card {
+    padding: 30px 20px !important;
+  }
+
+  .pjl-form input,
+  .pjl-form textarea,
+  .pjl-input {
+    font-size: 15px !important;
+  }
+
+  .mvv-card {
+    padding: 30px 22px !important;
+  }
+
+  /* Footer responsive */
+  .footer-pjl .container > div {
+    grid-template-columns: 1fr !important;
+    gap: 35px !important;
+  }
+
+  /* Zone card */
+  .zone-hero h2 {
+    font-size: 38px !important;
+  }
+
+  /* Profile cards grid */
+  .profiles-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 16px !important;
+  }
+
+  /* Form in contact page */
+  .pjl-form .form-grid,
+  .pjl-form [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Vatican widget */
+  .vatican-widget-shell {
+    max-height: 300px !important;
+    overflow: hidden !important;
+  }
+}
+
+/* Orientation change stability */
+@media (orientation: landscape) and (max-height: 500px) {
+  .hero-pjl {
+    min-height: 300px !important;
+  }
+
+  .hero-pjl .container {
+    padding: 40px 20px 60px !important;
+  }
+
+  .hero-pjl h2 {
+    font-size: 32px !important;
+  }
 }

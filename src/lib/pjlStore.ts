@@ -79,6 +79,8 @@ export interface SiteContent  {
   heroTag: string;
   heroTitle: string;
   heroText: string;
+  heroBtnText?: string;
+  heroBtnLink?: string;
   equiposTag: string;
   equiposTitle: string;
   zonasTag: string;
@@ -242,6 +244,8 @@ export const DEFAULT_CONTENT: SiteContent = {
   heroTag: 'Diócesis de San Lorenzo',
   heroTitle: 'Caminando con la <br/> <span style="color: var(--gold)">Juventud Luqueña</span>',
   heroText: 'Somos una comunidad de jóvenes comprometidos con el anuncio del Evangelio y la transformación social a través de la fe, la esperanza y la caridad.',
+  heroBtnText: '',
+  heroBtnLink: '',
   equiposTag: 'ESTRUCTURA',
   equiposTitle: 'Equipos y <i style="color: var(--gold); font-family: var(--font-display); font-weight: 400">Consejo</i>',
   zonasTag: 'TERRITORIO',

@@ -94,6 +94,8 @@ function HomeContent() {
   const [activeConsejoTab, setActiveConsejoTab] = useState('coordinacion');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [globalCommFilter, setGlobalCommFilter] = useState<number | 'all'>('all');
+  const [docSearch, setDocSearch] = useState('');
+  const [docCategory, setDocCategory] = useState('all');
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mobileSubmenuOpen, setMobileSubmenuOpen] = useState<Record<string, boolean>>({});
@@ -120,6 +122,7 @@ function HomeContent() {
   const [liveHeroImages, setLiveHeroImages] = useState<HeroSlide[]>([]);
   const [heroIntervalSecs, setHeroIntervalSecs] = useState<number>(3);
   const [liveHeroIndex, setLiveHeroIndex] = useState(0);
+  const [liveDocs, setLiveDocs] = useState<DocItem[]>([]);
 
   // Prevent background scrolling when modals or mobile menu is open
   useEffect(() => {
@@ -142,6 +145,7 @@ function HomeContent() {
     const newHeroInterval = store.heroInterval.get() || 3;
     const newSocial = store.social.get();
     const newChapels = store.chapels.get();
+    const newDocs = store.docs.get() || [];
 
     // Only update if stringified value changed to avoid unnecessary interval resets
     setSiteContent(prev => JSON.stringify(prev) !== JSON.stringify(newContent) ? newContent : prev);
@@ -154,6 +158,7 @@ function HomeContent() {
     setHeroIntervalSecs(prev => prev !== newHeroInterval ? newHeroInterval : prev);
     setLiveSocial(prev => JSON.stringify(prev) !== JSON.stringify(newSocial) ? newSocial : prev);
     setLiveChapels(prev => JSON.stringify(prev) !== JSON.stringify(newChapels) ? newChapels : prev);
+    setLiveDocs(prev => JSON.stringify(prev) !== JSON.stringify(newDocs) ? newDocs : prev);
   };
 
   useEffect(() => {
@@ -273,7 +278,7 @@ function HomeContent() {
 
     const pageIds = new Set([
       'home', 'estatuto', 'historia', 'institucional', 'consejo', 'zonas',
-      'agenda', 'noticias', 'contacto', 'faq', 'preguntas'
+      'agenda', 'noticias', 'contacto', 'faq', 'preguntas', 'documentos'
     ]);
     
     // Si ya estamos en la página y es 'zonas', reseteamos la selección
@@ -465,6 +470,9 @@ function HomeContent() {
               <Link href="/?page=noticias" onClick={(e) => navigate('noticias', e)} className="nav-btn">📰 Noticias</Link>
             </li>
             <li className="nav-item">
+              <Link href="/?page=documentos" onClick={(e) => navigate('documentos', e)} className="nav-btn">📁 Documentos</Link>
+            </li>
+            <li className="nav-item">
               <Link href="/?page=contacto" onClick={(e) => navigate('contacto', e)} className="nav-btn">✉️ Contacto</Link>
             </li>
 
@@ -559,6 +567,9 @@ function HomeContent() {
               <Link href="/?page=noticias" onClick={(e) => { navigate('noticias', e); setIsMobileMenuOpen(false); }} className="drawer-btn">📰 Noticias</Link>
             </li>
             <li>
+              <Link href="/?page=documentos" onClick={(e) => { navigate('documentos', e); setIsMobileMenuOpen(false); }} className="drawer-btn">📁 Documentos</Link>
+            </li>
+            <li>
               <Link href="/?page=contacto" onClick={(e) => { navigate('contacto', e); setIsMobileMenuOpen(false); }} className="drawer-btn">✉️ Contacto</Link>
             </li>
 
@@ -610,25 +621,22 @@ function HomeContent() {
                   </div>
                 )}
                 <span className="hero-tag reveal">{siteContent.heroTag}</span>
-                <h2 className="reveal" style={{ animationDelay: '0.2s', marginBottom: '20px', fontSize: '68px', lineHeight: 1.05, color: '#fff', fontFamily: 'var(--font-display)', fontWeight: 900 }}>
-                  {activeHeroSlide?.title
-                    ? <span dangerouslySetInnerHTML={{ __html: activeHeroSlide.title }} />
-                    : <span dangerouslySetInnerHTML={{ __html: siteContent.heroTitle || '' }} />
-                  }
-                </h2>
-                <p className="reveal" style={{ animationDelay: '0.4s', marginBottom: '35px', fontSize: '1.15rem', maxWidth: '580px', lineHeight: '1.75', color: 'rgba(255,255,255,0.85)' }}>
-                  {activeHeroSlide?.subtitle || siteContent.heroText}
-                </p>
-                <div className="reveal hero-cta-group" style={{ animationDelay: '0.6s', display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-                  {activeHeroSlide?.buttonText ? (
-                    <button className="btn-pjl hero-primary-cta" style={{ padding: '15px 40px', background: 'var(--gold)', color: 'var(--navy)', fontWeight: 700, borderRadius: '8px' }} onClick={() => navigate(activeHeroSlide.buttonLink?.replace('/', '') || 'contacto')}>{activeHeroSlide.buttonText}</button>
-                  ) : (
-                    <>
-                      <button className="btn-pjl hero-primary-cta" style={{ padding: '15px 40px', background: 'var(--gold)', color: 'var(--navy)', fontWeight: 700, borderRadius: '8px' }} onClick={() => navigate('estatuto')}>Conocer Estatuto</button>
-                      <button className="btn-pjl hero-secondary-cta" style={{ padding: '15px 40px', border: '2px solid rgba(255,255,255,0.8)', color: '#fff', borderRadius: '8px' }} onClick={() => navigate('contacto')}>Contáctanos</button>
-                    </>
-                  )}
-                </div>
+                 <h2 className="reveal" style={{ animationDelay: '0.2s', marginBottom: '20px', fontSize: '68px', lineHeight: 1.05, color: '#fff', fontFamily: 'var(--font-display)', fontWeight: 900 }}>
+                   <span dangerouslySetInnerHTML={{ __html: siteContent.heroTitle || '' }} />
+                 </h2>
+                 <p className="reveal" style={{ animationDelay: '0.4s', marginBottom: '35px', fontSize: '1.15rem', maxWidth: '580px', lineHeight: '1.75', color: 'rgba(255,255,255,0.85)' }}>
+                   {siteContent.heroText}
+                 </p>
+                 <div className="reveal hero-cta-group" style={{ animationDelay: '0.6s', display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                   {siteContent.heroBtnText ? (
+                     <button className="btn-pjl hero-primary-cta" style={{ padding: '15px 40px', background: 'var(--gold)', color: 'var(--navy)', fontWeight: 700, borderRadius: '8px' }} onClick={() => navigate(siteContent.heroBtnLink?.replace('/', '') || 'contacto')}>{siteContent.heroBtnText}</button>
+                   ) : (
+                     <>
+                       <button className="btn-pjl hero-primary-cta" style={{ padding: '15px 40px', background: 'var(--gold)', color: 'var(--navy)', fontWeight: 700, borderRadius: '8px' }} onClick={() => navigate('estatuto')}>Conocer Estatuto</button>
+                       <button className="btn-pjl hero-secondary-cta" style={{ padding: '15px 40px', border: '2px solid rgba(255,255,255,0.8)', color: '#fff', borderRadius: '8px' }} onClick={() => navigate('contacto')}>Contáctanos</button>
+                     </>
+                   )}
+                 </div>
                 {liveHeroImages.length > 1 && (
                   <div className="hero-controls" style={{ display: 'flex', gap: '8px', marginTop: '50px', alignItems: 'center', flexWrap: 'wrap' }}>
                     <button
@@ -681,42 +689,201 @@ function HomeContent() {
               </div>
             </section>
 
-            {/* INSTITUCIONAL SECTION */}
-            <section className="section-pjl identity-feature-section" id="institucional-preview">
-              <div className="container">
+            {/* INSTITUCIONAL SECTION - PREMIUM REDESIGN */}
+            <section className="section-pjl" id="institucional-preview" style={{ 
+              position: 'relative', 
+              overflow: 'hidden',
+              background: 'linear-gradient(155deg, var(--navy) 0%, #1e3060 60%, #243255 100%)',
+              padding: '100px 0'
+            }}>
+              {/* Background decorative elements */}
+              <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+                <div style={{ position: 'absolute', top: '-20%', right: '-10%', width: '700px', height: '700px', borderRadius: '50%', border: '1px solid rgba(200,151,58,0.12)', animation: 'spin-slow 40s linear infinite' }} />
+                <div style={{ position: 'absolute', top: '-10%', right: '-5%', width: '500px', height: '500px', borderRadius: '50%', border: '1px dashed rgba(200,151,58,0.08)' }} />
+                <div style={{ position: 'absolute', bottom: '-15%', left: '-8%', width: '500px', height: '500px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(200,151,58,0.04) 0%, transparent 70%)' }} />
+                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: '100%', height: '100%', background: 'radial-gradient(ellipse 60% 80% at 30% 50%, rgba(200,151,58,0.03) 0%, transparent 100%)' }} />
+              </div>
+
+              <div className="container" style={{ position: 'relative', zIndex: 2 }}>
                 <div className="insti-premium-layout reveal">
+                  
+                  {/* LEFT: Text Content */}
                   <div className="insti-text-side">
-                    <div className="section-head identity-feature-head" onClick={() => navigate('institucional')} style={{ cursor: 'pointer' }}>
-                      <span className="premium-label" style={{ color: 'var(--gold)' }}>HISTORIA Y LEGADO</span>
-                      <h3 style={{ fontSize: '2.5rem', marginBottom: '15px' }}>{siteContent.instiTitulo || 'Nuestra Institución'}</h3>
-                      <div className="line" style={{ width: '80px', marginLeft: '0' }}></div>
+                    <div style={{ marginBottom: '24px' }}>
+                      <span style={{ 
+                        display: 'inline-flex', alignItems: 'center', gap: '8px',
+                        color: 'var(--gold)', fontWeight: 800, fontSize: '11px', 
+                        letterSpacing: '3px', textTransform: 'uppercase',
+                        padding: '6px 16px', borderRadius: '20px',
+                        background: 'rgba(200,151,58,0.12)',
+                        border: '1px solid rgba(200,151,58,0.25)',
+                        marginBottom: '20px'
+                      }}>
+                        <span style={{ fontSize: '14px' }}>✦</span>
+                        HISTORIA Y LEGADO
+                      </span>
                     </div>
-                    <div className="insti-description">
-                      {siteContent.instiDesc}
+                    
+                    <h3 style={{ 
+                      fontSize: 'clamp(2rem, 4vw, 2.8rem)', 
+                      marginBottom: '8px', 
+                      color: '#fff',
+                      lineHeight: 1.15,
+                      fontFamily: 'var(--font-display)'
+                    }}>
+                      {siteContent.instiTitulo || 'Nuestra Identidad'}
+                    </h3>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '20px 0 28px' }}>
+                      <span style={{ height: '1px', flexGrow: 1, maxWidth: '50px', background: 'var(--gold)', opacity: 0.5 }}></span>
+                      <span style={{ fontSize: '20px', color: 'var(--gold)', opacity: 0.8 }}>†</span>
+                      <span style={{ height: '1px', flexGrow: 1, maxWidth: '50px', background: 'var(--gold)', opacity: 0.5 }}></span>
                     </div>
-                    <div className="identity-feature-actions">
-                      <button className="btn-premium btn-premium-gold" onClick={() => navigate('historia')}>NUESTRA TRAYECTORIA</button>
-                      <button className="btn-premium btn-premium-outline" onClick={() => navigate('estatuto')}>MARCO LEGAL</button>
+
+                    <p style={{ 
+                      color: 'rgba(255,255,255,0.78)', 
+                      fontSize: '1.05rem', 
+                      lineHeight: '1.85',
+                      marginBottom: '36px',
+                      maxWidth: '520px'
+                    }}>
+                      {siteContent.instiDesc || 'Somos una comunidad pastoral que camina desde hace décadas en la fe y el compromiso juvenil de la ciudad de Luque.'}
+                    </p>
+
+                    {/* Stats row */}
+                    <div style={{ 
+                      display: 'flex', gap: '24px', flexWrap: 'wrap',
+                      marginBottom: '40px'
+                    }}>
+                      {[
+                        { value: siteContent.statsAnos || '20', label: 'Años de Fe' },
+                        { value: siteContent.statsJovenes || '200+', label: 'Jóvenes' },
+                        { value: siteContent.statsZonas || '4', label: 'Zonas' }
+                      ].map((s, i) => (
+                        <div key={i} style={{
+                          textAlign: 'center',
+                          padding: '16px 22px',
+                          borderRadius: '16px',
+                          background: 'rgba(255,255,255,0.06)',
+                          border: '1px solid rgba(200,151,58,0.2)',
+                          backdropFilter: 'blur(10px)',
+                          minWidth: '90px'
+                        }}>
+                          <div style={{ fontSize: '1.9rem', fontWeight: 900, color: 'var(--gold)', fontFamily: 'var(--font-display)', lineHeight: 1 }}>{s.value}</div>
+                          <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '1.5px', marginTop: '6px' }}>{s.label}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
+                      <button 
+                        style={{ 
+                          padding: '14px 28px', borderRadius: '10px',
+                          background: 'var(--gold)', color: 'var(--navy)',
+                          fontWeight: 800, fontSize: '13px', letterSpacing: '1px',
+                          textTransform: 'uppercase', border: 'none', cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          boxShadow: '0 8px 20px rgba(200,151,58,0.35)'
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(200,151,58,0.5)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 20px rgba(200,151,58,0.35)'; }}
+                        onClick={() => navigate('historia')}
+                      >
+                        Nuestra Trayectoria
+                      </button>
+                      <button 
+                        style={{ 
+                          padding: '14px 28px', borderRadius: '10px',
+                          background: 'transparent', color: '#fff',
+                          fontWeight: 700, fontSize: '13px', letterSpacing: '1px',
+                          textTransform: 'uppercase',
+                          border: '1.5px solid rgba(255,255,255,0.25)', cursor: 'pointer',
+                          transition: 'all 0.3s ease'
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--gold)'; e.currentTarget.style.color = 'var(--gold)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'; e.currentTarget.style.color = '#fff'; }}
+                        onClick={() => navigate('estatuto')}
+                      >
+                        Marco Legal
+                      </button>
                     </div>
                   </div>
+
+                  {/* RIGHT: Image + floating badge */}
                   <div className="insti-visual-side">
-                    <div className="image-frame">
-                      <div className="frame-decoration"></div>
+                    <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
+                      {/* Outer glow frame */}
+                      <div style={{
+                        position: 'absolute', inset: '-12px',
+                        borderRadius: '28px',
+                        background: 'linear-gradient(135deg, rgba(200,151,58,0.3) 0%, rgba(200,151,58,0.05) 50%, rgba(200,151,58,0.15) 100%)',
+                        filter: 'blur(20px)',
+                        zIndex: 0
+                      }} />
+                      {/* Image border frame */}
+                      <div style={{
+                        position: 'absolute', inset: '-3px',
+                        borderRadius: '24px',
+                        background: 'linear-gradient(135deg, rgba(200,151,58,0.6), rgba(200,151,58,0.1), rgba(200,151,58,0.4))',
+                        zIndex: 1
+                      }} />
                       <img
                         src={siteContent.instiFoto || 'https://images.unsplash.com/photo-1544427928-c49cdfebf193?ixlib=rb-1.2.1&auto=format&fit=crop&w=900&q=80'}
                         onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1544427928-c49cdfebf193?ixlib=rb-1.2.1&auto=format&fit=crop&w=900&q=80'; }}
                         alt="Imagen Institucional PJL"
-                        className="main-insti-img"
+                        style={{ 
+                          width: '100%', 
+                          borderRadius: '22px', 
+                          display: 'block',
+                          objectFit: 'cover',
+                          aspectRatio: '4/3',
+                          position: 'relative',
+                          zIndex: 2
+                        }}
                       />
-                      <div className="years-badge">
-                        <span className="number">{siteContent.statsAnos || '20'}</span>
-                        <span className="label">AÑOS DE FE</span>
+                      {/* Floating badge */}
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '-18px',
+                        right: '-18px',
+                        width: '110px',
+                        height: '110px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, var(--gold) 0%, #E8B85A 100%)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 10,
+                        boxShadow: '0 12px 35px rgba(200,151,58,0.5)',
+                        border: '4px solid rgba(26,39,68,0.9)'
+                      }}>
+                        <span style={{ fontSize: '1.8rem', fontWeight: 900, color: 'var(--navy)', lineHeight: 1, fontFamily: 'var(--font-display)' }}>{siteContent.statsAnos || '20'}</span>
+                        <span style={{ fontSize: '9px', fontWeight: 800, color: 'var(--navy)', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.8 }}>Años de Fe</span>
                       </div>
+                      {/* Corner ornament */}
+                      <div style={{
+                        position: 'absolute',
+                        top: '-14px',
+                        left: '-14px',
+                        width: '50px',
+                        height: '50px',
+                        borderRadius: '12px',
+                        background: 'rgba(200,151,58,0.15)',
+                        border: '1.5px solid rgba(200,151,58,0.4)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '22px',
+                        zIndex: 10
+                      }}>✝</div>
                     </div>
                   </div>
+
                 </div>
               </div>
             </section>
+
 
             {/* EQUIPOS Y CONSEJO */}
             <section className="section-pjl" id="equipos">
@@ -1588,6 +1755,183 @@ function HomeContent() {
                   </div>
                 ))}
               </div>
+            </div>
+          </section>
+        )}
+
+        {/* --- PAGE: DOCUMENTOS --- */}
+        {currentPage === 'documentos' && (
+          <section className="section-pjl" style={{ background: 'var(--cream)' }} id="documentos-public">
+            <div className="container">
+              <div className="section-head reveal" onClick={() => navigate('documentos')}>
+                <span className="premium-label">RECURSOS</span>
+                <h3>Centro de <i>Documentos y Descargas</i></h3>
+                <p style={{ color: 'var(--text-muted)', maxWidth: '600px', margin: '10px auto 0', fontSize: '15px' }}>
+                  Accede a los boletines mensuales, planes pastorales, currículos y materiales de formación oficiales para su lectura o descarga.
+                </p>
+                <div className="line"></div>
+              </div>
+
+              {/* SEARCH & FILTERS PANEL */}
+              <div className="reveal" style={{
+                background: 'var(--white)',
+                padding: '25px',
+                borderRadius: '20px',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
+                border: '1px solid var(--gold-pale)',
+                marginBottom: '40px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '20px'
+              }}>
+                <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: '280px', position: 'relative' }}>
+                    <span style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
+                    <input
+                      type="text"
+                      className="pjl-input"
+                      style={{ paddingLeft: '45px', width: '100%' }}
+                      placeholder="Buscar por nombre o descripción de archivo..."
+                      value={docSearch}
+                      onChange={e => setDocSearch(e.target.value)}
+                    />
+                  </div>
+                  {docSearch && (
+                    <button className="btn-premium btn-premium-outline" onClick={() => setDocSearch('')} style={{ padding: '10px 20px' }}>
+                      Limpiar
+                    </button>
+                  )}
+                </div>
+
+                {/* DYNAMIC CATEGORY FILTER */}
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--navy)', marginRight: '10px', textTransform: 'uppercase', letterSpacing: '1px' }}>Categorías:</span>
+                  <button
+                    onClick={() => setDocCategory('all')}
+                    className={`btn-premium ${docCategory === 'all' ? 'btn-premium-gold' : 'btn-premium-outline'}`}
+                    style={{ padding: '6px 16px', fontSize: '12px', borderRadius: '20px' }}
+                  >
+                    TODOS
+                  </button>
+                  {Array.from(new Set(liveDocs.map(d => d.category || 'Otros'))).filter(Boolean).map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setDocCategory(cat)}
+                      className={`btn-premium ${docCategory === cat ? 'btn-premium-gold' : 'btn-premium-outline'}`}
+                      style={{ padding: '6px 16px', fontSize: '12px', borderRadius: '20px' }}
+                    >
+                      {cat.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* CARD GRID */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '30px' }}>
+                {liveDocs
+                  .filter(d => {
+                    const matchQuery = d.name.toLowerCase().includes(docSearch.toLowerCase()) || (d.description || '').toLowerCase().includes(docSearch.toLowerCase());
+                    const matchCat = docCategory === 'all' || d.category === docCategory;
+                    return matchQuery && matchCat;
+                  })
+                  .map((doc, idx) => {
+                    const isPdf = doc.type?.toLowerCase() === 'pdf' || doc.name.toLowerCase().endsWith('.pdf');
+                    return (
+                      <div
+                        key={doc.id || idx}
+                        className="reveal"
+                        style={{
+                          background: 'var(--white)',
+                          borderRadius: '20px',
+                          border: '1px solid var(--gold-pale)',
+                          padding: '25px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          boxShadow: '0 8px 25px rgba(0,0,0,0.02)',
+                          transition: 'all 0.3s ease',
+                          animationDelay: `${idx * 0.05}s`,
+                          position: 'relative',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        {/* CATEGORY & ICON */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+                          <span style={{
+                            padding: '4px 12px',
+                            background: 'var(--gold-pale)',
+                            color: 'var(--navy)',
+                            borderRadius: '20px',
+                            fontSize: '11px',
+                            fontWeight: 800,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px'
+                          }}>
+                            {doc.category || 'General'}
+                          </span>
+                          <div style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '50%',
+                            background: isPdf ? 'rgba(239,68,68,0.08)' : 'rgba(59,130,246,0.08)',
+                            color: isPdf ? '#ef4444' : '#3b82f6',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 900,
+                            fontSize: '12px'
+                          }}>
+                            {doc.type || 'DOC'}
+                          </div>
+                        </div>
+
+                        {/* DOCUMENT META */}
+                        <h4 className="serif" style={{ fontSize: '1.25rem', color: 'var(--navy)', margin: '0 0 10px', lineHeight: 1.3 }}>{doc.name}</h4>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '14px', lineHeight: 1.6, flex: 1, marginBottom: '20px' }}>
+                          {doc.description || 'Sin descripción disponible.'}
+                        </p>
+
+                        {/* FOOTER METADATA */}
+                        <div style={{
+                          borderTop: '1px solid #f3ebd7',
+                          paddingTop: '15px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          fontSize: '12px',
+                          color: 'var(--text-muted)',
+                          marginBottom: '20px'
+                        }}>
+                          <span>Tamaño: <strong>{doc.size || 'N/A'}</strong></span>
+                          <span>Descargas: <strong>{doc.downloads || 0}</strong></span>
+                        </div>
+
+                        {/* DOWNLOAD TRIGGER */}
+                        <button
+                          className="btn-premium btn-premium-gold"
+                          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px' }}
+                          onClick={() => {
+                            if (!doc.url) return;
+                            // Increment downloads count locally & sync
+                            const updatedDocs = liveDocs.map(d => d.id === doc.id ? { ...d, downloads: (d.downloads || 0) + 1 } : d);
+                            store.docs.set(updatedDocs);
+                            setLiveDocs(updatedDocs);
+                            // Download
+                            handleDownload(doc.url, doc.name);
+                          }}
+                        >
+                          <span>📥 Descargar Archivo</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+              </div>
+
+              {liveDocs.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '80px 0' }}>
+                  <div style={{ fontSize: '50px', marginBottom: '15px' }}>📁</div>
+                  <p style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No hay documentos disponibles en este momento.</p>
+                </div>
+              )}
             </div>
           </section>
         )}

@@ -2704,11 +2704,39 @@ function AdminContent() {
                   }}>+ AGREGAR SLIDE</button>
                 </div>
               </div>
+
+              {/* GLOBAL HERO CONTENT CONFIGURATION */}
+              <div style={{ marginBottom: '30px', padding: '25px', background: 'var(--cream)', borderRadius: '18px', border: '1px solid var(--gold-pale)' }}>
+                <h4 className="serif" style={{ margin: '0 0 15px', color: 'var(--navy)', fontWeight: 800 }}>Contenido Fijo del Hero (Texto y Botones)</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div>
+                    <label className="premium-label" style={{ fontSize: '0.7rem', marginBottom: '5px', display: 'block' }}>ETIQUETA SUPERIOR (TAG)</label>
+                    <input type="text" className="pjl-input" value={content.heroTag || ''} onChange={e => setContent({...content, heroTag: e.target.value})} />
+                  </div>
+                  <div>
+                    <label className="premium-label" style={{ fontSize: '0.7rem', marginBottom: '5px', display: 'block' }}>TÍTULO (Soporta HTML)</label>
+                    <input type="text" className="pjl-input" value={content.heroTitle || ''} onChange={e => setContent({...content, heroTitle: e.target.value})} />
+                  </div>
+                  <div style={{ gridColumn: 'span 2' }}>
+                    <label className="premium-label" style={{ fontSize: '0.7rem', marginBottom: '5px', display: 'block' }}>DESCRIPCIÓN / TEXTO DE INTRODUCCIÓN</label>
+                    <textarea className="pjl-input" rows={3} value={content.heroText || ''} onChange={e => setContent({...content, heroText: e.target.value})} />
+                  </div>
+                  <div>
+                    <label className="premium-label" style={{ fontSize: '0.7rem', marginBottom: '5px', display: 'block' }}>TEXTO BOTÓN PRINCIPAL (Opcional)</label>
+                    <input type="text" className="pjl-input" placeholder="ej. Conocer Estatuto" value={content.heroBtnText || ''} onChange={e => setContent({...content, heroBtnText: e.target.value})} />
+                  </div>
+                  <div>
+                    <label className="premium-label" style={{ fontSize: '0.7rem', marginBottom: '5px', display: 'block' }}>LINK BOTÓN PRINCIPAL (Opcional)</label>
+                    <input type="text" className="pjl-input" placeholder="ej. /estatuto o contacto" value={content.heroBtnLink || ''} onChange={e => setContent({...content, heroBtnLink: e.target.value})} />
+                  </div>
+                </div>
+              </div>
+
               <div style={{ display: 'grid', gap: '20px' }}>
                 {liveHeroImages.map((slide, i) => (
                   <div key={slide.id} className="hero-slide-admin-card" style={{ display: 'flex', gap: '20px', padding: '20px', background: 'var(--cream)', borderRadius: '15px', border: '1px solid var(--gold-pale)' }}>
                     <div style={{ width: '150px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <div style={{ fontWeight: 700, color: 'var(--navy)', fontSize: '0.9rem' }}>Slide #{i + 1}</div>
+                      <div style={{ fontWeight: 700, color: 'var(--navy)', fontSize: '0.9rem' }}>Foto #{i + 1}</div>
                       <div style={{ width: '100%', height: '100px', background: '#ddd', borderRadius: '10px', overflow: 'hidden' }}>
                         {slide.imageUrl ? <img src={slide.imageUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Slide" /> : <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: '#999', fontSize: '0.8rem' }}>Sin Imagen</div>}
                       </div>
@@ -2728,7 +2756,7 @@ function AdminContent() {
                           setLiveHeroImages(newArr);
                         }} className="btn-premium btn-premium-outline" style={{ padding: '5px', flex: 1 }}>↓</button>
                         <button onClick={() => {
-                          if(confirm('¿Seguro que desea eliminar este slide?')) setLiveHeroImages(liveHeroImages.filter(s => s.id !== slide.id));
+                          if(confirm('¿Seguro que desea eliminar esta foto?')) setLiveHeroImages(liveHeroImages.filter(s => s.id !== slide.id));
                         }} className="btn-premium" style={{ padding: '5px', background: '#fee2e2', color: '#ef4444', border: '1px solid #fca5a5', flex: 1 }}>🗑️</button>
                       </div>
                     </div>
@@ -2742,22 +2770,6 @@ function AdminContent() {
                           Subir Foto
                           <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, (url) => setLiveHeroImages(liveHeroImages.map(s => s.id === slide.id ? {...s, imageUrl: url} : s)))} />
                         </label>
-                      </div>
-                      <div>
-                        <label className="premium-label" style={{ fontSize: '0.7rem', marginBottom: '5px', display: 'block' }}>TÍTULO (Soporta HTML como &lt;i&gt;)</label>
-                        <input type="text" className="pjl-input" value={slide.title} onChange={e => setLiveHeroImages(liveHeroImages.map(s => s.id === slide.id ? {...s, title: e.target.value} : s))} />
-                      </div>
-                      <div>
-                        <label className="premium-label" style={{ fontSize: '0.7rem', marginBottom: '5px', display: 'block' }}>SUBTÍTULO</label>
-                        <input type="text" className="pjl-input" value={slide.subtitle} onChange={e => setLiveHeroImages(liveHeroImages.map(s => s.id === slide.id ? {...s, subtitle: e.target.value} : s))} />
-                      </div>
-                      <div>
-                        <label className="premium-label" style={{ fontSize: '0.7rem', marginBottom: '5px', display: 'block' }}>TEXTO BOTÓN</label>
-                        <input type="text" className="pjl-input" placeholder="Dejar vacío para usar predeterminado" value={slide.buttonText} onChange={e => setLiveHeroImages(liveHeroImages.map(s => s.id === slide.id ? {...s, buttonText: e.target.value} : s))} />
-                      </div>
-                      <div>
-                        <label className="premium-label" style={{ fontSize: '0.7rem', marginBottom: '5px', display: 'block' }}>LINK BOTÓN</label>
-                        <input type="text" className="pjl-input" placeholder="ej. /noticias" value={slide.buttonLink} onChange={e => setLiveHeroImages(liveHeroImages.map(s => s.id === slide.id ? {...s, buttonLink: e.target.value} : s))} />
                       </div>
                       <div>
                         <label className="premium-label" style={{ fontSize: '0.7rem', marginBottom: '5px', display: 'block' }}>AJUSTE DE POSICIÓN IMAGEN (MÓVIL)</label>
@@ -2774,7 +2786,7 @@ function AdminContent() {
                     </div>
                   </div>
                 ))}
-                {liveHeroImages.length === 0 && <p style={{ color: 'var(--text-muted)' }}>No hay slides configurados. Se mostrará una pantalla azul marino.</p>}
+                {liveHeroImages.length === 0 && <p style={{ color: 'var(--text-muted)' }}>No hay fotos en el carrusel. Se mostrará fondo azul.</p>}
               </div>
             </div>
           )}
