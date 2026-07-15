@@ -182,7 +182,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1 FROM public.user_profiles
-    WHERE auth_uid = auth.uid()
+    WHERE auth_uid::uuid = auth.uid()
     AND role IN ('desarrollador', 'editor')
   )
 );
@@ -203,7 +203,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1 FROM public.user_profiles
-    WHERE auth_uid = auth.uid()
+    WHERE auth_uid::uuid = auth.uid()
     AND role IN ('desarrollador', 'editor')
   )
 );
@@ -224,7 +224,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1 FROM public.user_profiles
-    WHERE auth_uid = auth.uid()
+    WHERE auth_uid::uuid = auth.uid()
     AND role IN ('desarrollador', 'editor')
   )
 );
@@ -236,7 +236,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1 FROM public.user_profiles
-    WHERE auth_uid = auth.uid()
+    WHERE auth_uid::uuid = auth.uid()
     AND role IN ('desarrollador', 'editor')
   )
 );
@@ -262,7 +262,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1 FROM public.user_profiles
-    WHERE auth_uid = auth.uid()
+    WHERE auth_uid::uuid = auth.uid()
     AND role IN ('desarrollador', 'editor')
   )
 );
@@ -274,7 +274,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1 FROM public.user_profiles
-    WHERE auth_uid = auth.uid()
+    WHERE auth_uid::uuid = auth.uid()
     AND role IN ('desarrollador', 'editor')
   )
 );
@@ -300,7 +300,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1 FROM public.user_profiles
-    WHERE auth_uid = auth.uid()
+    WHERE auth_uid::uuid = auth.uid()
     AND role IN ('desarrollador', 'editor')
   )
 );
@@ -315,7 +315,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1 FROM public.user_profiles
-    WHERE auth_uid = auth.uid()
+    WHERE auth_uid::uuid = auth.uid()
     AND role IN ('desarrollador', 'editor')
   )
 );
@@ -327,7 +327,7 @@ TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1 FROM public.user_profiles
-    WHERE auth_uid = auth.uid()
+    WHERE auth_uid::uuid = auth.uid()
     AND role IN ('desarrollador', 'editor')
   )
 );
