@@ -31,7 +31,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         id, title, subtitle, body, slug, featured_image_url, gallery_urls,
         published, pinned, pin_order, featured_on_homepage, views_count,
         created_at, updated_at, published_at, expires_at, archived,
-        category_id,
+        category_id, event_date, inscription_url, external_link, google_drive_url, event_location,
         news_categories!left (id, name, slug, icon_emoji, color_hex),
         news_events!left (id, start_date, start_time, end_date, end_time, location_name, location_address, google_maps_url, location_lat, location_lng, allow_inscription, max_participants, current_participants, inscription_deadline, contact_person_name, contact_email, contact_phone)
         `
@@ -160,6 +160,23 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     if (body.pin_order !== undefined && typeof body.pin_order === 'number') {
       updateData.pin_order = body.pin_order;
+    }
+
+    // Nuevos campos
+    if (body.event_date !== undefined) {
+      updateData.event_date = body.event_date || null;
+    }
+    if (body.inscription_url !== undefined) {
+      updateData.inscription_url = body.inscription_url || null;
+    }
+    if (body.external_link !== undefined) {
+      updateData.external_link = body.external_link || null;
+    }
+    if (body.google_drive_url !== undefined) {
+      updateData.google_drive_url = body.google_drive_url || null;
+    }
+    if (body.event_location !== undefined) {
+      updateData.event_location = body.event_location || null;
     }
 
     const { data, error } = await supabase

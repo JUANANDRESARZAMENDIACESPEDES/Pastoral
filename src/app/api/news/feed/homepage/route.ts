@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
         id, title, subtitle, body, slug, featured_image_url, gallery_urls,
         published, pinned, pin_order, featured_on_homepage, views_count,
         created_at, updated_at, published_at, expires_at,
-        category_id,
+        category_id, event_date, inscription_url, external_link, google_drive_url, event_location,
         news_categories!left (id, name, slug, icon_emoji, color_hex),
         news_events!left (id, start_date, start_time, end_date, location_name, location_lat, location_lng)
         `
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
         id, title, subtitle, body, slug, featured_image_url, gallery_urls,
         published, pinned, pin_order, featured_on_homepage, views_count,
         created_at, updated_at, published_at, expires_at,
-        category_id,
+        category_id, event_date, inscription_url, external_link, google_drive_url, event_location,
         news_categories!left (id, name, slug, icon_emoji, color_hex),
         news_events!left (id, start_date, start_time, end_date, location_name, location_lat, location_lng)
         `

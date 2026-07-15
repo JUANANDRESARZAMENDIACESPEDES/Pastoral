@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
         id, title, subtitle, body, slug, featured_image_url, gallery_urls,
         published, pinned, pin_order, featured_on_homepage, views_count,
         created_at, updated_at, published_at, expires_at, archived,
-        category_id,
+        category_id, event_date, inscription_url, external_link, google_drive_url, event_location,
         news_categories!left (id, name, slug, icon_emoji, color_hex),
         news_events!left (id, start_date, start_time, end_date, end_time, location_name, location_lat, location_lng)
         `,
@@ -156,6 +156,12 @@ export async function POST(request: NextRequest) {
       featured_on_homepage: false,
       published_at: body.published === true ? new Date().toISOString() : null,
       expires_at: body.expires_at || null,
+      // Nuevos campos
+      event_date: body.event_date || null,
+      inscription_url: body.inscription_url || null,
+      external_link: body.external_link || null,
+      google_drive_url: body.google_drive_url || null,
+      event_location: body.event_location || null,
     };
 
     const { data, error } = await supabase
