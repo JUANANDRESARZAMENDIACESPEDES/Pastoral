@@ -12,7 +12,6 @@ import {
 import { fetchStoreValue } from '@/lib/supabaseStore';
 import Link from 'next/link';
 import Script from 'next/script';
-import { NewsSection } from '@/components/NewsSection';
 
 const ZonaMap = dynamic(() => import('@/components/ZonaMap'), { ssr: false, loading: () => <div style={{ height: '500px', background: 'var(--cream)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>Cargando mapa...</div> });
 
@@ -414,7 +413,6 @@ function HomeContent() {
           <button onClick={() => changeFont(-1)} className="a11y-btn">A-</button>
           <button onClick={toggleContrast} className="a11y-btn">Alto Contraste</button>
           <Link href="/admin" className="a11y-btn">⚙ Panel Admin</Link>
-          <Link href="/admin/noticias" className="a11y-btn">📰 Gestionar Noticias</Link>
         </div>
       </div>
 
@@ -971,10 +969,7 @@ function HomeContent() {
               </div>
             </section>
 
-            {/* SECCIÓN DE NOTICIAS DEL NUEVO SISTEMA */}
-            <NewsSection />
-
-            {/* NOTICIAS Y AGENDA SECTION ANTIGUA */}
+            {/* NOTICIAS Y AGENDA SECTION */}
             <section className="section-pjl" style={{ background: 'var(--cream)' }}>
               <div className="container agenda-split">
                 {/* Column 1: News */}

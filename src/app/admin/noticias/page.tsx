@@ -8,6 +8,7 @@
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { NewsArticleWithDetails } from '@/lib/newsTypes';
+import { NewsSection } from '@/components/NewsSection';
 
 // Importar componentes de forma dinámica para evitar SSR issues
 const NewsAdminTable = dynamic(() => import('@/components/admin/NewsAdminTable').then(mod => ({ default: mod.NewsAdminTable })), { loading: () => <div>Cargando tabla...</div> });
@@ -131,12 +132,7 @@ export default function NewsAdminPage() {
       <div className="container">
         <div className="header">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <h1>📰 Gestión de Noticias y Eventos</h1>
-              <p className="header-subtitle">
-                Crea, edita y publica noticias, eventos y recordatorios para la Pastoral Juvenil
-              </p>
-            </div>
+            <h1 style={{ margin: 0, fontSize: '1.5rem', color: '#333' }}>📰 Gestión de Noticias</h1>
           </div>
 
           {currentView === 'list' && (
@@ -158,10 +154,7 @@ export default function NewsAdminPage() {
 
         {currentView === 'list' && (
           <div className="content">
-            <NewsAdminTable
-              onEdit={handleEditArticle}
-              onDelete={() => console.log('Artículo eliminado')}
-            />
+            <NewsSection />
           </div>
         )}
 
