@@ -137,7 +137,6 @@ function HomeContent() {
   const syncData = () => {
     const newContent = store.content.get();
     const newActivities = store.activities.get().filter(a => a.active);
-    const newNews = store.news.get().filter(n => n.published);
     const newFaq = store.faq.get();
     const newProfiles = store.profiles.get();
     const newBranding = store.branding.get();
@@ -150,7 +149,6 @@ function HomeContent() {
     // Only update if stringified value changed to avoid unnecessary interval resets
     setSiteContent(prev => JSON.stringify(prev) !== JSON.stringify(newContent) ? newContent : prev);
     setLiveActivities(prev => JSON.stringify(prev) !== JSON.stringify(newActivities) ? newActivities : prev);
-    setLiveNews(prev => JSON.stringify(prev) !== JSON.stringify(newNews) ? newNews : prev);
     setLiveFaq(prev => JSON.stringify(prev) !== JSON.stringify(newFaq) ? newFaq : prev);
     setLiveProfiles(prev => JSON.stringify(prev) !== JSON.stringify(newProfiles) ? newProfiles : prev);
     setBranding(prev => JSON.stringify(prev) !== JSON.stringify(newBranding) ? newBranding : prev);
@@ -178,6 +176,32 @@ function HomeContent() {
       window.removeEventListener('storage', onStorage);
       window.removeEventListener('pjl_store_update', onCustomUpdate);
     };
+  }, []);
+
+  // --- FETCH REAL NEWS FROM DATABASE ---
+  useEffect(() => {
+    const fetchRealNews = async () => {
+      try {
+        const response = await fetch('/api/news/articles?published=true&limit=20');
+        const data = await response.json();
+        if (data.success && Array.isArray(data.data)) {
+          const mapped = data.data.map((n: any) => ({
+            id: n.id,
+            title: n.title,
+            body: n.body,
+            date: n.published_at || n.created_at,
+            published: n.published
+          }));
+          setLiveNews(mapped);
+        }
+      } catch (err) {
+        console.error('Error fetching real news:', err);
+      }
+    };
+
+    fetchRealNews();
+    const interval = setInterval(fetchRealNews, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   // --- AUTO-SLIDE HERO BANNER ---
