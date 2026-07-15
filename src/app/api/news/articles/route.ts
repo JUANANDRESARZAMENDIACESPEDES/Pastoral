@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
     const bodyText = (body.body as string).trim();
     const slug = body.slug ? (body.slug as string).toLowerCase() : generateSlug(title);
 
-    const tags = Array.isArray(body.tags) ? body.tags.filter((t) => typeof t === 'string') : [];
+    const tags = Array.isArray(body.tags) ? body.tags.filter((t: unknown) => typeof t === 'string') : [];
 
     const articleData = {
       title,
