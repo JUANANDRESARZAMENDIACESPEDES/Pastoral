@@ -3273,6 +3273,29 @@ input:checked + .pjl-slider:before {
     width: 100%;
     max-width: 100%;
   }
+
+  .admin-content-area div[style*="display: flex"][style*="justify-content: space-between"],
+  .admin-content-area div[style*="display:flex"][style*="justify-content:space-between"] {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+
+  .admin-content-area div[style*="display: grid"][style*="grid-template-columns"],
+  .admin-content-area div[style*="display:grid"][style*="grid-template-columns"] {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .admin-content-area div[style*="overflow-x: auto"],
+  .admin-content-area div[style*="overflowX: 'auto'"],
+  .admin-content-area div[style*="overflow-x:auto"] {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 @media (max-width: 768px) and (orientation: landscape) {
@@ -3296,5 +3319,100 @@ input:checked + .pjl-slider:before {
 
   .calendar-wrapper {
     height: 360px !important;
+  }
+}
+
+@media (max-width: 768px) and (orientation: portrait) {
+  .admin-content-area {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .admin-dashboard-kpi-grid,
+  .admin-dashboard-main-grid,
+  .admin-dashboard-summary-grid,
+  .admin-dashboard-actions,
+  .news-admin-grid,
+  .territory-editor-grid,
+  .identity-admin-grid,
+  .identity-admin-hero-grid,
+  .docs-admin-summary-grid,
+  .hero-slide-admin-card,
+  .animate-reveal > div[style*="grid-template-columns"],
+  .animate-reveal > div[style*="display: grid"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-dashboard-kpi-grid,
+  .admin-dashboard-summary-grid,
+  .admin-dashboard-actions,
+  .news-admin-grid,
+  .territory-editor-grid,
+  .identity-admin-grid,
+  .identity-admin-hero-grid,
+  .docs-admin-summary-grid {
+    gap: 12px !important;
+  }
+
+  .admin-dashboard-card-head,
+  .admin-content-area div[style*="display: flex"][style*="align-items: center"][style*="justify-content: space-between"],
+  .admin-content-area div[style*="display: flex"][style*="align-items: flex-start"][style*="justify-content: space-between"] {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+
+  .admin-content-area .pjl-card,
+  .admin-content-area .admin-analytics-card,
+  .admin-content-area .section-head,
+  .admin-content-area .vatican-news-sidebar,
+  .admin-content-area .territory-map-shell,
+  .admin-content-area .hero-slide-admin-card,
+  .admin-content-area .drawer-vatican-widget {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .admin-content-area .pjl-table-container,
+  .admin-content-area .pjl-table,
+  .admin-content-area table,
+  .admin-content-area div[style*="overflow-x: auto"] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .admin-content-area .pjl-table {
+    min-width: 560px;
+  }
+
+  .admin-content-area .pjl-table th,
+  .admin-content-area .pjl-table td {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  .admin-content-area .hero-slide-admin-card > div:first-child,
+  .admin-content-area .hero-slide-admin-card > div:last-child,
+  .admin-content-area .territory-editor-grid > div,
+  .admin-content-area .news-admin-grid > div {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .admin-content-area input,
+  .admin-content-area select,
+  .admin-content-area textarea,
+  .admin-content-area .pjl-input {
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .admin-content-area .btn-premium,
+  .admin-content-area button {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 }
