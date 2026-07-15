@@ -32,12 +32,13 @@ interface NewsArticle {
 /** Convierte URLs en texto plano a elementos <a> clicables */
 function TextWithLinks({ text, maxLength }: { text: string; maxLength?: number }) {
   const display = maxLength ? text.slice(0, maxLength) + (text.length > maxLength ? '...' : '') : text;
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const urlRegex = /(https?:\/\/[^\s]+)/gi;
+  const isUrl = (value: string) => /^https?:\/\/[^\s]+$/i.test(value);
   const parts = display.split(urlRegex);
   return (
     <>
       {parts.map((part, i) =>
-        urlRegex.test(part) ? (
+        isUrl(part) ? (
           <a
             key={i}
             href={part}

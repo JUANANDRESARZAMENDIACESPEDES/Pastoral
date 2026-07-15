@@ -13,6 +13,17 @@ import { fetchStoreValue } from '@/lib/supabaseStore';
 import Link from 'next/link';
 import Script from 'next/script';
 
+type PublicNewsItem = Omit<NewsItem, 'id'> & {
+  id: number | string;
+  subtitle?: string;
+  featured_image_url?: string | null;
+  inscription_url?: string | null;
+  external_link?: string | null;
+  google_drive_url?: string | null;
+  event_date?: string | null;
+  event_location?: string | null;
+};
+
 const ZonaMap = dynamic(() => import('@/components/ZonaMap'), { ssr: false, loading: () => <div style={{ height: '500px', background: 'var(--cream)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>Cargando mapa...</div> });
 
 const STAT_LABELS: Record<string, string> = {
@@ -78,6 +89,37 @@ const detectDeviceType = () => {
   return 'desktop' as const;
 };
 
+function TextWithLinks({ text }: { text: string }) {
+  const parts = text.split(/(https?:\/\/[^\s]+)/gi);
+  const isUrl = (value: string) => /^https?:\/\/[^\s]+$/i.test(value);
+
+  return (
+    <>
+      {parts.map((part, index) =>
+        isUrl(part) ? (
+          <a
+            key={`${part}-${index}`}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              color: 'var(--gold)',
+              textDecoration: 'underline',
+              fontWeight: 600,
+              wordBreak: 'break-word',
+            }}
+          >
+            {part}
+          </a>
+        ) : (
+          <span key={`${part}-${index}`}>{part}</span>
+        )
+      )}
+    </>
+  );
+}
+
 
 function HomeContent() {
   const router = useRouter();
@@ -112,10 +154,10 @@ function HomeContent() {
 
   const [liveSocial, setLiveSocial] = useState<SocialLinks>(DEFAULT_SOCIAL);
   const [liveChapels, setLiveChapels] = useState<Chapel[]>([]);
-  const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
+  const [selectedNews, setSelectedNews] = useState<PublicNewsItem | null>(null);
   const [siteContent, setSiteContent] = useState<SiteContent>(DEFAULT_CONTENT);
   const [liveActivities, setLiveActivities] = useState<Activity[]>([]);
-  const [liveNews, setLiveNews] = useState<NewsItem[]>([]);
+  const [liveNews, setLiveNews] = useState<PublicNewsItem[]>([]);
   const [liveFaq, setLiveFaq] = useState<FaqItem[]>([]);
   const [liveProfiles, setLiveProfiles] = useState<MemberProfile[]>([]);
   const [branding, setBranding] = useState<Branding>(DEFAULT_BRANDING);
@@ -190,7 +232,14 @@ function HomeContent() {
             title: n.title,
             body: n.body,
             date: n.published_at || n.created_at,
-            published: n.published
+            published: n.published,
+            subtitle: n.subtitle || '',
+            featured_image_url: n.featured_image_url || null,
+            inscription_url: n.inscription_url || null,
+            external_link: n.external_link || null,
+            google_drive_url: n.google_drive_url || null,
+            event_date: n.event_date || null,
+            event_location: n.event_location || null,
           }));
           setLiveNews(mapped);
         }
@@ -444,7 +493,7 @@ function HomeContent() {
       <nav className="top-nav">
         <div className="container nav-content">
           <div className="logo-area" style={{ cursor: 'pointer' }} onClick={() => navigate('home')}>
-            {branding.mainLogo ? <img src={branding.mainLogo} className="logo-img-circular" style={{ height: '60px', width: '60px' }} alt="Logotipo Principal PJL" /> : <div style={{ fontSize: '30px' }}>†</div>}
+            {branding.mainLogo ? <img src={branding.mainLogo} className="logo-img-circular site-logo-img" style={{ height: '60px', width: '60px' }} alt="Logotipo Principal PJL" /> : <div style={{ fontSize: '30px' }}>†</div>}
             <div>
               <h1>PJL LUQUE</h1>
               <p>Pastoral Juvenil Luqueña</p>
@@ -518,7 +567,7 @@ function HomeContent() {
       <div className={`mobile-nav-drawer ${isMobileMenuOpen ? 'open' : ''}`}>
         <div className="drawer-header">
           <div className="logo-area" style={{ cursor: 'pointer' }} onClick={() => { navigate('home'); setIsMobileMenuOpen(false); }}>
-            {branding.mainLogo ? <img src={branding.mainLogo} className="logo-img-circular" style={{ height: '50px', width: '50px' }} alt="Logotipo Principal PJL" /> : <div style={{ fontSize: '24px' }}>†</div>}
+            {branding.mainLogo ? <img src={branding.mainLogo} className="logo-img-circular site-logo-img" style={{ height: '50px', width: '50px' }} alt="Logotipo Principal PJL" /> : <div style={{ fontSize: '24px' }}>†</div>}
             <div>
               <h2>PJL LUQUE</h2>
               <p>Pastoral Juvenil</p>
@@ -1019,7 +1068,7 @@ function HomeContent() {
                           {new Date(n.date).toLocaleDateString('es-PY', { day: '2-digit', month: 'long', year: 'numeric' })}
                         </span>
                         <h4>{n.title}</h4>
-                        <p>{n.body.substring(0, 150)}...</p>
+                        <p>{(n.subtitle || n.body).substring(0, 150)}...</p>
                         <Link href="/" onClick={(e) => { e.stopPropagation(); navigate('noticias', e); }}>Leer artículo completo <span style={{ fontSize: '16px' }}>➞</span></Link>
                       </div>
                     ))}
@@ -1774,7 +1823,15 @@ function HomeContent() {
                       <span style={{ fontSize: '18px' }}>📰</span>
                     </div>
                     <h4 style={{ margin: '0 0 15px', lineHeight: 1.3 }}>{n.title}</h4>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '14px', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{n.body}</p>
+                    {n.subtitle && <p style={{ color: 'var(--navy)', fontSize: '14px', fontWeight: 600, marginBottom: '12px' }}>{n.subtitle}</p>}
+                    <p style={{ color: 'var(--text-muted)', fontSize: '14px', display: '-webkit-box', WebkitLineClamp: 5, WebkitBoxOrient: 'vertical', overflow: 'hidden', whiteSpace: 'pre-wrap' }}>{n.body}</p>
+                    {(n.inscription_url || n.google_drive_url || n.external_link) && (
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '16px' }}>
+                        {n.inscription_url && <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--gold)', border: '1px solid var(--gold)', borderRadius: '999px', padding: '5px 10px' }}>Inscripción</span>}
+                        {n.google_drive_url && <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--navy)', border: '1px solid rgba(26,39,68,0.2)', borderRadius: '999px', padding: '5px 10px' }}>Fotos</span>}
+                        {n.external_link && <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', border: '1px solid rgba(0,0,0,0.12)', borderRadius: '999px', padding: '5px 10px' }}>Más info</span>}
+                      </div>
+                    )}
                     <button className="btn-premium btn-premium-outline" style={{ marginTop: '20px', padding: '8px 15px', fontSize: '0.7rem' }}>LEER NOTICIA COMPLETA</button>
                   </div>
                 ))}
@@ -2208,11 +2265,49 @@ function HomeContent() {
             >×</button>
             <div style={{ textAlign: 'center' }}>
               <span style={{ color: 'var(--gold)', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '3px', display: 'block', marginBottom: '15px' }}>{new Date(selectedNews.date).toLocaleDateString('es-PY', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
-              <h2 className="serif" style={{ fontSize: '2.5rem', color: 'var(--navy)', marginBottom: '30px', lineHeight: 1.2 }}>{selectedNews.title}</h2>
-              <div className="line" style={{ margin: '0 auto 40px' }}></div>
-              <div style={{ color: 'var(--navy)', lineHeight: '1.8', fontSize: '1.1rem', textAlign: 'justify', whiteSpace: 'pre-line', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
-                {selectedNews.body}
+              <h2 className="serif" style={{ fontSize: '2.5rem', color: 'var(--navy)', marginBottom: selectedNews.subtitle ? '18px' : '30px', lineHeight: 1.2 }}>{selectedNews.title}</h2>
+              {selectedNews.subtitle && (
+                <p style={{ color: 'var(--text-muted)', fontSize: '1rem', lineHeight: 1.7, margin: '0 auto 24px', maxWidth: '620px' }}>
+                  {selectedNews.subtitle}
+                </p>
+              )}
+              {selectedNews.event_date && (
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '18px', padding: '8px 14px', borderRadius: '999px', background: 'rgba(200, 151, 58, 0.12)', color: 'var(--navy)', fontSize: '0.95rem', fontWeight: 600 }}>
+                  <span>📅</span>
+                  <span>{new Date(selectedNews.event_date).toLocaleDateString('es-PY', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
+                </div>
+              )}
+              {selectedNews.event_location && (
+                <div style={{ margin: '0 auto 24px', maxWidth: '620px', padding: '12px 16px', borderRadius: '14px', background: 'var(--cream)', color: 'var(--navy)', fontSize: '0.95rem' }}>
+                  📍 {selectedNews.event_location}
+                </div>
+              )}
+              <div className="line" style={{ margin: '0 auto 32px' }}></div>
+              <div style={{ color: 'var(--navy)', lineHeight: '1.8', fontSize: '1.1rem', textAlign: 'justify', whiteSpace: 'pre-wrap', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
+                <TextWithLinks text={selectedNews.body} />
               </div>
+              {(selectedNews.inscription_url || selectedNews.google_drive_url || selectedNews.external_link) && (
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '28px' }}>
+                  {selectedNews.inscription_url && (
+                    <a href={selectedNews.inscription_url} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 18px', borderRadius: '12px', background: 'linear-gradient(135deg, #C8973A, #e8b84a)', color: '#fff', fontWeight: 700, textDecoration: 'none' }}>
+                      <span>✍️</span>
+                      <span>Inscribirse</span>
+                    </a>
+                  )}
+                  {selectedNews.google_drive_url && (
+                    <a href={selectedNews.google_drive_url} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 18px', borderRadius: '12px', background: '#eef4ff', color: '#1d4ed8', fontWeight: 700, textDecoration: 'none' }}>
+                      <span>📂</span>
+                      <span>Ver fotos</span>
+                    </a>
+                  )}
+                  {selectedNews.external_link && (
+                    <a href={selectedNews.external_link} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 18px', borderRadius: '12px', background: '#f5f5f5', color: 'var(--navy)', fontWeight: 700, textDecoration: 'none' }}>
+                      <span>🌐</span>
+                      <span>Más información</span>
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

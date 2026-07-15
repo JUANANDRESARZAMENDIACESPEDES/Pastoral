@@ -8,7 +8,6 @@
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { NewsArticleWithDetails } from '@/lib/newsTypes';
-import { NewsSection } from '@/components/NewsSection';
 
 // Importar componentes de forma dinámica para evitar SSR issues
 const NewsAdminTable = dynamic(() => import('@/components/admin/NewsAdminTable').then(mod => ({ default: mod.NewsAdminTable })), { loading: () => <div>Cargando tabla...</div> });
@@ -26,7 +25,7 @@ export default function NewsAdminPage() {
     setCurrentView('article');
   };
 
-  const handleSaveArticle = (article: NewsArticleWithDetails) => {
+  const handleSaveArticle = () => {
     setCurrentView('list');
     setSelectedArticle(null);
   };
@@ -123,6 +122,7 @@ export default function NewsAdminPage() {
           display: flex;
           gap: 10px;
           align-items: center;
+          flex-wrap: wrap;
         }
         .form-container {
           padding: 20px;
@@ -136,7 +136,7 @@ export default function NewsAdminPage() {
           </div>
 
           {currentView === 'list' && (
-            <div className="toolbar">
+            <div className="toolbar" style={{ marginTop: '20px' }}>
               <button className="new-article-btn" onClick={() => setCurrentView('article')}>
                 ✨ Crear Nueva Noticia
               </button>
@@ -144,10 +144,15 @@ export default function NewsAdminPage() {
           )}
 
           {currentView !== 'list' && (
-            <div className="toolbar">
+            <div className="toolbar" style={{ marginTop: '20px' }}>
               <button className="back-btn" onClick={handleCancel}>
                 ← Volver a la lista
               </button>
+              <div style={{ color: '#666', fontWeight: 500 }}>
+                {currentView === 'article'
+                  ? (selectedArticle ? `Editando: ${selectedArticle.title}` : 'Creando una nueva noticia')
+                  : (selectedArticle ? `Configurando evento para: ${selectedArticle.title}` : 'Configurando evento')}
+              </div>
             </div>
           )}
         </div>

@@ -109,6 +109,28 @@ export function NewsArticleForm({ article, onSave, onCancel }: NewsArticleFormPr
           font-family: 'Inter', 'Segoe UI', sans-serif;
           color: #1a1a2e;
         }
+        .naf-topbar {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          flex-wrap: wrap;
+          margin-bottom: 20px;
+        }
+        .naf-back-btn {
+          border: 1px solid rgba(200, 151, 58, 0.7);
+          background: white;
+          color: #C8973A;
+          border-radius: 12px;
+          padding: 11px 18px;
+          font-size: 0.9rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .naf-back-btn:hover {
+          background: #fffaf0;
+          transform: translateY(-1px);
+        }
         .naf-header {
           background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
           padding: 28px 32px;
@@ -179,6 +201,8 @@ export function NewsArticleForm({ article, onSave, onCancel }: NewsArticleFormPr
         }
         @media (max-width: 600px) {
           .naf-row { grid-template-columns: 1fr; }
+          .naf-topbar { align-items: stretch; }
+          .naf-back-btn { width: 100%; justify-content: center; }
           .naf-header { margin: -20px -12px 0; padding: 20px 16px; }
         }
         .naf-field {
@@ -414,14 +438,20 @@ export function NewsArticleForm({ article, onSave, onCancel }: NewsArticleFormPr
         }
       `}</style>
 
-      {/* Header */}
-      <div className="naf-header">
-        <div className="naf-header-icon">
-          {article ? '✏️' : '✨'}
-        </div>
-        <div>
-          <h2>{article ? 'Editar Artículo' : 'Crear Nueva Noticia'}</h2>
-          <p>{article ? `Modificando: ${article.title.slice(0, 50)}...` : 'Completa los campos para publicar una nueva noticia'}</p>
+      <div className="naf-topbar">
+        {onCancel && (
+          <button type="button" className="naf-back-btn" onClick={onCancel}>
+            ← Volver a la lista
+          </button>
+        )}
+        <div className="naf-header" style={{ flex: '1 1 420px' }}>
+          <div className="naf-header-icon">
+            {article ? '✏️' : '✨'}
+          </div>
+          <div>
+            <h2>{article ? 'Editar Artículo' : 'Crear Nueva Noticia'}</h2>
+            <p>{article ? `Modificando: ${article.title.slice(0, 50)}...` : 'Completa los campos para publicar una nueva noticia'}</p>
+          </div>
         </div>
       </div>
 

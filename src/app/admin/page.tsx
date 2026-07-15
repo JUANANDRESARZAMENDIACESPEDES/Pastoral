@@ -2683,11 +2683,6 @@ function AdminContent() {
 
               {newsView === 'article' && (
                 <div>
-                  <div style={{ marginBottom: '20px' }}>
-                    <button className="btn-premium btn-premium-outline" onClick={() => { setNewsView('list'); setSelectedArticle(null); }}>
-                      ← Volver a la lista
-                    </button>
-                  </div>
                   <NewsArticleForm
                     article={selectedArticle || undefined}
                     onSave={() => {
@@ -2705,12 +2700,12 @@ function AdminContent() {
 
               {newsView === 'event' && selectedArticle && (
                 <div>
-                  <div style={{ marginBottom: '20px' }}>
+                  <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
                     <button className="btn-premium btn-premium-outline" onClick={() => { setNewsView('list'); setSelectedArticle(null); }}>
                       ← Volver a la lista
                     </button>
+                    <h3 className="serif" style={{ margin: 0 }}>Agregar/Editar Evento para: &quot;{selectedArticle.title}&quot;</h3>
                   </div>
-                  <h3 className="serif" style={{ marginBottom: '20px' }}>Agregar/Editar Evento para: &quot;{selectedArticle.title}&quot;</h3>
                   <NewsEventForm
                     articleId={selectedArticle.id}
                     event={selectedArticle.event}
