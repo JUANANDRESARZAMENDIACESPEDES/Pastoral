@@ -9,7 +9,7 @@
 -- 1. TABLA: news_categories
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS public.news_categories (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(100) NOT NULL UNIQUE,
   slug VARCHAR(100) UNIQUE NOT NULL,
   description TEXT,
@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS public.news_articles (
 );
 
 CREATE INDEX IF NOT EXISTS idx_news_articles_category ON public.news_articles(category_id);
-CREATE INDEX IF NOT EXISTS idx_news_articles_published ON public.news_articles(published, published_at DESC) WHERE published = true;
+CREATE INDEX IF NOT EXISTS idx_news_articles_published ON public.news_articles(published, published_at DESC);
 CREATE INDEX IF NOT EXISTS idx_news_articles_pinned ON public.news_articles(pinned, pin_order);
 CREATE INDEX IF NOT EXISTS idx_news_articles_slug ON public.news_articles(slug);
 CREATE INDEX IF NOT EXISTS idx_news_articles_search ON public.news_articles USING GIN(search_vector);
