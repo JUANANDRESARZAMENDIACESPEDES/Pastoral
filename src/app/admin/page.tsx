@@ -472,6 +472,13 @@ function AdminContent() {
     return () => { (window as any).onPJLMapClick = null; };
   }, [capturingZone]);
 
+  useEffect(() => {
+    if (!(mod === 'capillas' && capillasView === 'territorio')) {
+      setCapturingZone(null);
+      setTempPolygon([]);
+    }
+  }, [mod, capillasView]);
+
   const saveCapturedPolygon = () => {
     if (capturingZone === null) return;
     setBranding({
@@ -522,9 +529,7 @@ function AdminContent() {
       if (match) {
         const [_, lat, lon] = match;
         // Nominatim reverse geocoding (OpenStreetMap)
-        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`, {
-          headers: { 'User-Agent': 'PJL-Admin-App/1.0' }
-        })
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
           .then(r => r.json())
           .then(data => {
             if (data.display_name && !form.address) {
@@ -2446,12 +2451,14 @@ function AdminContent() {
               <div className="territory-editor-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '30px' }}>
                 <div className="territory-map-shell" style={{ height: '600px', borderRadius: '25px', overflow: 'hidden', border: `3px solid ${capturingZone ? 'var(--gold)' : 'var(--gold-pale)'}`, position: 'relative', transition: 'border-color 0.3s ease', boxShadow: capturingZone ? '0 0 0 4px rgba(200,151,58,0.15)' : 'none' }}>
                   <ZonaMap 
+                    key={`territory-map-${capturingZone ?? 'view'}`}
                     selectedZone={capturingZone || 0}
                     showAllZones={capturingZone === null}
                     tempPolygon={tempPolygon}
                     scrollWheelZoom={true}
                     drawingMode={!!capturingZone}
                     hideFallbackPolygon={!!capturingZone && tempPolygon.length === 0 && !branding[`zona${capturingZone}Polygon`]}
+                    enableSearch={true}
                     zoneColors={{
                       1: branding.zona1Color as string || '#C8973A',
                       2: branding.zona2Color as string || '#1A2744',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export interface ChapelMapPoint {
   id: string | number;
@@ -27,6 +27,18 @@ interface ZonaMapProps {
   scrollWheelZoom?: boolean;
   drawingMode?: boolean;
   hideFallbackPolygon?: boolean;
+  enableSearch?: boolean;
+}
+
+interface PlaceSuggestion {
+  place_id: number;
+  display_name: string;
+  lat: string;
+  lon: string;
+  type?: string;
+  class?: string;
+  importance?: number;
+  address?: Record<string, string>;
 }
 
 const DEFAULT_ZONE_COLORS: Record<number, { fill: string; border: string; text: string }> = {
@@ -83,11 +95,95 @@ export default function ZonaMap({
   scrollWheelZoom = false,
   drawingMode = false,
   hideFallbackPolygon = false,
+  enableSearch = false,
 }: ZonaMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<any>(null);
   const layersRef = useRef<any[]>([]);
   const baseLayerRef = useRef<any>(null);
+  const zoomControlRef = useRef<any>(null);
+  const searchMarkerRef = useRef<any>(null);
+  const searchTimerRef = useRef<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<PlaceSuggestion[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [selectedPlace, setSelectedPlace] = useState<PlaceSuggestion | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (searchTimerRef.current) {
+        window.clearTimeout(searchTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!enableSearch) {
+      setSearchQuery('');
+      setSearchResults([]);
+      setSelectedPlace(null);
+    }
+  }, [enableSearch]);
+
+  useEffect(() => {
+    if (!enableSearch) return;
+
+    const query = searchQuery.trim();
+    if (query.length < 3) {
+      setSearchResults([]);
+      return;
+    }
+
+    if (searchTimerRef.current) {
+      window.clearTimeout(searchTimerRef.current);
+    }
+
+    searchTimerRef.current = window.setTimeout(() => {
+      setSearchLoading(true);
+      fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&q=${encodeURIComponent(query)}`)
+        .then(r => r.json())
+        .then((data: PlaceSuggestion[]) => {
+          setSearchResults(Array.isArray(data) ? data : []);
+        })
+        .catch(() => setSearchResults([]))
+        .finally(() => setSearchLoading(false));
+    }, 350);
+
+    return () => {
+      if (searchTimerRef.current) {
+        window.clearTimeout(searchTimerRef.current);
+      }
+    };
+  }, [enableSearch, searchQuery]);
+
+  const focusPlace = (place: PlaceSuggestion) => {
+    const map = leafletMapRef.current;
+    if (!map) return;
+
+    const L = require('leaflet');
+    const lat = Number(place.lat);
+    const lng = Number(place.lon);
+
+    try {
+      map.setView([lat, lng], Math.max(map.getZoom?.() || 14, 15), { animate: true });
+    } catch (e) {}
+
+    if (searchMarkerRef.current && map.removeLayer) {
+      try { map.removeLayer(searchMarkerRef.current); } catch (e) {}
+    }
+
+    const marker = L.marker([lat, lng]).addTo(map).bindPopup(`
+      <div style="min-width: 180px; max-width: 240px; font-size: 12px; line-height: 1.4; padding: 2px 0;">
+        <strong style="display:block; margin-bottom:4px;">${place.display_name}</strong>
+        <div style="color:#666; margin-bottom:4px;">${place.class || 'Lugar'} · ${place.type || 'Ubicación'}</div>
+        <div style="color:#333;">Lat: ${lat.toFixed(5)}<br/>Lng: ${lng.toFixed(5)}</div>
+      </div>
+    `).openPopup();
+
+    searchMarkerRef.current = marker;
+    setSelectedPlace(place);
+    setSearchResults([]);
+  };
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -115,7 +211,7 @@ export default function ZonaMap({
 
       const map = L.map(mapRef.current, { zoomControl: false, scrollWheelZoom }).setView(center, zoom);
       leafletMapRef.current = map;
-      L.control.zoom({ position: drawingMode ? 'bottomright' : 'topright' }).addTo(map);
+      zoomControlRef.current = L.control.zoom({ position: drawingMode ? 'bottomright' : 'topright' }).addTo(map);
 
       const baseLayers = [
         { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', options: { attribution: '© OpenStreetMap', maxZoom: 19, crossOrigin: true } }
@@ -147,12 +243,17 @@ export default function ZonaMap({
       resizeObserver.observe(mapRef.current);
     }
 
-    // Limpieza estricta de capas
     layersRef.current.forEach(layer => {
       if (layer && layer.remove) layer.remove();
       else if (map && map.removeLayer) { try { map.removeLayer(layer); } catch(e) {} }
     });
     layersRef.current = [];
+
+    if (zoomControlRef.current && map && map.removeControl) {
+      try { map.removeControl(zoomControlRef.current); } catch (e) {}
+      zoomControlRef.current = null;
+    }
+    zoomControlRef.current = L.control.zoom({ position: drawingMode ? 'bottomright' : 'topright' }).addTo(map);
 
     // Dibujar polígonos de zonas activas
     const zonesToDraw = (selectedZone && !showAllZones) ? [selectedZone] : [1, 2, 3, 4];
@@ -210,7 +311,7 @@ export default function ZonaMap({
             const clickLatLng = L.latLng(clickLat, clickLng);
             const dist = ptLatLng.distanceTo(clickLatLng); // Distancia real en metros
 
-            if (dist < dist.minDistance || dist < minDistance) {
+            if (dist < minDistance) {
               minDistance = dist;
               closestPoint = pt;
             }
@@ -293,6 +394,14 @@ export default function ZonaMap({
     return () => {
       clearTimeout(mapTimeout);
       resizeObserver?.disconnect();
+      if (searchMarkerRef.current && map && map.removeLayer) {
+        try { map.removeLayer(searchMarkerRef.current); } catch (e) {}
+        searchMarkerRef.current = null;
+      }
+      if (zoomControlRef.current && map && map.removeControl) {
+        try { map.removeControl(zoomControlRef.current); } catch (e) {}
+        zoomControlRef.current = null;
+      }
       layersRef.current.forEach(layer => {
         if (layer.remove) layer.remove();
         else if (map && map.removeLayer) { try { map.removeLayer(layer); } catch(e) {} }
@@ -323,8 +432,115 @@ export default function ZonaMap({
         }
         .zone-tooltip-centered::before { display: none !important; }
         .leaflet-drawing-cursor .leaflet-container { cursor: crosshair !important; }
+        .zona-map-search {
+          position: absolute;
+          top: 14px;
+          left: 14px;
+          z-index: 1200;
+          width: min(92vw, 360px);
+          pointer-events: auto;
+        }
+        .zona-map-search input {
+          width: 100%;
+          border: 1px solid rgba(200, 151, 58, 0.35);
+          border-radius: 14px;
+          padding: 12px 14px;
+          background: rgba(255,255,255,0.96);
+          color: var(--navy);
+          box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+          outline: none;
+        }
+        .zona-map-search-results {
+          margin-top: 8px;
+          background: rgba(255,255,255,0.98);
+          border: 1px solid rgba(200, 151, 58, 0.28);
+          border-radius: 14px;
+          overflow: hidden;
+          box-shadow: 0 14px 30px rgba(0,0,0,0.16);
+          max-height: 240px;
+          overflow-y: auto;
+        }
+        .zona-map-search-results button {
+          width: 100%;
+          border: 0;
+          background: transparent;
+          text-align: left;
+          padding: 12px 14px;
+          cursor: pointer;
+          display: block;
+          border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+        .zona-map-search-results button:hover {
+          background: rgba(200,151,58,0.08);
+        }
+        .zona-map-search-meta {
+          display: inline-block;
+          margin-top: 4px;
+          font-size: 11px;
+          color: #7a6a55;
+        }
+        .zona-map-details {
+          position: absolute;
+          right: 14px;
+          bottom: 14px;
+          z-index: 1200;
+          width: min(92vw, 320px);
+          background: rgba(26, 39, 68, 0.94);
+          color: #fff;
+          border: 1px solid rgba(200,151,58,0.3);
+          border-radius: 16px;
+          padding: 12px 14px;
+          box-shadow: 0 14px 30px rgba(0,0,0,0.18);
+        }
+        @media (max-width: 768px) {
+          .zona-map-search {
+            width: calc(100vw - 28px);
+          }
+          .zona-map-details {
+            left: 14px;
+            right: 14px;
+            width: auto;
+          }
+        }
       `}</style>
-      <div ref={mapRef} style={{ height, width: '100%', borderRadius: '12px', zIndex: 1 }} className={drawingMode ? 'leaflet-drawing-cursor' : ''} />
+      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+        {enableSearch && (
+          <div className="zona-map-search">
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar lugar, dirección o referencia..."
+              aria-label="Buscar ubicación en el mapa"
+            />
+            {searchLoading && <div className="zona-map-search-meta">Buscando ubicaciones…</div>}
+            {searchResults.length > 0 && (
+              <div className="zona-map-search-results">
+                {searchResults.map(place => (
+                  <button key={place.place_id} type="button" onClick={() => focusPlace(place)}>
+                    <strong style={{ display: 'block', color: 'var(--navy)' }}>{place.display_name}</strong>
+                    <span className="zona-map-search-meta">
+                      {place.class || 'Lugar'} {place.type ? `· ${place.type}` : ''}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        {enableSearch && selectedPlace && (
+          <div className="zona-map-details">
+            <div style={{ fontSize: '11px', fontWeight: 900, letterSpacing: '1px', color: 'var(--gold)', marginBottom: '6px' }}>UBICACIÓN SELECCIONADA</div>
+            <div style={{ fontWeight: 800, lineHeight: 1.35, marginBottom: '6px' }}>{selectedPlace.display_name}</div>
+            <div style={{ fontSize: '12px', opacity: 0.9 }}>
+              {selectedPlace.class || 'Lugar'} {selectedPlace.type ? `· ${selectedPlace.type}` : ''}
+            </div>
+            <div style={{ fontSize: '12px', marginTop: '8px', opacity: 0.9 }}>
+              Lat: {Number(selectedPlace.lat).toFixed(5)} · Lng: {Number(selectedPlace.lon).toFixed(5)}
+            </div>
+          </div>
+        )}
+        <div ref={mapRef} style={{ height, width: '100%', borderRadius: '12px', zIndex: 1 }} className={drawingMode ? 'leaflet-drawing-cursor' : ''} />
+      </div>
     </>
   );
 }
