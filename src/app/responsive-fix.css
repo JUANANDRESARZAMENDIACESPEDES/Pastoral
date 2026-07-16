@@ -629,6 +629,14 @@ th {
     min-width: 0 !important;
   }
 
+  .admin-content-area [style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-content-area [style*="display: grid"] {
+    min-width: 0 !important;
+  }
+
   /* Tables of data and information */
   .pjl-table-container,
   .table-responsive,
@@ -702,6 +710,17 @@ th {
     text-align: center !important;
   }
 
+  .admin-content-area .admin-chip-scroll button,
+  .admin-content-area .admin-chip-scroll .btn-premium,
+  .admin-content-area .profile-member-card button,
+  .admin-content-area .profile-member-card .btn-premium,
+  .admin-content-area .profile-member-card label {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
   /* Filter bars and grouped controls */
   .filter-container,
   .btn-group,
@@ -721,6 +740,8 @@ th {
   .btn-group {
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-x: contain !important;
+    touch-action: pan-x !important;
     scrollbar-width: none;
     flex-wrap: nowrap !important;
     padding-bottom: 8px !important;
@@ -733,6 +754,25 @@ th {
 
   .filter-container button,
   .btn-group button {
+    width: auto !important;
+    flex: 0 0 auto !important;
+    min-width: max-content !important;
+  }
+
+  .admin-chip-scroll {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-x: contain !important;
+    touch-action: pan-x !important;
+    scrollbar-width: none;
+  }
+
+  .admin-chip-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .admin-chip-scroll button {
     width: auto !important;
     flex: 0 0 auto !important;
     min-width: max-content !important;
@@ -756,6 +796,14 @@ th {
     height: auto !important;
     max-height: none !important;
     min-width: 0 !important;
+  }
+
+  .admin-content-area [style*="overflow-x: auto"],
+  .admin-content-area [style*="overflowX: 'auto'"],
+  .admin-content-area [style*="overflow-x:auto"],
+  .admin-content-area .custom-scrollbar {
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-x: contain !important;
   }
 
   .hero-slide-admin-card > div:first-child,
