@@ -195,6 +195,63 @@ th {
 }
 
 @media (max-width: 768px) {
+  .admin-shell .admin-sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: -280px !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: min(88vw, 280px) !important;
+    height: 100dvh !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    padding: 24px 20px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    z-index: 200 !important;
+  }
+
+  .admin-shell .admin-sidebar.sidebar-mobile-open {
+    left: 0 !important;
+  }
+
+  .admin-shell .sidebar-header,
+  .admin-shell .sidebar-nav,
+  .admin-shell .sidebar-footer {
+    width: 100% !important;
+  }
+
+  .admin-shell .sidebar-nav {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+
+  .admin-shell .sidebar-footer {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    margin-top: 16px !important;
+  }
+
+  .admin-shell .sidebar-footer .btn-premium {
+    width: 100% !important;
+    min-height: 44px !important;
+    padding: 12px 14px !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis;
+    font-size: 12px !important;
+  }
+
+  .admin-shell .sidebar-footer .btn-premium-outline {
+    margin-bottom: 0 !important;
+  }
+
   html,
   body,
   #__next,
