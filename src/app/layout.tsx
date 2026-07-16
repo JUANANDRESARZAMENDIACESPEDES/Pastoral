@@ -1,26 +1,26 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import { Playfair_Display, DM_Sans, Cormorant_Garamond } from "next/font/google";
+import { Fraunces, Manrope, Libre_Baskerville } from "next/font/google";
 import ThemeLoader from "../components/ThemeLoader";
 import "./globals.css";
 import "./responsive-fix.css";
 
-const playfair = Playfair_Display({
+const displayFont = Fraunces({
   subsets: ["latin"],
   variable: "--font-display",
-  weight: ["400", "700", "900"],
+  weight: ["400", "600", "700"],
 });
 
-const dmSans = DM_Sans({
+const bodyFont = Manrope({
   subsets: ["latin"],
   variable: "--font-body",
-  weight: ["300", "400", "500", "600"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
-const cormorant = Cormorant_Garamond({
+const accentFont = Libre_Baskerville({
   subsets: ["latin"],
-  variable: "--font-serif",
-  weight: ["300", "400", "600"],
+  variable: "--font-accent",
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
@@ -40,7 +40,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${playfair.variable} ${dmSans.variable} ${cormorant.variable}`} suppressHydrationWarning>
+    <html lang="es" className={`${displayFont.variable} ${bodyFont.variable} ${accentFont.variable}`} suppressHydrationWarning>
       <head>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
       </head>

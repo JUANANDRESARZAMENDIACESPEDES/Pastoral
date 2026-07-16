@@ -20,9 +20,9 @@
   --green: #2E6B4F;
   --radius: 4px;
   --shadow: 0 8px 40px rgba(26,39,68,0.12);
-  --font-display: 'Playfair Display', serif;
-  --font-body: 'DM Sans', sans-serif;
-  --font-accent: 'Cormorant Garamond', serif;
+  --font-display: 'Fraunces', serif;
+  --font-body: 'Manrope', sans-serif;
+  --font-accent: 'Libre Baskerville', serif;
   --font-size-base: 16px;
 }
 
@@ -53,7 +53,7 @@ body {
   background: var(--white);
   color: var(--text);
   font-size: var(--font-size-base);
-  line-height: 1.6;
+  line-height: 1.7;
   overflow-x: hidden;
   width: 100%;
   max-width: 100%;
@@ -85,7 +85,7 @@ p {
 
 h1, h2, h3, h4, .serif {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 a { text-decoration: none; color: inherit; transition: 0.3s; }
