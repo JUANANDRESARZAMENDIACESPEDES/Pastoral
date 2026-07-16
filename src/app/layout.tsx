@@ -3,6 +3,7 @@ import Script from "next/script";
 import { Playfair_Display, DM_Sans, Cormorant_Garamond } from "next/font/google";
 import ThemeLoader from "../components/ThemeLoader";
 import "./globals.css";
+import "./responsive-fix.css";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],

@@ -1,0 +1,292 @@
+/* =====================================================================
+   RESPONSIVE FIX MASTER PATCH
+   Load after globals.css to stabilize mobile and tablet layouts.
+   ===================================================================== */
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  min-width: 320px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+img,
+video,
+iframe,
+canvas,
+svg {
+  max-width: 100%;
+  height: auto;
+}
+
+table {
+  width: 100%;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  min-height: 44px;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+li,
+span,
+a,
+td,
+th {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+:where(.container, .section-pjl, .section-head, .top-nav .container, .hero-pjl .container) {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+:where(
+  .admin-shell,
+  .admin-main,
+  .admin-content,
+  .admin-content-area,
+  .news-admin-grid,
+  .territory-editor-grid,
+  .identity-admin-grid,
+  .identity-admin-hero-grid,
+  .docs-admin-summary-grid,
+  .admin-dashboard-grid,
+  .admin-dashboard-main-grid,
+  .admin-dashboard-side-grid,
+  .admin-dashboard-kpi-grid,
+  .admin-dashboard-summary-grid,
+  .hero-slide-admin-card
+) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+:where(
+  .hero-cta-group,
+  .hero-controls,
+  .filter-container,
+  .btn-group,
+  .news-admin-card,
+  .admin-dashboard-card-head,
+  .admin-dashboard-actions,
+  .drawer-header,
+  .drawer-body,
+  .drawer-links li,
+  .drawer-links a,
+  .admin-nav-item,
+  .territory-action-bar,
+  .login-actions,
+  .pjl-form .form-grid,
+  .pjl-form [style*="grid-template-columns"]
+) {
+  min-width: 0;
+}
+
+.pjl-table-container,
+.table-responsive,
+[style*="overflow-x: auto"],
+[style*="overflowX: 'auto'"] {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pjl-table {
+  min-width: 560px;
+}
+
+.pjl-table th,
+.pjl-table td {
+  white-space: normal;
+}
+
+@media (max-width: 1024px) {
+  .container,
+  .section-head,
+  .hero-pjl .container,
+  .admin-content-area {
+    padding-left: clamp(16px, 3vw, 24px);
+    padding-right: clamp(16px, 3vw, 24px);
+  }
+
+  .hero-cta-group,
+  .hero-controls,
+  .filter-container,
+  .btn-group,
+  .news-admin-card,
+  .admin-dashboard-card-head,
+  .admin-dashboard-actions {
+    flex-wrap: wrap;
+  }
+
+  .hero-primary-cta,
+  .hero-secondary-cta,
+  .filter-container button,
+  .btn-group button,
+  .drawer-links a,
+  .admin-nav-item,
+  .dropdown-link,
+  .btn-premium,
+  button {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .news-admin-grid,
+  .territory-editor-grid,
+  .identity-admin-grid,
+  .identity-admin-hero-grid,
+  .docs-admin-summary-grid,
+  .admin-dashboard-grid,
+  .admin-dashboard-main-grid,
+  .admin-dashboard-side-grid,
+  .admin-dashboard-kpi-grid,
+  .admin-dashboard-summary-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-dashboard-actions > * {
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  .pjl-table {
+    min-width: 520px;
+  }
+}
+
+@media (max-width: 768px) {
+  .section-pjl {
+    padding-top: 64px !important;
+    padding-bottom: 64px !important;
+  }
+
+  .section-head {
+    padding-top: 24px !important;
+    padding-bottom: 24px !important;
+  }
+
+  .hero-pjl {
+    min-height: auto !important;
+  }
+
+  .hero-pjl .container {
+    padding-top: 72px !important;
+    padding-bottom: 88px !important;
+  }
+
+  .top-nav {
+    height: auto !important;
+  }
+
+  .mobile-nav-drawer,
+  .drawer-backdrop {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .admin-content-area {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .admin-dashboard-card-head,
+  .news-admin-card,
+  .hero-slide-admin-card,
+  .territory-editor-grid > div,
+  .identity-admin-grid > div,
+  .identity-admin-hero-grid > div,
+  .docs-admin-summary-grid > div {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .admin-content-area .pjl-table {
+    min-width: 500px;
+  }
+}
+
+@media (max-width: 768px) and (orientation: portrait) {
+  .admin-content-area {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .admin-dashboard-kpi-grid,
+  .admin-dashboard-main-grid,
+  .admin-dashboard-summary-grid,
+  .admin-dashboard-actions,
+  .news-admin-grid,
+  .territory-editor-grid,
+  .identity-admin-grid,
+  .identity-admin-hero-grid,
+  .docs-admin-summary-grid,
+  .hero-slide-admin-card {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .admin-dashboard-card-head,
+  .admin-content-area div[style*="justify-content: space-between"],
+  .admin-content-area div[style*="justifyContent: 'space-between'"] {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+
+  .admin-content-area .pjl-table {
+    min-width: 560px;
+  }
+}
+
+@media (max-width: 768px) and (orientation: landscape) {
+  .hero-pjl {
+    min-height: auto !important;
+  }
+
+  .hero-pjl .container {
+    padding-top: 44px !important;
+    padding-bottom: 56px !important;
+  }
+
+  .calendar-wrapper {
+    height: 360px !important;
+  }
+}
