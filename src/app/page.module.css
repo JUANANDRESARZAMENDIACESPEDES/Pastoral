@@ -109,17 +109,42 @@ a.secondary {
 
 @media (max-width: 600px) {
   .main {
-    padding: 48px 24px;
+    width: 100%;
+    max-width: 100%;
+    padding: 48px 16px;
   }
 
   .intro {
+    width: 100%;
+    max-width: 100%;
     gap: 16px;
   }
 
   .intro h1 {
+    max-width: 100%;
     font-size: 32px;
     line-height: 40px;
     letter-spacing: -1.92px;
+  }
+
+  .intro p {
+    max-width: 100%;
+  }
+
+  .ctas {
+    flex-direction: column;
+    max-width: 100%;
+    gap: 12px;
+  }
+
+  .ctas a {
+    width: 100%;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    text-align: center;
   }
 }
 

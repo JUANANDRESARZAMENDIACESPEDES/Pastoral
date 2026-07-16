@@ -165,8 +165,10 @@ th {
   .dropdown-link,
   .btn-premium,
   button {
-    white-space: normal;
-    overflow-wrap: anywhere;
+    white-space: nowrap;
+    overflow-wrap: normal;
+    word-break: keep-all;
+    hyphens: none;
   }
 
   .news-admin-grid,
@@ -193,6 +195,22 @@ th {
 }
 
 @media (max-width: 768px) {
+  button,
+  .btn-premium,
+  .hero-primary-cta,
+  .hero-secondary-cta,
+  .drawer-links a,
+  .admin-nav-item,
+  .dropdown-link {
+    writing-mode: horizontal-tb !important;
+    text-orientation: mixed !important;
+    white-space: nowrap !important;
+    overflow-wrap: normal !important;
+    word-break: keep-all !important;
+    hyphens: none !important;
+    line-height: 1.2 !important;
+  }
+
   .section-pjl {
     padding-top: 64px !important;
     padding-bottom: 64px !important;
