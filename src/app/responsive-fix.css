@@ -195,6 +195,107 @@ th {
 }
 
 @media (max-width: 768px) {
+  html,
+  body,
+  #__next,
+  main,
+  header,
+  nav,
+  footer,
+  section,
+  article,
+  aside,
+  .page,
+  .main,
+  .container,
+  .pjl-card,
+  .section-pjl,
+  .section-head,
+  .hero-pjl,
+  .hero-pjl .container,
+  .admin-shell,
+  .admin-main,
+  .admin-content,
+  .admin-content-area,
+  .news-admin-grid,
+  .territory-editor-grid,
+  .identity-admin-grid,
+  .identity-admin-hero-grid,
+  .docs-admin-summary-grid,
+  .admin-dashboard-grid,
+  .admin-dashboard-main-grid,
+  .admin-dashboard-side-grid,
+  .admin-dashboard-kpi-grid,
+  .admin-dashboard-summary-grid {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  [style*="width: 250px"],
+  [style*="width: 260px"],
+  [style*="width: 300px"],
+  [style*="width: 320px"],
+  [style*="width: 350px"],
+  [style*="width: 400px"],
+  [style*="width: 440px"],
+  [style*="width: 480px"],
+  [style*="width: 600px"],
+  [style*="width: 720px"],
+  [style*="max-width: 320px"],
+  [style*="max-width: 360px"],
+  [style*="max-width: 400px"],
+  [style*="max-width: 440px"],
+  [style*="max-width: 480px"],
+  [style*="max-width: 600px"],
+  [style*="max-width: 680px"],
+  [style*="max-width: 800px"] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  [style*="gridTemplateColumns"],
+  [style*="grid-template-columns"],
+  [class*="grid"] {
+    grid-template-columns: 1fr !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  [style*="display: flex"],
+  [style*="display:flex"],
+  [class*="flex"] {
+    flex-wrap: wrap !important;
+    min-width: 0 !important;
+  }
+
+  img,
+  video,
+  iframe,
+  canvas,
+  svg {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  span,
+  a,
+  li,
+  label,
+  td,
+  th {
+    max-width: 100% !important;
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+
   button,
   .btn-premium,
   .hero-primary-cta,
@@ -209,6 +310,9 @@ th {
     word-break: keep-all !important;
     hyphens: none !important;
     line-height: 1.2 !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    text-align: center !important;
   }
 
   .section-pjl {
