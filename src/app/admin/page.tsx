@@ -2577,12 +2577,12 @@ function AdminContent() {
           {/* HISTORIAL / LOGS */}
           {mod === 'logs' && (
             <div className="animate-reveal pjl-card" style={{ padding: '40px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                <div>
+              <div className="admin-section-header admin-stack-mobile" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                <div className="admin-section-title-group">
                   <h3 className="serif" style={{ fontSize: '2rem', color: 'var(--navy)', margin: 0 }}>Historial de Actividad</h3>
                   <p className="premium-label" style={{ color: 'var(--gold)', marginTop: '5px' }}>REGISTRO DE ACCIONES ADMINISTRATIVAS</p>
                 </div>
-                <button className="btn-premium btn-premium-outline" onClick={() => {
+                <button className="btn-premium btn-premium-outline admin-section-action" onClick={() => {
                   if(confirm('¿Limpiar todo el historial?')) {
                     setLogs([]);
                     showToast('Historial limpiado');
@@ -2590,7 +2590,7 @@ function AdminContent() {
                 }}>LIMPIAR HISTORIAL</button>
               </div>
 
-              <div className="pjl-table-container">
+              <div className="pjl-table-container admin-table-scroll">
                 <table className="pjl-table">
                   <thead>
                     <tr>
@@ -2647,9 +2647,9 @@ function AdminContent() {
             <div className="animate-reveal pjl-card" style={{ padding: '40px' }}>
               {newsView === 'list' && (
                 <>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                    <h3 className="serif">Gestión de Noticias</h3>
-                    <button className="btn-premium btn-premium-gold" onClick={() => { setSelectedArticle(null); setNewsView('article'); }}>+ PUBLICAR NOTICIA</button>
+                  <div className="admin-section-header admin-stack-mobile" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                    <h3 className="serif admin-section-title">Gestión de Noticias</h3>
+                    <button className="btn-premium btn-premium-gold admin-section-action" onClick={() => { setSelectedArticle(null); setNewsView('article'); }}>+ PUBLICAR NOTICIA</button>
                   </div>
                   <div className="news-admin-grid">
                     <div>
@@ -3118,10 +3118,10 @@ function AdminContent() {
           {/* PERFILES */}
           {mod === 'perfiles' && (
             <div className="animate-reveal pjl-card" style={{ padding: '40px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                <h3 className="serif" style={{ margin: 0 }}>Gestión de Currículos y Perfiles</h3>
+              <div className="admin-section-header admin-stack-mobile" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                <h3 className="serif admin-section-title" style={{ margin: 0 }}>Gestión de Currículos y Perfiles</h3>
                 <button 
-                  className="btn-premium btn-premium-gold" 
+                  className="btn-premium btn-premium-gold admin-section-action" 
                   onClick={() => {
                     const newProfile: MemberProfile = {
                       id: Date.now(),
@@ -3139,7 +3139,7 @@ function AdminContent() {
                   + AGREGAR MIEMBRO A ESTE EQUIPO
                 </button>
               </div>
-              <div className="custom-scrollbar" style={{ display: 'flex', gap: '12px', marginBottom: '40px', overflowX: 'auto', padding: '15px', borderRadius: '20px', border: '1px solid var(--gold-pale)', background: 'linear-gradient(to right, var(--cream), white)', boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.02)' }}>
+              <div className="custom-scrollbar admin-chip-scroll" style={{ display: 'flex', gap: '12px', marginBottom: '40px', overflowX: 'auto', padding: '15px', borderRadius: '20px', border: '1px solid var(--gold-pale)', background: 'linear-gradient(to right, var(--cream), white)', boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.02)' }}>
                 {['coordinacion', 'efo', 'ecomu', 'eli', 'mmpjl', 'zona1', 'zona2', 'zona3', 'zona4'].map(tk => (
                   <button 
                     key={tk} 
@@ -3164,7 +3164,7 @@ function AdminContent() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '25px' }}>
                 {profiles.filter(p => p.teamKey === activeProfileTeam).map(p => (
-            <div key={p.id} className="pjl-card" style={{ display: 'flex', gap: '25px', padding: '30px', position: 'relative' }}>
+                  <div key={p.id} className="pjl-card profile-member-card" style={{ display: 'flex', gap: '25px', padding: '30px', position: 'relative' }}>
                     <button 
                       onClick={() => {
                         if (confirm(`¿Seguro que deseas eliminar a ${p.name}?`)) {
@@ -3215,9 +3215,9 @@ function AdminContent() {
           {/* USUARIOS */}
           {mod === 'usuarios' && (
             <div className="animate-reveal pjl-card" style={{ padding: '40px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '15px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                  <h3 className="serif" style={{ margin: 0 }}>Gestión de Acceso</h3>
+              <div className="admin-section-header admin-stack-mobile" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '15px' }}>
+                <div className="admin-section-title-group" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                  <h3 className="serif admin-section-title" style={{ margin: 0 }}>Gestión de Acceso</h3>
                   <div style={{ position: 'relative' }}>
                     <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
                     <input 
@@ -3230,20 +3230,20 @@ function AdminContent() {
                     />
                   </div>
                 </div>
-                <button className="btn-premium btn-premium-gold" onClick={() => {
+                <button className="btn-premium btn-premium-gold admin-section-action" onClick={() => {
                   setForm({ email: '', name: '', role: 'editor', permissions: ['dashboard'] });
                   setModal('usuarios');
                 }}>+ NUEVO USUARIO</button>
               </div>
               {currentUser?.role === 'desarrollador' && (
-                <div className="pjl-card" style={{ padding: '24px', marginBottom: '24px', background: '#fdf7e8', border: '1px dashed #f3ce66' }}>
+                <div className="pjl-card admin-user-pending-card" style={{ padding: '24px', marginBottom: '24px', background: '#fdf7e8', border: '1px dashed #f3ce66' }}>
                   <h4 className="serif" style={{ margin: '0 0 12px', color: 'var(--navy)' }}>Solicitudes pendientes</h4>
                   {pendingProfiles.length === 0 ? (
                     <p style={{ margin: 0, fontSize: '13px', color: '#555' }}>No hay cuentas pendientes de aprobación.</p>
                   ) : (
                     <div style={{ display: 'grid', gap: '12px' }}>
                       {pendingProfiles.map(profile => (
-                        <div key={profile.id} style={{ padding: '14px', borderRadius: '14px', background: '#fff', border: '1px solid #f1d77b' }}>
+                        <div key={profile.id} className="admin-user-pending-item" style={{ padding: '14px', borderRadius: '14px', background: '#fff', border: '1px solid #f1d77b' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                             <div>
                               <strong>{profile.name}</strong> <span style={{ color: '#666', fontSize: '12px' }}>{profile.email}</span>

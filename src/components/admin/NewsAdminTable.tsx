@@ -226,6 +226,40 @@ export function NewsAdminTable({ onEdit, onDelete, onEvent }: NewsAdminTableProp
           padding: 40px;
           color: #999;
         }
+        @media (max-width: 768px) {
+          .filters {
+            flex-direction: column;
+            align-items: stretch;
+          }
+          .filter-group {
+            width: 100%;
+            justify-content: space-between;
+          }
+          .filter-group select {
+            width: 100%;
+          }
+          .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+          }
+          table {
+            min-width: 600px;
+          }
+          th,
+          td {
+            white-space: nowrap;
+          }
+          .actions {
+            gap: 6px;
+          }
+          .action-btn {
+            min-height: 40px;
+            min-width: 40px;
+          }
+          .title-cell {
+            max-width: none;
+          }
+        }
       `}</style>
 
       <div className="filters">

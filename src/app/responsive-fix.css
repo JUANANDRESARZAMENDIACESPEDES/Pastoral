@@ -276,6 +276,128 @@ th {
   }
 }
 
+@media (max-width: 768px) {
+  /* Admin section headers */
+  .admin-section-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    gap: 12px !important;
+  }
+
+  .admin-section-title-group {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+
+  .admin-section-title {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .admin-section-action {
+    width: 100% !important;
+  }
+
+  /* Profile/team chips and cards */
+  .admin-chip-scroll {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .profile-member-card {
+    flex-direction: column !important;
+    gap: 16px !important;
+    align-items: stretch !important;
+    padding: 18px !important;
+  }
+
+  .profile-member-card > div:first-child {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+  }
+
+  .profile-member-card > div:last-child {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .profile-member-card button[style*="position: absolute"] {
+    position: static !important;
+    align-self: flex-end !important;
+    margin-bottom: 6px !important;
+  }
+
+  .profile-member-card label[style*="position: absolute"] {
+    position: static !important;
+    margin-top: 8px !important;
+    align-self: flex-end !important;
+  }
+
+  .profile-member-card input,
+  .profile-member-card textarea {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Users / access management */
+  .admin-user-pending-card,
+  .admin-user-pending-item {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .admin-user-pending-item > div {
+    width: 100% !important;
+  }
+
+  /* News table mobile behavior */
+  .table-container,
+  .pjl-table-container {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .table-container table,
+  .pjl-table-container table {
+    min-width: 600px !important;
+  }
+
+  .table-container th,
+  .table-container td,
+  .pjl-table-container th,
+  .pjl-table-container td {
+    white-space: nowrap !important;
+  }
+
+  .filters {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+
+  .filter-group {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 6px !important;
+  }
+
+  .filter-group select {
+    width: 100% !important;
+  }
+}
+
 @media (max-width: 768px) and (orientation: landscape) {
   .hero-pjl {
     min-height: auto !important;
