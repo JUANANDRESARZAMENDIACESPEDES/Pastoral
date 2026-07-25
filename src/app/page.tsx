@@ -580,43 +580,43 @@ function HomeContent() {
           </button>
           <ul className="nav-links">
             <li className="nav-item">
-              <Link href="/" onClick={(e) => navigate('home', e)} className="nav-btn">🏠 Inicio</Link>
+              <button type="button" onClick={() => navigate('home')} className="nav-btn">🏠 Inicio</button>
             </li>
             <li className="nav-item nav-item-featured">
-              <Link href="/?page=institucional" onClick={(e) => navigate('institucional', e)} className="nav-btn">📖 Nosotros ▾</Link>
+              <button type="button" onClick={() => navigate('institucional')} className="nav-btn">📖 Nosotros ▾</button>
               <div className="dropdown-pjl dropdown-pjl-featured">
-                <Link href="/?page=estatuto" onClick={(e) => navigate('estatuto', e)} className="dropdown-link">Estatuto</Link>
-                <Link href="/?page=historia" onClick={(e) => navigate('historia', e)} className="dropdown-link">Nuestra Historia</Link>
-                <Link href="/?page=institucional" onClick={(e) => navigate('institucional', e)} className="dropdown-link">Institucional</Link>
+                <button type="button" onClick={() => navigate('estatuto')} className="dropdown-link">Estatuto</button>
+                <button type="button" onClick={() => navigate('historia')} className="dropdown-link">Nuestra Historia</button>
+                <button type="button" onClick={() => navigate('institucional')} className="dropdown-link">Institucional</button>
               </div>
             </li>
             <li className="nav-item">
-              <Link href="/?page=consejo" onClick={(e) => navigate('consejo', e)} className="nav-btn" data-tooltip="Conoce la estructura y líderes">👥 Consejo PJL ▾</Link>
+              <button type="button" onClick={() => navigate('consejo')} className="nav-btn" data-tooltip="Conoce la estructura y líderes">👥 Consejo PJL ▾</button>
               <div className="dropdown-pjl">
                 {councilTabs.map(t => (
-                  <Link key={t.id} href="/?page=consejo" onClick={(e) => { navigate('consejo', e); setActiveConsejoTab(t.id); }} className="dropdown-link">{t.label}</Link>
+                  <button key={t.id} type="button" onClick={() => { navigate('consejo'); setActiveConsejoTab(t.id); }} className="dropdown-link">{t.label}</button>
                 ))}
               </div>
             </li>
             <li className="nav-item">
-              <Link href="/?page=zonas" onClick={(e) => navigate('zonas', e)} className="nav-btn" data-tooltip="Explorar nuestras comunidades">🗺️ Zonas ▾</Link>
+              <button type="button" onClick={() => navigate('zonas')} className="nav-btn" data-tooltip="Explorar nuestras comunidades">🗺️ Zonas ▾</button>
               <div className="dropdown-pjl">
                 {zonasInfo.map(z => (
-                  <Link key={z.id} href="/?page=zonas" onClick={(e) => { navigate('zonas', e); setActiveZoneTab('capillas'); setSelectedZone(z.id); }} className="dropdown-link">Zona {z.id} – {z.name}</Link>
+                  <button key={z.id} type="button" onClick={() => { navigate('zonas'); setActiveZoneTab('capillas'); setSelectedZone(z.id); }} className="dropdown-link">Zona {z.id} – {z.name}</button>
                 ))}
               </div>
             </li>
             <li className="nav-item">
-              <Link href="/?page=agenda" onClick={(e) => navigate('agenda', e)} className="nav-btn">📅 Agenda</Link>
+              <button type="button" onClick={() => navigate('agenda')} className="nav-btn">📅 Agenda</button>
             </li>
             <li className="nav-item">
-              <Link href="/?page=noticias" onClick={(e) => navigate('noticias', e)} className="nav-btn">📰 Noticias</Link>
+              <button type="button" onClick={() => navigate('noticias')} className="nav-btn">📰 Noticias</button>
             </li>
             <li className="nav-item">
-              <Link href="/?page=documentos" onClick={(e) => navigate('documentos', e)} className="nav-btn">📁 Documentos</Link>
+              <button type="button" onClick={() => navigate('documentos')} className="nav-btn">📁 Documentos</button>
             </li>
             <li className="nav-item">
-              <Link href="/?page=contacto" onClick={(e) => navigate('contacto', e)} className="nav-btn">✉️ Contacto</Link>
+              <button type="button" onClick={() => navigate('contacto')} className="nav-btn">✉️ Contacto</button>
             </li>
 
             <li className="nav-item">
