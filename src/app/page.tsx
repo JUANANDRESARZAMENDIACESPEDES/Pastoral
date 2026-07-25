@@ -2254,7 +2254,7 @@ function HomeContent() {
             position: 'fixed', inset: 0,
             background: 'rgba(14, 22, 50, 0.9)',
             backdropFilter: 'blur(15px)',
-            zIndex: 9500,
+            zIndex: 1000000,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: '20px',
             animation: 'fadeOverlay 0.3s ease both',
@@ -2337,11 +2337,11 @@ function HomeContent() {
               style={{ position: 'absolute', top: '24px', right: '24px', background: 'var(--cream)', border: 'none', borderRadius: '50%', width: '40px', height: '40px', color: 'var(--navy)', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.2s' }}
             >×</button>
             {selectedNews.featured_image_url && (
-              <div style={{ margin: '-20px -10px 32px', borderRadius: '20px', overflow: 'hidden', border: '1px solid rgba(200, 151, 58, 0.22)', background: 'var(--cream)' }}>
+              <div style={{ margin: '-20px -10px 32px', borderRadius: '20px', overflow: 'hidden', border: '1px solid rgba(200, 151, 58, 0.22)', background: 'linear-gradient(135deg, rgba(26, 39, 68, 0.06), rgba(200, 151, 58, 0.08))', aspectRatio: '16 / 9', minHeight: '220px', maxHeight: '360px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <img
                   src={selectedNews.featured_image_url}
                   alt={selectedNews.title}
-                  style={{ display: 'block', width: '100%', maxHeight: '320px', objectFit: 'cover' }}
+                  style={{ display: 'block', width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center center' }}
                 />
               </div>
             )}
