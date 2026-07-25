@@ -746,18 +746,18 @@ function HomeContent() {
               <div className="hero-ornament"></div>
               
               {/* Images layer — absolute, full cover */}
-              <div style={{ position: 'absolute', inset: 0, zIndex: 0, overflow: 'hidden' }}>
+              <div className="hero-bg-layer">
                 {liveHeroImages.map((slide, i) => (
-                  <div key={slide.id || i} style={{ position: 'absolute', inset: 0, opacity: i === liveHeroIndex ? 1 : 0, transition: 'opacity 1.2s ease-in-out' }}>
-                    <img src={slide.imageUrl} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: i === liveHeroIndex ? activeHeroPosition : 'center center', display: 'block' }} alt="" />
-                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(105deg, rgba(26,39,68,0.88) 0%, rgba(26,39,68,0.55) 55%, rgba(26,39,68,0.25) 100%)' }} />
+                  <div key={slide.id || i} className="hero-bg-slide" style={{ opacity: i === liveHeroIndex ? 1 : 0 }}>
+                    <img src={slide.imageUrl} className="hero-bg-image" style={{ objectPosition: i === liveHeroIndex ? activeHeroPosition : 'center center' }} alt="" />
+                    <div className="hero-bg-overlay" />
                   </div>
                 ))}
                 {liveHeroImages.length === 0 && <div style={{ position: 'absolute', inset: 0, background: 'var(--navy)' }} />}
               </div>
 
               {/* Content layer — always above images */}
-              <div className="container" style={{ position: 'relative', zIndex: 10, padding: '130px 30px 170px' }}>
+              <div className="container hero-content-container">
                 {liveHeroImages.length > 0 && (
                   <div className="reveal hero-slide-meta" style={{ animationDelay: '0.1s' }}>
                     Slide {liveHeroIndex + 1} de {liveHeroImages.length}
