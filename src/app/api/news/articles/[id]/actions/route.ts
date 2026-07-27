@@ -5,15 +5,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getSupabaseRouteConfig, missingSupabaseConfigResponse } from '@/lib/supabaseRoute';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase configuration');
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabaseConfig = getSupabaseRouteConfig();
+const supabase = supabaseConfig ? createClient(supabaseConfig.url, supabaseConfig.key) : null;
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -21,6 +16,8 @@ type RouteContext = {
 
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
+    if (!supabase) return missingSupabaseConfigResponse();
+
     const { id } = await context.params;
     const { action, ...payload } = await request.json();
 

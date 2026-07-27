@@ -2418,9 +2418,15 @@ function AdminContent() {
                               { key: 'showCalendars', label: 'Mostrar calendarios secundarios' },
                               { key: 'showTz', label: 'Mostrar zona horaria' },
                             ].map(option => {
-                              const checked = option.key === 'showAgenda'
-                                ? calendarOptions.mode === 'AGENDA'
-                                : Boolean((calendarOptions as Record<string, boolean>)[option.key]);
+                              const checkedMap = {
+                                showTitle: calendarOptions.showTitle,
+                                showNav: calendarOptions.showNav,
+                                showPrint: calendarOptions.showPrint,
+                                showAgenda: calendarOptions.mode === 'AGENDA' || calendarOptions.showAgenda,
+                                showCalendars: calendarOptions.showCalendars,
+                                showTz: calendarOptions.showTz,
+                              };
+                              const checked = checkedMap[option.key as keyof typeof checkedMap];
                               return (
                                 <label
                                   key={option.key}

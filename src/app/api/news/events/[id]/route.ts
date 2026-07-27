@@ -5,15 +5,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getSupabaseRouteConfig, missingSupabaseConfigResponse } from '@/lib/supabaseRoute';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase configuration');
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabaseConfig = getSupabaseRouteConfig();
+const supabase = supabaseConfig ? createClient(supabaseConfig.url, supabaseConfig.key) : null;
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -22,6 +17,8 @@ type RouteContext = {
 // GET: Obtener un evento específico
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
+    if (!supabase) return missingSupabaseConfigResponse();
+
     const { id } = await context.params;
 
     const { data, error } = await supabase
@@ -55,6 +52,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
 // PATCH: Actualizar un evento
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
+    if (!supabase) return missingSupabaseConfigResponse();
+
     const { id } = await context.params;
     const body = await request.json();
     const updateData: Record<string, unknown> = {};
@@ -216,6 +215,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 // DELETE: Eliminar un evento
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
+    if (!supabase) return missingSupabaseConfigResponse();
+
     const { id } = await context.params;
 
     const { error } = await supabase

@@ -6,19 +6,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { generateSlug } from '@/lib/newsValidation';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase configuration');
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { getSupabaseRouteConfig, missingSupabaseConfigResponse } from '@/lib/supabaseRoute';
 
 // GET: Listar todas las categorías
 export async function GET(request: NextRequest) {
   try {
+    const config = getSupabaseRouteConfig();
+    if (!config) return missingSupabaseConfigResponse();
+    const supabase = createClient(config.url, config.key);
+
     const includeInactive = request.nextUrl.searchParams.get('include_inactive') === 'true';
 
     let query = supabase.from('news_categories').select('*');
@@ -52,6 +48,10 @@ export async function GET(request: NextRequest) {
 // POST: Crear nueva categoría
 export async function POST(request: NextRequest) {
   try {
+    const config = getSupabaseRouteConfig();
+    if (!config) return missingSupabaseConfigResponse();
+    const supabase = createClient(config.url, config.key);
+
     const body = await request.json();
 
     if (!body.name || typeof body.name !== 'string' || body.name.length < 3 || body.name.length > 100) {

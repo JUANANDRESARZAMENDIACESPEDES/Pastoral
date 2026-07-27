@@ -6,15 +6,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { generateSlug } from '@/lib/newsValidation';
+import { getSupabaseRouteConfig, missingSupabaseConfigResponse } from '@/lib/supabaseRoute';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase configuration');
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabaseConfig = getSupabaseRouteConfig();
+const supabase = supabaseConfig ? createClient(supabaseConfig.url, supabaseConfig.key) : null;
 
 function isValidImageSource(value: string) {
   if (value.startsWith('data:image/')) return true;
@@ -60,6 +55,8 @@ function validateArticleInput(body: unknown) {
 // GET: Listar artículos con filtros
 export async function GET(request: NextRequest) {
   try {
+    if (!supabase) return missingSupabaseConfigResponse();
+
     const searchParams = request.nextUrl.searchParams;
     const category_id = searchParams.get('category_id');
     const published = searchParams.get('published')?.toLowerCase() === 'true' ? true : searchParams.get('published')?.toLowerCase() === 'false' ? false : undefined;
@@ -133,6 +130,8 @@ export async function GET(request: NextRequest) {
 // POST: Crear nuevo artículo
 export async function POST(request: NextRequest) {
   try {
+    if (!supabase) return missingSupabaseConfigResponse();
+
     const body = await request.json();
     const { valid, errors } = validateArticleInput(body);
 
