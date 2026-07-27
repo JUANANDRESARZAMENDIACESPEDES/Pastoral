@@ -4,11 +4,12 @@
 import { useState, useEffect, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { 
+import {
   store, NewsItem, Activity, FaqItem, SiteContent, DocItem, MemberProfile, Chapel, Branding, ThemePalette, TimelineEvent, HeroSlide,
   DEFAULT_CONTENT, DEFAULT_NEWS, DEFAULT_ACTIVITIES, DEFAULT_FAQ, DEFAULT_SOCIAL, SocialLinks, DEFAULT_BRANDING, DEFAULT_CHAPELS,
   DEFAULT_STATS, PageStat, mergePageStats
 } from '@/lib/pjlStore';
+import { buildGoogleCalendarEmbedUrl, DEFAULT_GOOGLE_CALENDAR_OPTIONS } from '@/lib/googleCalendar';
 import { fetchStoreValue } from '@/lib/supabaseStore';
 import Link from 'next/link';
 import Script from 'next/script';
@@ -226,6 +227,8 @@ function HomeContent() {
   const [liveChapels, setLiveChapels] = useState<Chapel[]>([]);
   const [selectedNews, setSelectedNews] = useState<PublicNewsItem | null>(null);
   const [siteContent, setSiteContent] = useState<SiteContent>(DEFAULT_CONTENT);
+  const publicCalendarOptions = siteContent.googleCalendarOptions ?? DEFAULT_GOOGLE_CALENDAR_OPTIONS;
+  const publicCalendarEmbedUrl = buildGoogleCalendarEmbedUrl(siteContent.googleCalendarUrl, publicCalendarOptions);
   const [liveActivities, setLiveActivities] = useState<Activity[]>([]);
   const [liveNews, setLiveNews] = useState<PublicNewsItem[]>([]);
   const [liveFaq, setLiveFaq] = useState<FaqItem[]>([]);
@@ -1848,10 +1851,17 @@ function HomeContent() {
                   <h3 style={{ margin: '10px 0' }}>Google Calendar</h3>
                   <div className="line"></div>
                 </div>
-                <div className="reveal calendar-wrapper" style={{ animationDelay: '0.2s', height: '650px' }}>
+                <div className="reveal calendar-wrapper" style={{ animationDelay: '0.2s', height: 'clamp(480px, 70vw, 650px)' }}>
                   <div className="calendar-inner">
-                    {siteContent.googleCalendarUrl ? (
-                      <iframe src={siteContent.googleCalendarUrl} style={{ border: 0, width: '100%', height: '100%', borderRadius: '8px' }} scrolling="no"></iframe>
+                    {publicCalendarEmbedUrl ? (
+                      <iframe
+                        src={publicCalendarEmbedUrl}
+                        title="Google Calendar institucional"
+                        style={{ border: 0, width: '100%', height: '100%', borderRadius: '8px' }}
+                        scrolling="no"
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                      ></iframe>
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>
                         <div style={{ fontSize: '48px', marginBottom: '20px', color: 'var(--gold)' }}>📅</div>

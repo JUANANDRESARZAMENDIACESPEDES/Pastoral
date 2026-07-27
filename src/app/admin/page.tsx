@@ -13,6 +13,7 @@ import {
   DEFAULT_DOCS, DEFAULT_CONTENT, DEFAULT_SOCIAL, DEFAULT_SECTIONS, DEFAULT_BRANDING,
   DEFAULT_STATS, DEFAULT_THEME_PALETTE, DEFAULT_USERS, mergePageStats
 } from '@/lib/pjlStore';
+import { buildGoogleCalendarEmbedUrl, DEFAULT_GOOGLE_CALENDAR_OPTIONS } from '@/lib/googleCalendar';
 import { fetchStoreValue, upsertStoreValue, subscribeStoreChanges } from '@/lib/supabaseStore';
 import { SupabaseProfile, fetchProfileByEmail, fetchAllProfiles, fetchPendingProfiles, approveProfile, signInProfile, signUpProfile, subscribeProfileChanges, deleteProfile, resendVerificationEmail } from '@/lib/supabaseProfiles';
 
@@ -335,6 +336,12 @@ function AdminContent() {
   const [chapels, setChapels] = useLS<Chapel[]>('chapels', []);
   const [pageStats, setPageStats] = useLS<PageStat[]>('stats', DEFAULT_STATS);
   const [logs, setLogs] = useLS<any[]>('logs', []);
+  const calendarOptions = {
+    ...DEFAULT_GOOGLE_CALENDAR_OPTIONS,
+    showAgenda: false,
+    ...(content.googleCalendarOptions ?? {}),
+  };
+  const calendarEmbedUrl = buildGoogleCalendarEmbedUrl(content.googleCalendarUrl, calendarOptions);
 
   useEffect(() => {
     let isMounted = true;
@@ -2380,23 +2387,80 @@ function AdminContent() {
                 {/* TAB: CALENDARIO */}
                 {activeContentTab === 'google_calendar' && (
                   <div className="animate-reveal" style={{ padding: '40px', background: 'var(--navy)', color: '#fff', borderRadius: '25px', border: '2px solid var(--gold)' }}>
-                    <div style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
-                      <div style={{ fontSize: '50px' }}>🗓️</div>
-                      <div style={{ flex: 1 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '24px', alignItems: 'start' }}>
+                      <div style={{ fontSize: '50px', lineHeight: 1 }}>🗓️</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <h4 className="serif" style={{ color: 'var(--gold)', marginBottom: '15px', fontSize: '1.5rem' }}>Google Calendar</h4>
                         <p style={{ opacity: 0.8, marginBottom: '25px', lineHeight: '1.6' }}>
                           Integra tu calendario institucional para que los eventos se actualicen automáticamente en la web.
-                          Solo necesitas copiar el enlace de <strong>Inserción (Embed URL)</strong> desde la configuración de tu Google Calendar.
+                          Puedes pegar el correo del calendario, su ID, o el enlace de inserción de Google Calendar.
                         </p>
                         <div className="form-group">
-                          <label className="premium-label" style={{ color: 'var(--gold-pale)' }}>URL DE INSERCIÓN</label>
+                          <label className="premium-label" style={{ color: 'var(--gold-pale)' }}>CALENDARIO / CORREO / URL EMBED</label>
                           <input 
                             className="pjl-input" 
                             style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--gold)', padding: '15px' }}
                             value={content.googleCalendarUrl || ''} 
-                            placeholder="https://calendar.google.com/calendar/embed?src=..."
+                            placeholder="tu-calendario@gmail.com o https://calendar.google.com/calendar/embed?src=..."
                             onChange={e => setContent({ ...content, googleCalendarUrl: e.target.value })} 
                           />
+                        </div>
+                        <div style={{ marginTop: '20px', padding: '18px', borderRadius: '18px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(200,151,58,0.35)' }}>
+                          <p style={{ margin: '0 0 14px', fontSize: '12px', color: 'var(--gold-pale)', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>
+                            Opciones visibles del calendario
+                          </p>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '10px' }}>
+                            {[
+                              { key: 'showTitle', label: 'Mostrar título' },
+                              { key: 'showNav', label: 'Mostrar navegación' },
+                              { key: 'showPrint', label: 'Mostrar impresión' },
+                              { key: 'showAgenda', label: 'Mostrar agenda' },
+                              { key: 'showCalendars', label: 'Mostrar calendarios secundarios' },
+                              { key: 'showTz', label: 'Mostrar zona horaria' },
+                            ].map(option => {
+                              const checked = option.key === 'showAgenda'
+                                ? calendarOptions.mode === 'AGENDA'
+                                : Boolean((calendarOptions as Record<string, boolean>)[option.key]);
+                              return (
+                                <label
+                                  key={option.key}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px',
+                                    padding: '12px 14px',
+                                    borderRadius: '14px',
+                                    background: 'rgba(255,255,255,0.06)',
+                                    border: '1px solid rgba(255,255,255,0.08)',
+                                    cursor: 'pointer',
+                                    fontSize: '13px',
+                                    fontWeight: 600,
+                                    lineHeight: 1.3,
+                                  }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={(e) => {
+                                      const next = {
+                                        ...calendarOptions,
+                                        [option.key]: e.target.checked,
+                                      } as typeof calendarOptions;
+                                      if (option.key === 'showAgenda') {
+                                        next.mode = e.target.checked ? 'AGENDA' : 'MONTH';
+                                        next.showAgenda = e.target.checked;
+                                      }
+                                      setContent({ ...content, googleCalendarOptions: next });
+                                    }}
+                                  />
+                                  <span>{option.label}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                          <p style={{ margin: '12px 0 0', fontSize: '11px', opacity: 0.75, lineHeight: 1.5 }}>
+                            El iframe se genera automáticamente con los parámetros de Google Calendar para ocultar o mostrar cada bloque.
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -2974,10 +3038,10 @@ function AdminContent() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <span>🗓️</span> VISTA PREVIA DE GOOGLE CALENDAR
                     </div>
-                    <span style={{ fontSize: '9px', opacity: 0.7 }}>{content.googleCalendarUrl}</span>
+                    <span style={{ fontSize: '9px', opacity: 0.7, maxWidth: '45%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{content.googleCalendarUrl}</span>
                   </div>
                   <iframe 
-                    src={`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(content.googleCalendarUrl)}&ctz=America/Asuncion&showTitle=0&showNav=1&showPrint=0&showTabs=1&showCalendars=0&showTz=0`} 
+                    src={calendarEmbedUrl} 
                     style={{ border: 0 }} 
                     width="100%" 
                     height="500" 
@@ -3413,14 +3477,14 @@ function AdminContent() {
                     </div>
 
                     <div className="form-group">
-                      <label className="premium-label">ID DE GOOGLE CALENDAR</label>
+                      <label className="premium-label">ID / CORREO / URL EMBED DE GOOGLE CALENDAR</label>
                       <input 
                         className="pjl-input" 
                         value={content.googleCalendarUrl || ''} 
                         onChange={e => setContent({...content, googleCalendarUrl: e.target.value})} 
-                        placeholder="ej: tu-email@gmail.com"
+                        placeholder="ej: tu-email@gmail.com o enlace embed de Google Calendar"
                       />
-                      <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '5px' }}>Necesario para mostrar el calendario en la agenda.</p>
+                      <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '5px' }}>Acepta correo del calendario, ID o enlace de inserción. Las opciones de visibilidad se guardan arriba.</p>
                     </div>
 
                     <button className="btn-premium btn-premium-gold" onClick={() => showToast('Configuración de integraciones guardada ✔')}>GUARDAR CAMBIOS</button>

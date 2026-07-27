@@ -69,6 +69,16 @@ export interface SiteContent  {
   statsJovenes: string;
   statsAnos: string;
   googleCalendarUrl: string;
+  googleCalendarOptions?: {
+    showTitle: boolean;
+    showNav: boolean;
+    showPrint: boolean;
+    showTabs: boolean;
+    showCalendars: boolean;
+    showTz: boolean;
+    showAgenda: boolean;
+    mode: 'MONTH' | 'WEEK' | 'AGENDA';
+  };
   historiaTimeline: TimelineEvent[];
   instiTitulo: string;
   instiSubtitle: string;
@@ -227,6 +237,16 @@ export const DEFAULT_CONTENT: SiteContent = {
   statsJovenes: '300+',
   statsAnos: '20',
   googleCalendarUrl: '',
+  googleCalendarOptions: {
+    showTitle: false,
+    showNav: true,
+    showPrint: false,
+    showTabs: false,
+    showCalendars: false,
+    showTz: false,
+    showAgenda: false,
+    mode: 'MONTH',
+  },
   historiaTimeline: [
     { id: '1', title: 'Inicios', text: 'La Pastoral Juvenil Luqueña nació con la misión de acompañar a los jóvenes de la ciudad de Luque en su camino de fe.', accentColor: '#C8973A' },
     { id: '2', title: 'Presente', text: 'Hoy en día, la PJL Luque se consolida como un referente diocesano de organización y fe activa.', accentColor: '#1A2744' }
