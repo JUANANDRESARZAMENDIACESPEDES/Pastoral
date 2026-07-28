@@ -481,8 +481,7 @@ function HomeContent() {
     { id: 'efo', label: 'EFO' },
     { id: 'ecomu', label: 'ECOMU' },
     { id: 'eli', label: 'ELI' },
-    { id: 'mmpjl', label: 'Música' },
-    { id: 'representantes', label: 'Representantes' }
+    { id: 'mmpjl', label: 'Música' }
   ];
 
   const zoneColors = {
