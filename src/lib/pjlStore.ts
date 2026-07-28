@@ -4,7 +4,7 @@
 import { fetchAllStoreValues, subscribeStoreChanges, upsertStoreValue } from './supabaseStore';
 
 export interface NewsItem     { id: number; title: string; body: string; date: string; published: boolean; }
-export interface Activity     { id: number; title: string; date: string; category: string; active: boolean; inscription: boolean; description?: string; }
+export interface Activity     { id: number; title: string; date: string; category: string; active: boolean; inscription: boolean; description?: string; calendarUrl?: string; }
 export interface FaqItem      { id: number; question: string; answer: string; }
 export interface DocItem      { id: number; name: string; type: string; size: string; downloads: number; url?: string; description?: string; category?: string; previewImage?: string; uploadedAt?: string; }
 export interface GalleryItem  { id: number; name: string; src: string; }

@@ -65,3 +65,31 @@ export const buildGoogleCalendarEmbedUrl = (
 
   return `${GOOGLE_EMBED_BASE}?${params.join('&')}`;
 };
+
+export const buildGoogleCalendarCreateUrl = (
+  title: string,
+  date: string,
+  details = '',
+  location = '',
+  timezone = 'America/Asuncion'
+) => {
+  if (!title.trim() || !date.trim()) return '';
+
+  const cleanDate = date.replace(/-/g, '');
+  if (!/^\d{8}$/.test(cleanDate)) return '';
+
+  const nextDay = new Date(`${date}T00:00:00`);
+  nextDay.setDate(nextDay.getDate() + 1);
+  const endDate = nextDay.toISOString().slice(0, 10).replace(/-/g, '');
+
+  const params = [
+    `action=TEMPLATE`,
+    `text=${encodeURIComponent(title.trim())}`,
+    `dates=${encodeURIComponent(`${cleanDate}/${endDate}`)}`,
+    `details=${encodeURIComponent(details.trim())}`,
+    `location=${encodeURIComponent(location.trim())}`,
+    `ctz=${encodeURIComponent(timezone)}`,
+  ];
+
+  return `https://calendar.google.com/calendar/render?${params.join('&')}`;
+};

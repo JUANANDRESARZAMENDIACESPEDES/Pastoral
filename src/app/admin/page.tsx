@@ -13,7 +13,7 @@ import {
   DEFAULT_DOCS, DEFAULT_CONTENT, DEFAULT_SOCIAL, DEFAULT_SECTIONS, DEFAULT_BRANDING,
   DEFAULT_STATS, DEFAULT_THEME_PALETTE, DEFAULT_USERS, mergePageStats
 } from '@/lib/pjlStore';
-import { buildGoogleCalendarEmbedUrl, DEFAULT_GOOGLE_CALENDAR_OPTIONS } from '@/lib/googleCalendar';
+import { buildGoogleCalendarCreateUrl, buildGoogleCalendarEmbedUrl, DEFAULT_GOOGLE_CALENDAR_OPTIONS } from '@/lib/googleCalendar';
 import { fetchStoreValue, upsertStoreValue, subscribeStoreChanges } from '@/lib/supabaseStore';
 import { SupabaseProfile, fetchProfileByEmail, fetchAllProfiles, fetchPendingProfiles, approveProfile, signInProfile, signUpProfile, subscribeProfileChanges, deleteProfile, resendVerificationEmail } from '@/lib/supabaseProfiles';
 
@@ -780,11 +780,38 @@ function AdminContent() {
   };
 
   const saveActivity = () => {
+    const title = typeof form.title === 'string' ? form.title.trim() : '';
+    const date = typeof form.date === 'string' ? form.date : '';
+    const category = typeof form.category === 'string' ? form.category : 'Formación';
+    const description = typeof form.description === 'string' ? form.description.trim() : '';
+    const updatedActivity = {
+      ...form,
+      title,
+      date,
+      category,
+      description,
+      inscription: Boolean(form.inscription),
+      active: editId ? Boolean((form as Activity).active ?? true) : true,
+      calendarUrl: buildGoogleCalendarCreateUrl(title, date, description, category),
+    };
+
+    if (!title || !date) {
+      alert('Debes completar al menos el título y la fecha de la actividad.');
+      return;
+    }
+
     const updated = editId
-      ? activities.map(a => a.id === editId ? { ...a, ...form } : a)
-      : [...activities, { ...form, id: Date.now(), active: true }];
+      ? activities.map(a => a.id === editId ? { ...a, ...updatedActivity } : a)
+      : [...activities, { ...updatedActivity, id: Date.now(), active: true }];
     setActivities(updated); closeModal(); showToast('Actividad guardada ✔');
     addLog(editId ? 'editar' : 'crear', 'actividades', `Act: ${form.title}`);
+  };
+
+  const deleteAllActivities = () => {
+    if (!confirm('¿Deseas borrar todas las actividades? Esta acción no se puede deshacer.')) return;
+    setActivities([]);
+    showToast('Todas las actividades fueron eliminadas 🗑️');
+    addLog('eliminar todo', 'actividades');
   };
 
   const saveDoc = () => {
@@ -3034,6 +3061,9 @@ function AdminContent() {
                       </button>
                     ))}
                   </div>
+                  <button className="btn-premium btn-premium-outline" style={{ borderColor: '#EF4444', color: '#EF4444' }} onClick={deleteAllActivities}>
+                    BORRAR TODO
+                  </button>
                   <button className="btn-premium btn-premium-gold" onClick={() => openNew('actividades')}>+ AGREGAR ACTIVIDAD</button>
                 </div>
               </div>
@@ -3069,17 +3099,22 @@ function AdminContent() {
                     </tr>
                   </thead>
                   <tbody>
-                    {activities.filter(a => a.title.toLowerCase().includes(searchTerm.toLowerCase()) || a.category.toLowerCase().includes(searchTerm.toLowerCase())).map(a => (
+                    {activities.filter(a => (a.title || '').toLowerCase().includes(searchTerm.toLowerCase()) || (a.category || '').toLowerCase().includes(searchTerm.toLowerCase())).map(a => (
                       <tr key={a.id}>
                         <td>
                           <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: a.active ? '#10B981' : '#EF4444', display: 'inline-block', marginRight: '8px' }} />
                           <span style={{ fontSize: '10px', fontWeight: 600, color: a.active ? '#10B981' : '#EF4444' }}>{a.active ? 'ACTIVO' : 'PASADO'}</span>
                         </td>
-                        <td style={{ fontWeight: 800, color: 'var(--navy)' }}>{a.title}</td>
-                        <td>{a.date}</td>
-                        <td><span className="premium-label" style={{ fontSize: '10px', background: 'var(--gold-pale)', color: 'var(--navy)' }}>{a.category}</span></td>
+                        <td style={{ fontWeight: 800, color: 'var(--navy)' }}>{a.title || 'Sin título'}</td>
+                        <td>{a.date || 'Sin fecha'}</td>
+                        <td><span className="premium-label" style={{ fontSize: '10px', background: 'var(--gold-pale)', color: 'var(--navy)' }}>{a.category || 'Sin categoría'}</span></td>
                         <td>
-                          <div style={{ display: 'flex', gap: '8px' }}>
+                          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                            {a.calendarUrl && (
+                              <a href={a.calendarUrl} target="_blank" rel="noreferrer" className="btn-premium btn-premium-gold" style={{ padding: '6px 12px', fontSize: '10px', textDecoration: 'none' }}>
+                                GOOGLE CALENDAR
+                              </a>
+                            )}
                             <button onClick={() => openEdit('actividades', a)} className="btn-premium btn-premium-outline" style={{ padding: '6px 12px', fontSize: '10px' }}>EDITAR</button>
                             <button onClick={() => deleteItem('activities', a.id)} className="btn-premium" style={{ color: '#EF4444', padding: '6px 12px', fontSize: '10px', border: '1px solid #EF4444' }}>BORRAR</button>
                           </div>
