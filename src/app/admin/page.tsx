@@ -3048,9 +3048,9 @@ function AdminContent() {
                   </div>
                   <iframe 
                     src={calendarEmbedUrl} 
-                    style={{ border: 0 }} 
+                    style={{ border: 0, width: '100%', height: 'clamp(380px, 42vw, 460px)', display: 'block' }} 
                     width="100%" 
-                    height="500" 
+                    height="460" 
                     frameBorder="0" 
                     scrolling="no"
                   ></iframe>
