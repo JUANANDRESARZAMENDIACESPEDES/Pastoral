@@ -470,10 +470,10 @@ function HomeContent() {
 
   // --- DATA ---
   const zonasInfo = [
-    { id: 1, name: 'San Miguel' },
-    { id: 2, name: 'San Rafael' },
-    { id: 3, name: 'San Gabriel' },
-    { id: 4, name: 'Zona Urbana' }
+    { id: 1, name: '' },
+    { id: 2, name: '' },
+    { id: 3, name: '' },
+    { id: 4, name: '' }
   ];
 
   const councilTabs = [
