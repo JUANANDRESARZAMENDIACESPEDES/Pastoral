@@ -73,6 +73,9 @@ export async function GET(request: NextRequest) {
 // POST: Crear nuevo evento
 export async function POST(request: NextRequest) {
   try {
+    // Verificación de Supabase para corregir error de TypeScript en Vercel
+    if (!supabase) return missingSupabaseConfigResponse();
+
     const body = await request.json();
 
     // Validaciones
