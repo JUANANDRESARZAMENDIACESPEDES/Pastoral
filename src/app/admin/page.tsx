@@ -201,6 +201,9 @@ function AdminContent() {
     const confirmed = searchParams.get('confirmed');
     const type = searchParams.get('type');
     const errorDescription = searchParams.get('error_description') || searchParams.get('error');
+    const gcal = searchParams.get('gcal');
+    const gcalMessage = searchParams.get('gcal_message');
+    const gcalAccount = searchParams.get('gcal_account');
 
     if (confirmed === 'true' || type === 'signup') {
       setRegisterMode('login');
@@ -214,6 +217,22 @@ function AdminContent() {
       setLoginErr(true);
       setLoginErrorMessage(decodeURIComponent(errorDescription));
       router.replace('/admin');
+      return;
+    }
+
+    if (gcal === 'connected') {
+      setGoogleCalendarStatus({
+        connected: true,
+        account: gcalAccount || undefined,
+      });
+      showToast('Google Calendar conectado ✔');
+      router.replace('/admin?mod=actividades');
+      return;
+    }
+
+    if (gcal === 'error') {
+      showToast(gcalMessage || 'No se pudo conectar Google Calendar.');
+      router.replace('/admin?mod=actividades');
       return;
     }
 
@@ -342,6 +361,22 @@ function AdminContent() {
     ...(content.googleCalendarOptions ?? {}),
   };
   const calendarEmbedUrl = buildGoogleCalendarEmbedUrl(content.googleCalendarUrl, calendarOptions);
+  const [googleCalendarStatus, setGoogleCalendarStatus] = useState<{ connected: boolean; account?: string } | null>(null);
+  const [googleCalendarSyncing, setGoogleCalendarSyncing] = useState(false);
+
+  useEffect(() => {
+    const loadGoogleCalendarStatus = async () => {
+      try {
+        const response = await fetch('/api/google-calendar/status');
+        const json = await response.json();
+        setGoogleCalendarStatus(json);
+      } catch {
+        setGoogleCalendarStatus({ connected: false });
+      }
+    };
+
+    loadGoogleCalendarStatus();
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -770,22 +805,147 @@ function AdminContent() {
   const openNew = (type: Module) => { setModal(type); setEditId(null); setForm({}); };
   const openEdit = (type: Module, item: NewsItem | Activity | FaqItem | DocItem | GalleryItem | Chapel | MemberProfile | User | Record<string, string>) => { setModal(type); setEditId((item as { id?: number | string }).id || null); setForm(item); };
 
-  // --- CRUD ---
-  const saveNews = () => {
-    const updated = editId
-      ? news.map(n => n.id === editId ? { ...n, ...form } : n)
-      : [...news, { ...form, id: Date.now(), published: true }];
-    setNews(updated); closeModal(); showToast('Noticia actualizada ✔');
-    addLog(editId ? 'editar' : 'crear', 'noticias', `Tít: ${form.title}`);
+  const syncActivityToGoogleCalendar = async (
+    activity: Activity,
+    action: 'create' | 'update' | 'delete',
+    calendarEventId?: string
+  ) => {
+    const response = await fetch('/api/google-calendar/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action,
+        title: activity.title,
+        date: activity.date,
+        description: activity.description || '',
+        category: activity.category || '',
+        eventId: calendarEventId || activity.calendarEventId || '',
+      }),
+    });
+
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok || !json.ok) {
+      throw new Error(json.message || 'No se pudo sincronizar con Google Calendar.');
+    }
+
+    return json as { eventId?: string; htmlLink?: string; deleted?: boolean };
   };
 
-  const saveActivity = () => {
+  const syncNewsToGoogleCalendar = async (
+    item: NewsItem,
+    action: 'create' | 'update' | 'delete',
+    calendarEventId?: string
+  ) => {
+    const response = await fetch('/api/google-calendar/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action,
+        title: item.title,
+        date: item.date,
+        description: item.body || '',
+        category: 'Noticias',
+        eventId: calendarEventId || item.calendarEventId || '',
+      }),
+    });
+
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok || !json.ok) {
+      throw new Error(json.message || 'No se pudo sincronizar la noticia con Google Calendar.');
+    }
+
+    return json as { eventId?: string; htmlLink?: string; deleted?: boolean };
+  };
+
+  // --- CRUD ---
+  const saveNews = async () => {
+    const title = typeof form.title === 'string' ? form.title.trim() : '';
+    const body = typeof form.body === 'string' ? form.body.trim() : '';
+    const date = typeof form.date === 'string' ? form.date : '';
+    const published = Boolean(form.published ?? true);
+    const existingNews = editId ? news.find(n => n.id === editId) : null;
+    const localId = editId || Date.now();
+    const savedNews: NewsItem = {
+      ...form,
+      id: localId,
+      title,
+      body,
+      date,
+      published,
+      calendarEventId: published ? existingNews?.calendarEventId : undefined,
+      calendarUrl: published ? existingNews?.calendarUrl : undefined,
+      calendarSyncStatus: googleCalendarStatus?.connected ? 'pending' : 'error',
+    };
+
+    if (!title || !date) {
+      alert('Debes completar al menos el título y la fecha de la noticia.');
+      return;
+    }
+
+    const updated = editId
+      ? news.map(n => n.id === editId ? { ...n, ...savedNews } : n)
+      : [...news, savedNews];
+    setNews(updated);
+    closeModal();
+    addLog(editId ? 'editar' : 'crear', 'noticias', `Tít: ${form.title}`);
+
+    if (!googleCalendarStatus?.connected) {
+      showToast('Noticia guardada ✔');
+      return;
+    }
+
+    if (!published) {
+      if (existingNews?.calendarEventId) {
+        try {
+          await syncNewsToGoogleCalendar({ ...savedNews, calendarEventId: existingNews.calendarEventId }, 'delete', existingNews.calendarEventId);
+        } catch (error) {
+          console.error('Error borrando noticia en Google Calendar:', error);
+        }
+      }
+      showToast('Noticia guardada ✔');
+      return;
+    }
+
+    setGoogleCalendarSyncing(true);
+    try {
+      const result = await syncNewsToGoogleCalendar(
+        {
+          ...savedNews,
+          id: localId,
+        } as NewsItem,
+        existingNews?.calendarEventId ? 'update' : 'create',
+        existingNews?.calendarEventId
+      );
+
+      setNews(prev => prev.map(n => {
+        if (n.id !== localId) return n;
+        return {
+          ...n,
+          calendarEventId: result.eventId || n.calendarEventId,
+          calendarUrl: result.htmlLink || n.calendarUrl,
+          calendarSyncStatus: 'synced',
+        };
+      }));
+      showToast(existingNews?.calendarEventId ? 'Noticia actualizada en Google Calendar ✔' : 'Noticia enviada a Google Calendar ✔');
+    } catch (error) {
+      console.error('Error sincronizando noticia con Google Calendar:', error);
+      setNews(prev => prev.map(n => n.id === localId ? { ...n, calendarSyncStatus: 'error' } : n));
+      showToast('Noticia guardada ✔');
+    } finally {
+      setGoogleCalendarSyncing(false);
+    }
+  };
+
+  const saveActivity = async () => {
     const title = typeof form.title === 'string' ? form.title.trim() : '';
     const date = typeof form.date === 'string' ? form.date : '';
     const category = typeof form.category === 'string' ? form.category : 'Formación';
     const description = typeof form.description === 'string' ? form.description.trim() : '';
-    const updatedActivity = {
+    const existingActivity = editId ? activities.find(a => a.id === editId) : null;
+    const localId = editId || Date.now();
+    const savedActivity: Activity = {
       ...form,
+      id: localId,
       title,
       date,
       category,
@@ -793,6 +953,8 @@ function AdminContent() {
       inscription: Boolean(form.inscription),
       active: editId ? Boolean((form as Activity).active ?? true) : true,
       calendarUrl: buildGoogleCalendarCreateUrl(title, date, description, category),
+      calendarEventId: existingActivity?.calendarEventId,
+      calendarSyncStatus: googleCalendarStatus?.connected ? 'pending' : 'error',
     };
 
     if (!title || !date) {
@@ -801,14 +963,55 @@ function AdminContent() {
     }
 
     const updated = editId
-      ? activities.map(a => a.id === editId ? { ...a, ...updatedActivity } : a)
-      : [...activities, { ...updatedActivity, id: Date.now(), active: true }];
-    setActivities(updated); closeModal(); showToast('Actividad guardada ✔');
+      ? activities.map(a => a.id === editId ? { ...a, ...savedActivity } : a)
+      : [...activities, savedActivity];
+    setActivities(updated);
+    closeModal();
     addLog(editId ? 'editar' : 'crear', 'actividades', `Act: ${form.title}`);
+
+    if (!googleCalendarStatus?.connected) {
+      showToast('Actividad guardada ✔');
+      return;
+    }
+
+    setGoogleCalendarSyncing(true);
+    try {
+      const result = await syncActivityToGoogleCalendar(
+        {
+          ...savedActivity,
+          id: localId,
+        } as Activity,
+        existingActivity?.calendarEventId ? 'update' : 'create',
+        existingActivity?.calendarEventId
+      );
+
+      setActivities(prev => prev.map(a => {
+        if (a.id !== localId) return a;
+        return {
+          ...a,
+          calendarEventId: result.eventId || a.calendarEventId,
+          calendarUrl: result.htmlLink || a.calendarUrl,
+          calendarSyncStatus: 'synced',
+        };
+      }));
+      showToast(existingActivity?.calendarEventId ? 'Actividad actualizada en Google Calendar ✔' : 'Actividad enviada a Google Calendar ✔');
+    } catch (error) {
+      console.error('Error sincronizando actividad con Google Calendar:', error);
+      setActivities(prev => prev.map(a => a.id === localId ? { ...a, calendarSyncStatus: 'error' } : a));
+      showToast('Actividad guardada ✔');
+    } finally {
+      setGoogleCalendarSyncing(false);
+    }
   };
 
-  const deleteAllActivities = () => {
+  const deleteAllActivities = async () => {
     if (!confirm('¿Deseas borrar todas las actividades? Esta acción no se puede deshacer.')) return;
+
+    const remoteDeletes = activities
+      .filter(activity => activity.calendarEventId)
+      .map(activity => syncActivityToGoogleCalendar(activity, 'delete'));
+    await Promise.allSettled(remoteDeletes);
+
     setActivities([]);
     showToast('Todas las actividades fueron eliminadas 🗑️');
     addLog('eliminar todo', 'actividades');
@@ -854,6 +1057,22 @@ function AdminContent() {
 
   const deleteItem = async (type: 'news' | 'activities' | 'docs' | 'chapels' | 'users', id: number | string) => {
     if (!confirm('¿Estás seguro de eliminar este elemento?')) return;
+    const newsToDelete = type === 'news' ? news.find(n => n.id === id) : null;
+    const activityToDelete = type === 'activities' ? activities.find(a => a.id === id) : null;
+    if (newsToDelete?.calendarEventId) {
+      try {
+        await syncNewsToGoogleCalendar(newsToDelete, 'delete', newsToDelete.calendarEventId);
+      } catch (error) {
+        console.error('No se pudo borrar el evento remoto de la noticia en Google Calendar:', error);
+      }
+    }
+    if (activityToDelete?.calendarEventId) {
+      try {
+        await syncActivityToGoogleCalendar(activityToDelete, 'delete');
+      } catch (error) {
+        console.error('No se pudo borrar el evento remoto de Google Calendar:', error);
+      }
+    }
     if (type === 'news') setNews(news.filter(n => n.id !== id));
     if (type === 'activities') setActivities(activities.filter(a => a.id !== id));
     if (type === 'docs') setDocs(docs.filter(d => d.id !== id));
@@ -2432,6 +2651,27 @@ function AdminContent() {
                             onChange={e => setContent({ ...content, googleCalendarUrl: e.target.value })} 
                           />
                         </div>
+                        <div className="form-group" style={{ marginTop: '18px' }}>
+                          <label className="premium-label" style={{ color: 'var(--gold-pale)' }}>GOOGLE CLIENT ID</label>
+                          <input
+                            className="pjl-input"
+                            style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--gold)', padding: '15px' }}
+                            value={content.googleCalendarClientId || ''}
+                            placeholder="xxx.apps.googleusercontent.com"
+                            onChange={e => setContent({ ...content, googleCalendarClientId: e.target.value })}
+                          />
+                        </div>
+                        <div className="form-group" style={{ marginTop: '18px' }}>
+                          <label className="premium-label" style={{ color: 'var(--gold-pale)' }}>GOOGLE CLIENT SECRET</label>
+                          <input
+                            className="pjl-input"
+                            type="password"
+                            style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--gold)', padding: '15px' }}
+                            value={content.googleCalendarClientSecret || ''}
+                            placeholder="Client secret de Google"
+                            onChange={e => setContent({ ...content, googleCalendarClientSecret: e.target.value })}
+                          />
+                        </div>
                         <div style={{ marginTop: '20px', padding: '18px', borderRadius: '18px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(200,151,58,0.35)' }}>
                           <p style={{ margin: '0 0 14px', fontSize: '12px', color: 'var(--gold-pale)', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>
                             Opciones visibles del calendario
@@ -3064,7 +3304,20 @@ function AdminContent() {
                   <button className="btn-premium btn-premium-outline" style={{ borderColor: '#EF4444', color: '#EF4444' }} onClick={deleteAllActivities}>
                     BORRAR TODO
                   </button>
+                  <button
+                    className="btn-premium btn-premium-outline"
+                    style={{ borderColor: googleCalendarStatus?.connected ? '#10B981' : '#EF4444', color: googleCalendarStatus?.connected ? '#10B981' : '#EF4444' }}
+                    onClick={() => window.location.assign('/api/google-calendar/connect')}
+                    disabled={googleCalendarSyncing}
+                  >
+                    {googleCalendarStatus?.connected ? 'GOOGLE CONECTADO' : 'CONECTAR GOOGLE CALENDAR'}
+                  </button>
                   <button className="btn-premium btn-premium-gold" onClick={() => openNew('actividades')}>+ AGREGAR ACTIVIDAD</button>
+                </div>
+                <div style={{ marginTop: '10px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                  {googleCalendarStatus?.connected
+                    ? `Sincronización automática activa${googleCalendarStatus.account ? ` para ${googleCalendarStatus.account}` : ''}.`
+                    : 'Conecta Google Calendar para que cada actividad se cree automáticamente en la cuenta del usuario.'}
                 </div>
               </div>
               

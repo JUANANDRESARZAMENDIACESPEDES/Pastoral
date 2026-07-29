@@ -3,8 +3,8 @@
 // All keys are stored in localStorage so changes persist across pages.
 import { fetchAllStoreValues, subscribeStoreChanges, upsertStoreValue } from './supabaseStore';
 
-export interface NewsItem     { id: number; title: string; body: string; date: string; published: boolean; }
-export interface Activity     { id: number; title: string; date: string; category: string; active: boolean; inscription: boolean; description?: string; calendarUrl?: string; }
+export interface NewsItem     { id: number; title: string; body: string; date: string; published: boolean; calendarUrl?: string; calendarEventId?: string; calendarSyncStatus?: 'pending' | 'synced' | 'error'; }
+export interface Activity     { id: number; title: string; date: string; category: string; active: boolean; inscription: boolean; description?: string; calendarUrl?: string; calendarEventId?: string; calendarSyncStatus?: 'pending' | 'synced' | 'error'; }
 export interface FaqItem      { id: number; question: string; answer: string; }
 export interface DocItem      { id: number; name: string; type: string; size: string; downloads: number; url?: string; description?: string; category?: string; previewImage?: string; uploadedAt?: string; }
 export interface GalleryItem  { id: number; name: string; src: string; }
@@ -69,6 +69,8 @@ export interface SiteContent  {
   statsJovenes: string;
   statsAnos: string;
   googleCalendarUrl: string;
+  googleCalendarClientId: string;
+  googleCalendarClientSecret: string;
   googleCalendarOptions?: {
     showTitle: boolean;
     showNav: boolean;
@@ -237,6 +239,8 @@ export const DEFAULT_CONTENT: SiteContent = {
   statsJovenes: '300+',
   statsAnos: '20',
   googleCalendarUrl: '',
+  googleCalendarClientId: '',
+  googleCalendarClientSecret: '',
   googleCalendarOptions: {
     showTitle: false,
     showNav: true,
