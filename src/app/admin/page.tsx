@@ -3781,6 +3781,27 @@ function AdminContent() {
                       <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '5px' }}>Acepta correo del calendario, ID o enlace de inserción. Las opciones de visibilidad se guardan arriba.</p>
                     </div>
 
+                    <div className="form-group">
+                      <label className="premium-label">GOOGLE CLIENT ID</label>
+                      <input
+                        className="pjl-input"
+                        value={content.googleCalendarClientId || ''}
+                        onChange={e => setContent({ ...content, googleCalendarClientId: e.target.value })}
+                        placeholder="xxx.apps.googleusercontent.com"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="premium-label">GOOGLE CLIENT SECRET</label>
+                      <input
+                        className="pjl-input"
+                        type="password"
+                        value={content.googleCalendarClientSecret || ''}
+                        onChange={e => setContent({ ...content, googleCalendarClientSecret: e.target.value })}
+                        placeholder="Client secret de Google"
+                      />
+                    </div>
+
                     <button className="btn-premium btn-premium-gold" onClick={() => showToast('Configuración de integraciones guardada ✔')}>GUARDAR CAMBIOS</button>
                   </div>
                 </div>
