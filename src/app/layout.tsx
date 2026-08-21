@@ -43,6 +43,16 @@ export default function RootLayout({
     <html lang="es" className={`${displayFont.variable} ${bodyFont.variable} ${accentFont.variable}`} suppressHydrationWarning>
       <head>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+        {/* Critical CSS: oculta la navbar desde el primer paint para que
+            la animación de entrada siempre se vea completa, sin flash del menú */}
+        <style
+          dangerouslySetInnerHTML={{
+            __html: [
+              '.top-nav .brand-logo-wrap,.top-nav .brand-text,.nav-links .nav-item{opacity:0}',
+              '@media (prefers-reduced-motion:reduce){.top-nav .brand-logo-wrap,.top-nav .brand-text,.nav-links .nav-item{opacity:1}}',
+            ].join(''),
+          }}
+        />
       </head>
       <body suppressHydrationWarning>
         {/* Marca <html> ANTES de pintar el splash: solo fuera de /admin.

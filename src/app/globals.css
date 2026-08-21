@@ -340,7 +340,7 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
 @media (min-width: 1680px) {
   .brand-tagline {
     display: block;
-    animation: brandTextSlide 0.55s cubic-bezier(0.22, 1, 0.36, 1) both 0.3s;
+    animation: brandTextSlide 0.8s cubic-bezier(0.45, 0, 0.25, 1) both 0.5s;
   }
 }
 @media (max-width: 768px) {
@@ -3465,13 +3465,14 @@ input:checked + .pjl-slider:before {
   gap: 10px;
 }
 
-/* Entrada escalonada de los enlaces al abrir el drawer */
+/* Entrada escalonada de los enlaces al abrir el drawer (con difuminado) */
 @keyframes drawerItemIn {
-  from { opacity: 0; transform: translateX(30px); }
-  to { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; transform: translateX(30px); filter: blur(4px); }
+  60% { opacity: 0.75; filter: blur(1.5px); }
+  to { opacity: 1; transform: translateX(0); filter: blur(0); }
 }
 .mobile-nav-drawer.open .drawer-links > li {
-  animation: drawerItemIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: drawerItemIn 0.6s cubic-bezier(0.45, 0, 0.25, 1) both;
 }
 .mobile-nav-drawer.open .drawer-links > li:nth-child(1) { animation-delay: 0.08s; }
 .mobile-nav-drawer.open .drawer-links > li:nth-child(2) { animation-delay: 0.13s; }
@@ -5816,34 +5817,38 @@ textarea:focus-visible,
   .sidebar-header .logo-img-circular { animation: none !important; }
 }
 
-/* ---------- NAVBAR PÚBLICO — ENTRADA ESCALONADA Y STAGGER ---------- */
+/* ---------- NAVBAR PÚBLICO — ENTRADA ESCALONADA CON DIFUMINADO ---------- */
+/* Curva suave en ambos extremos + desenfoque que se disipa:
+   la aparición se percibe como un velo que se levanta, no un salto */
 @keyframes navFadeDown {
-  from { opacity: 0; transform: translateY(-16px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(-14px); filter: blur(6px); }
+  55% { opacity: 0.75; filter: blur(2px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
 }
-.nav-links .nav-item { animation: navFadeDown 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
-.nav-links .nav-item:nth-child(1) { animation-delay: 0.05s; }
-.nav-links .nav-item:nth-child(2) { animation-delay: 0.1s; }
-.nav-links .nav-item:nth-child(3) { animation-delay: 0.15s; }
-.nav-links .nav-item:nth-child(4) { animation-delay: 0.2s; }
-.nav-links .nav-item:nth-child(5) { animation-delay: 0.25s; }
-.nav-links .nav-item:nth-child(6) { animation-delay: 0.3s; }
-.nav-links .nav-item:nth-child(7) { animation-delay: 0.35s; }
-.nav-links .nav-item:nth-child(8) { animation-delay: 0.4s; }
-.nav-links .nav-item:nth-child(9) { animation-delay: 0.45s; }
+.nav-links .nav-item { animation: navFadeDown 0.9s cubic-bezier(0.45, 0, 0.25, 1) both; }
+.nav-links .nav-item:nth-child(1) { animation-delay: 0.06s; }
+.nav-links .nav-item:nth-child(2) { animation-delay: 0.12s; }
+.nav-links .nav-item:nth-child(3) { animation-delay: 0.18s; }
+.nav-links .nav-item:nth-child(4) { animation-delay: 0.24s; }
+.nav-links .nav-item:nth-child(5) { animation-delay: 0.3s; }
+.nav-links .nav-item:nth-child(6) { animation-delay: 0.36s; }
+.nav-links .nav-item:nth-child(7) { animation-delay: 0.42s; }
+.nav-links .nav-item:nth-child(8) { animation-delay: 0.48s; }
+.nav-links .nav-item:nth-child(9) { animation-delay: 0.54s; }
 
-/* Entrada de la marca: el escudo cae con rebote y el texto se desliza */
+/* Entrada de la marca: el escudo emerge desenfocado y aterriza con rebote,
+   el texto se desliza disipándose nítidamente */
 @keyframes brandLogoDrop {
-  0% { opacity: 0; transform: translateY(-22px) scale(0.7); }
-  60% { opacity: 1; transform: translateY(3px) scale(1.06); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
+  0% { opacity: 0; transform: translateY(-20px) scale(0.75); filter: blur(6px); }
+  60% { opacity: 1; transform: translateY(3px) scale(1.05); filter: blur(0); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
 }
 @keyframes brandTextSlide {
-  from { opacity: 0; transform: translateX(-16px); }
-  to { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; transform: translateX(-14px); filter: blur(4px); }
+  to { opacity: 1; transform: translateX(0); filter: blur(0); }
 }
-.top-nav .brand-logo-wrap { animation: brandLogoDrop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both 0.05s; }
-.top-nav .brand-text { animation: brandTextSlide 0.55s cubic-bezier(0.22, 1, 0.36, 1) both 0.18s; }
+.top-nav .brand-logo-wrap { animation: brandLogoDrop 0.95s cubic-bezier(0.34, 1.4, 0.64, 1) both 0.05s; }
+.top-nav .brand-text { animation: brandTextSlide 0.8s cubic-bezier(0.45, 0, 0.25, 1) both 0.28s; }
 
 @keyframes dropLinkIn {
   from { opacity: 0; transform: translateX(-12px); }
