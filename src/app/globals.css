@@ -6774,3 +6774,230 @@ html.show-splash .splash-screen { visibility: visible; }
   .pjl-empty-state { padding: 36px 18px; }
   .pjl-empty-state .empty-icon { width: 60px; height: 60px; font-size: 27px; }
 }
+
+/* ============================================================
+   ADMIN PANEL — CONTENT UX OVERHAUL
+   Entradas escalonadas, topbar temática por módulo,
+   controles pulidos, fondos vivos y responsivo completo
+   ============================================================ */
+
+/* --- 1) Entrada de módulo más rica (reemplaza el reveal simple) --- */
+@keyframes moduleViewIn {
+  0%   { opacity: 0; transform: translateY(26px) scale(0.985); filter: blur(7px); }
+  55%  { opacity: 0.85; filter: blur(2px); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+.animate-reveal {
+  animation: moduleViewIn 0.65s cubic-bezier(0.22, 0.9, 0.32, 1) both;
+}
+/* Bloques anidados: entran después para efecto cascada */
+.animate-reveal .animate-reveal { animation-delay: 0.14s; }
+
+@keyframes childRiseIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+/* Cascada entre los bloques internos de cada tarjeta de módulo */
+.pjl-card.animate-reveal > * { animation: childRiseIn 0.55s cubic-bezier(0.22, 0.9, 0.32, 1) both; }
+.pjl-card.animate-reveal > *:nth-child(1) { animation-delay: 0.08s; }
+.pjl-card.animate-reveal > *:nth-child(2) { animation-delay: 0.14s; }
+.pjl-card.animate-reveal > *:nth-child(3) { animation-delay: 0.2s; }
+.pjl-card.animate-reveal > *:nth-child(4) { animation-delay: 0.26s; }
+.pjl-card.animate-reveal > *:nth-child(5) { animation-delay: 0.32s; }
+.pjl-card.animate-reveal > *:nth-child(6) { animation-delay: 0.38s; }
+.pjl-card.animate-reveal > *:nth-child(7) { animation-delay: 0.44s; }
+.pjl-card.animate-reveal > *:nth-child(n+8) { animation-delay: 0.5s; }
+
+/* --- 2) Encabezado de sección: subrayado dorado que se dibuja --- */
+.admin-section-title {
+  position: relative;
+  padding-bottom: 10px;
+}
+.admin-section-title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 56px;
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--gold), rgba(200, 151, 58, 0.15));
+  transform-origin: left center;
+  animation: underlineSweep 0.8s cubic-bezier(0.22, 0.9, 0.32, 1) 0.25s both;
+}
+@keyframes underlineSweep {
+  from { transform: scaleX(0); opacity: 0; }
+  to   { transform: scaleX(1); opacity: 1; }
+}
+.admin-section-desc {
+  animation: childRiseIn 0.6s cubic-bezier(0.22, 0.9, 0.32, 1) 0.18s both;
+}
+
+/* --- 3) Topbar viva: acento cromático por módulo + título animado --- */
+.admin-topbar {
+  background: linear-gradient(180deg, #fffdf8 0%, #ffffff 100%);
+  border-bottom: 1px solid rgba(200, 151, 58, 0.22);
+  position: relative;
+}
+.admin-topbar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--module-accent, var(--gold)) 0%, transparent 65%);
+  opacity: 0.55;
+  pointer-events: none;
+}
+.admin-main[data-module="dashboard"]     { --module-accent: #C8973A; }
+.admin-main[data-module="identidad"]     { --module-accent: #8B6DFF; }
+.admin-main[data-module="carrusel"]      { --module-accent: #3B82F6; }
+.admin-main[data-module="apariencia"]    { --module-accent: #EC4899; }
+.admin-main[data-module="contenido"]     { --module-accent: #10B981; }
+.admin-main[data-module="noticias"]      { --module-accent: #F59E0B; }
+.admin-main[data-module="actividades"]   { --module-accent: #14B8A6; }
+.admin-main[data-module="capillas"]      { --module-accent: #B45309; }
+.admin-main[data-module="perfiles"]      { --module-accent: #F472B6; }
+.admin-main[data-module="documentos"]    { --module-accent: #64748B; }
+.admin-main[data-module="usuarios"]      { --module-accent: #6366F1; }
+.admin-main[data-module="logs"]          { --module-accent: #475569; }
+.admin-main[data-module="configuracion"] { --module-accent: #0EA5A4; }
+.admin-main[data-module="asistente"]     { --module-accent: #A855F7; }
+.admin-main[data-module="territorio"]    { --module-accent: #16A34A; }
+
+.topbar-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 20px;
+  animation: topbarTitleIn 0.55s cubic-bezier(0.22, 0.9, 0.32, 1) both;
+}
+.topbar-title::before {
+  content: '';
+  flex-shrink: 0;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--module-accent, var(--gold));
+  box-shadow: 0 0 0 4px rgba(200, 151, 58, 0.15);
+  animation: accentPulse 2.6s ease-in-out 0.6s infinite;
+}
+@keyframes topbarTitleIn {
+  from { opacity: 0; transform: translateX(-14px); filter: blur(4px); }
+  to   { opacity: 1; transform: translateX(0); filter: blur(0); }
+}
+@keyframes accentPulse {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(200, 151, 58, 0.15); }
+  50%      { box-shadow: 0 0 0 7px rgba(200, 151, 58, 0.05); }
+}
+
+/* --- 4) Menú de usuario con aparición suave --- */
+.user-menu-pop {
+  transform-origin: top right;
+  animation: userMenuPop 0.28s cubic-bezier(0.22, 1.2, 0.36, 1) both;
+}
+@keyframes userMenuPop {
+  from { opacity: 0; transform: translateY(-8px) scale(0.94); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* --- 5) Fondos vivos: los orbes respiran lentamente --- */
+.admin-content-area::before {
+  animation: orbDrift 18s ease-in-out infinite alternate;
+}
+@keyframes orbDrift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(-24px, 18px, 0) scale(1.06); }
+}
+
+/* --- 6) Tarjetas: elevación y sombra al pasar el cursor --- */
+.admin-analytics-card,
+.dash-welcome,
+.identity-stat-box,
+.liturgical-preset-btn {
+  transition: transform 0.35s cubic-bezier(0.22, 0.9, 0.32, 1), box-shadow 0.35s ease;
+}
+.admin-analytics-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 34px rgba(26, 39, 68, 0.1) !important;
+}
+
+/* --- 7) Controles: foco dorado, botones que responden, filas vivas --- */
+.admin-content-area input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.admin-content-area select,
+.admin-content-area textarea {
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+}
+.admin-content-area input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
+.admin-content-area select:focus,
+.admin-content-area textarea:focus {
+  outline: none;
+  border-color: var(--gold) !important;
+  box-shadow: 0 0 0 3px rgba(200, 151, 58, 0.16);
+  background-color: #fff;
+}
+.btn-premium,
+.btn-premium-outline {
+  transition: transform 0.15s ease, box-shadow 0.25s ease, background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+.btn-premium:active,
+.btn-premium-outline:active {
+  transform: scale(0.96);
+}
+.admin-content-area tbody tr {
+  transition: background-color 0.2s ease;
+}
+.admin-content-area tbody tr:hover {
+  background-color: rgba(200, 151, 58, 0.05);
+}
+
+/* Scrollbar del área de contenido en tono dorado */
+.admin-content-area {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(200, 151, 58, 0.35) transparent;
+}
+.admin-content-area::-webkit-scrollbar { width: 10px; }
+.admin-content-area::-webkit-scrollbar-track { background: transparent; }
+.admin-content-area::-webkit-scrollbar-thumb {
+  background: rgba(200, 151, 58, 0.35);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.admin-content-area::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(200, 151, 58, 0.55);
+}
+
+/* --- 8) Responsivo: tablet y celular --- */
+@media (max-width: 1024px) {
+  .admin-dashboard-main-grid { grid-template-columns: 1fr !important; }
+  .identity-hero-grid { grid-template-columns: 1fr !important; }
+  .admin-content-area { padding: 24px 20px; }
+}
+@media (max-width: 640px) {
+  .admin-content-area { padding: 18px 14px; }
+  .pjl-card.animate-reveal { padding: 22px 16px !important; }
+  .admin-topbar { height: 64px; padding: 0 16px; }
+  .topbar-title { font-size: 17px; gap: 9px; }
+  .user-info-text { display: none; }
+  .user-avatar { width: 40px; height: 40px; font-size: 17px; }
+  .admin-toolbar { padding: 12px; }
+  .admin-dashboard-kpi-grid { gap: 12px !important; }
+  .admin-section-title::after { width: 44px; }
+}
+
+/* --- Accesibilidad: sin movimiento si el usuario lo prefiere --- */
+@media (prefers-reduced-motion: reduce) {
+  .animate-reveal,
+  .animate-reveal .animate-reveal,
+  .pjl-card.animate-reveal > *,
+  .admin-section-desc,
+  .admin-section-title::after,
+  .topbar-title,
+  .topbar-title::before,
+  .user-menu-pop,
+  .admin-content-area::before {
+    animation: none !important;
+  }
+}

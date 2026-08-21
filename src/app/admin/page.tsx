@@ -1578,7 +1578,7 @@ function AdminContent() {
       </aside>
 
       {/* MAIN */}
-      <main className="admin-main">
+      <main className="admin-main" data-module={mod}>
         <header className="admin-topbar">
           <div className="topbar-left">
             {/* Hamburger for mobile */}
@@ -1589,7 +1589,7 @@ function AdminContent() {
             >
               ☰
             </button>
-            <h2 className="serif" style={{ color: 'var(--navy)' }}>
+            <h2 key={mod} className="serif topbar-title" style={{ color: 'var(--navy)' }}>
               {NAV_ITEMS.find(n => n.id === mod)?.label}
             </h2>
           </div>
@@ -1608,7 +1608,7 @@ function AdminContent() {
                 {currentUser?.name?.[0] || 'A'}
               </button>
               {showUserMenu && (
-                <div style={{
+                <div className="user-menu-pop" style={{
                   position: 'absolute', top: 'calc(100% + 12px)', right: '0',
                   background: '#fff', padding: '15px', borderRadius: '14px',
                   boxShadow: '0 8px 40px rgba(0,0,0,0.18)', display: 'flex',
