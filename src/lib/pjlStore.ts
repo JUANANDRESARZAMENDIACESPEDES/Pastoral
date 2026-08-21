@@ -32,7 +32,7 @@ export interface User {
   email: string;
   password?: string;
   authUid?: string;
-  role: 'desarrollador' | 'editor' | 'viewer';
+  role: 'desarrollador' | 'superadmin' | 'editor' | 'viewer';
   status: 'activo' | 'inactivo' | 'pendiente';
   lastActive?: string;
   createdAt?: string;

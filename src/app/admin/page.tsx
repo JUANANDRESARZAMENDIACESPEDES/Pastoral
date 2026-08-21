@@ -15,7 +15,7 @@ import {
 } from '@/lib/pjlStore';
 import { buildGoogleCalendarCreateUrl, buildGoogleCalendarEmbedUrl, DEFAULT_GOOGLE_CALENDAR_OPTIONS } from '@/lib/googleCalendar';
 import { fetchStoreValue, upsertStoreValue, subscribeStoreChanges } from '@/lib/supabaseStore';
-import { SupabaseProfile, fetchProfileByEmail, fetchAllProfiles, fetchPendingProfiles, approveProfile, signInProfile, signUpProfile, subscribeProfileChanges, deleteProfile, resendVerificationEmail } from '@/lib/supabaseProfiles';
+import { SupabaseProfile, fetchProfileByEmail, fetchAllProfiles, fetchPendingProfiles, approveProfile, signInProfile, signUpProfile, subscribeProfileChanges, deleteProfile, resendVerificationEmail, updateProfile } from '@/lib/supabaseProfiles';
 
 const ZonaMap = dynamic(() => import('@/components/ZonaMap'), { 
   ssr: false,
@@ -51,7 +51,8 @@ const NAV_ITEMS = [
   { id: 'asistente',      iconKey: 'adminIconAsistente', label: 'Asistente IA', defaultIcon: '🤖' },
 ];
 
-const ADMIN_RESTRICTED_MODULES: Module[] = ['identidad', 'apariencia', 'usuarios', 'configuracion'];
+// Módulos que nunca se delegan desde la UI de permisos (solo acceso total)
+const NON_DELEGABLE_MODULES: Module[] = ['usuarios', 'configuracion'];
 
 const getDocPresentation = (doc: Partial<DocItem>) => {
   const lowerType = doc.type?.toLowerCase() || '';
@@ -317,21 +318,24 @@ function AdminContent() {
 
   const hasPermission = (m: Module, action: 'view' | 'edit' | 'admin' = 'view') => {
     if (!loggedIn) return false;
-    if (!currentUser) return true; 
-    if (currentUser.role === 'desarrollador') return true;
+    if (!currentUser) return true;
+    if (currentUser.role === 'desarrollador' || currentUser.role === 'superadmin') return true;
     if (m === 'dashboard' && action === 'view') return true;
+
+    // Módulos que no se pueden delegar desde la UI de permisos
+    if (NON_DELEGABLE_MODULES.includes(m)) return false;
 
     const permissionKeys = m === 'territorio' ? ['capillas', 'territorio'] : [m];
     const explicitPermissions = currentUser.permissions || [];
     const hasExplicitRules = explicitPermissions.length > 0;
 
     if (currentUser.role === 'editor') {
-      if (ADMIN_RESTRICTED_MODULES.includes(m)) return false;
+      // Si el admin otorgó módulos explícitos, se respetan tal cual
       if (hasExplicitRules) return permissionKeys.some(key => explicitPermissions.includes(key));
       return true;
     }
     if (currentUser.role === 'viewer') {
-      if (action !== 'view' || ADMIN_RESTRICTED_MODULES.includes(m)) return false;
+      if (action !== 'view') return false;
       return hasExplicitRules
         ? permissionKeys.some(key => explicitPermissions.includes(key))
         : ['dashboard', 'logs', 'noticias', 'actividades', 'documentos', 'capillas', 'perfiles', 'territorio'].includes(m);
@@ -1040,19 +1044,42 @@ function AdminContent() {
     addLog(editId ? 'editar' : 'crear', 'capillas', `Nombre: ${form.name}`);
   };
 
-  const saveUser = () => {
+  const saveUser = async () => {
     if (!form.email || !form.name) return;
-    const normalizedUser = {
-      ...form,
-      permissions:
-        form.role === 'superadmin'
-          ? NAV_ITEMS.map(n => n.id)
-          : Array.from(new Set(['dashboard', ...(form.permissions || [])])),
-    };
-    const updated = editId
-      ? allUsers.map(u => u.id === editId ? { ...u, ...normalizedUser } : u)
-      : [...allUsers, { ...normalizedUser, id: Date.now().toString(), password: form.password || 'pjl123', createdAt: new Date().toISOString() }];
-    setAllUsers(updated); closeModal(); showToast('Usuario actualizado ✔');
+    const normalizedPermissions = form.role === 'superadmin'
+      ? NAV_ITEMS.map(n => n.id)
+      : Array.from(new Set(['dashboard', ...(form.permissions || [])]));
+    const normalizedUser = { ...form, permissions: normalizedPermissions };
+
+    closeModal();
+
+    if (editId) {
+      const previousUsers = allUsers;
+      const target = allUsers.find(u => u.id === editId);
+      // Actualización optimista en la UI
+      setAllUsers(allUsers.map(u => u.id === editId ? { ...u, ...normalizedUser } : u));
+
+      if (target) {
+        // Persistir en Supabase: sin esto, los cambios se pierden al recargar
+        const ok = await updateProfile(target.id, {
+          name: form.name,
+          email: form.email,
+          role: form.role,
+          status: (form.status as 'activo' | 'inactivo' | 'pendiente') || target.status,
+          permissions: normalizedPermissions,
+        });
+        if (!ok) {
+          setAllUsers(previousUsers);
+          showToast('Sin conexión con la nube: cambios revertidos ✖');
+          addLog('error', 'usuarios', `No se pudo actualizar: ${form.email}`);
+          return;
+        }
+        showToast('Usuario actualizado y sincronizado ✔');
+      }
+    } else {
+      setAllUsers([...allUsers, { ...normalizedUser, id: Date.now().toString(), password: form.password || 'pjl123', createdAt: new Date().toISOString() }]);
+      showToast('Usuario creado ✔');
+    }
     addLog(editId ? 'editar' : 'crear', 'usuarios', `User: ${form.email}`);
   };
 
@@ -1445,7 +1472,7 @@ function AdminContent() {
           </div>
         </header>
 
-        <div className="admin-content-area" style={{ position: 'relative' }}>
+        <div className="admin-content-area" style={{ position: 'relative' }} data-module={mod}>
           {/* LOGO WATERMARK BACKGROUND */}
           {branding.logoWatermark && branding.mainLogo && (
             <div style={{
@@ -3825,41 +3852,68 @@ function AdminContent() {
 
 
           {/* USUARIOS */}
-          {mod === 'usuarios' && (
+          {mod === 'usuarios' && (() => {
+            const roleMeta: Record<string, { label: string; color: string; bg: string }> = {
+              desarrollador: { label: 'Desarrollador', color: '#7c3aed', bg: 'rgba(124,58,237,0.12)' },
+              superadmin: { label: 'Super Admin', color: '#b45309', bg: 'rgba(200,151,58,0.18)' },
+              editor: { label: 'Editor', color: '#8a6516', bg: 'rgba(200,151,58,0.12)' },
+              viewer: { label: 'Visualizador', color: '#475569', bg: 'rgba(71,85,105,0.12)' },
+            };
+            const statusMeta: Record<string, { label: string; color: string; bg: string }> = {
+              activo: { label: 'Activo', color: '#166534', bg: '#dcfce7' },
+              inactivo: { label: 'Bloqueado', color: '#991b1b', bg: '#fee2e2' },
+              pendiente: { label: 'Pendiente', color: '#92400e', bg: '#fef3c7' },
+            };
+            const filteredUsers = allUsers.filter(u =>
+              u.name.toLowerCase().includes(searchTerm.toLowerCase()) || u.email.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+            return (
             <div className="animate-reveal pjl-card" style={{ padding: '40px' }}>
-              <div className="admin-section-header admin-stack-mobile" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '15px' }}>
-                <div className="admin-section-title-group" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+              <div className="admin-section-header admin-stack-mobile" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '26px', flexWrap: 'wrap', gap: '16px' }}>
+                <div className="admin-section-title-group">
                   <h3 className="serif admin-section-title" style={{ margin: 0 }}>Gestión de Acceso</h3>
+                  <p className="admin-section-desc">Creá cuentas, definí roles y habilitá módulos específicos. Los cambios se sincronizan al instante con la cuenta de cada usuario.</p>
+                </div>
+                <div className="admin-toolbar" style={{ marginBottom: 0 }}>
                   <div style={{ position: 'relative' }}>
                     <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
-                    <input 
-                      type="text" 
-                      placeholder="Buscar usuario..." 
-                      className="pjl-input" 
-                      style={{ paddingLeft: '35px', width: '250px', height: '40px' }}
+                    <input
+                      type="text"
+                      placeholder="Buscar usuario..."
+                      className="pjl-input"
+                      style={{ paddingLeft: '35px', width: '230px', height: '40px' }}
                       value={searchTerm}
                       onChange={e => setSearchTerm(e.target.value)}
                     />
                   </div>
+                  <button className="btn-premium btn-premium-gold" onClick={() => {
+                    setForm({ email: '', name: '', role: 'editor', permissions: ['dashboard'] });
+                    setModal('usuarios');
+                  }}>+ Nuevo Usuario</button>
                 </div>
-                <button className="btn-premium btn-premium-gold admin-section-action" onClick={() => {
-                  setForm({ email: '', name: '', role: 'editor', permissions: ['dashboard'] });
-                  setModal('usuarios');
-                }}>+ NUEVO USUARIO</button>
               </div>
+
               {currentUser?.role === 'desarrollador' && (
-                <div className="pjl-card admin-user-pending-card" style={{ padding: '24px', marginBottom: '24px', background: '#fdf7e8', border: '1px dashed #f3ce66' }}>
-                  <h4 className="serif" style={{ margin: '0 0 12px', color: 'var(--navy)' }}>Solicitudes pendientes</h4>
+                <div className="pjl-card admin-user-pending-card" style={{ padding: '22px 24px', marginBottom: '24px', background: 'linear-gradient(135deg, #fdf7e8, #fffdf5)', border: '1.5px dashed #e9c96a' }}>
+                  <h4 className="serif" style={{ margin: '0 0 14px', color: 'var(--navy)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    ⏳ Solicitudes pendientes
+                    {pendingProfiles.length > 0 && (
+                      <span className="user-count-pill">{pendingProfiles.length}</span>
+                    )}
+                  </h4>
                   {pendingProfiles.length === 0 ? (
-                    <p style={{ margin: 0, fontSize: '13px', color: '#555' }}>No hay cuentas pendientes de aprobación.</p>
+                    <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)' }}>No hay cuentas esperando aprobación. Todo al día ✨</p>
                   ) : (
                     <div style={{ display: 'grid', gap: '12px' }}>
-                      {pendingProfiles.map(profile => (
-                        <div key={profile.id} className="admin-user-pending-item" style={{ padding: '14px', borderRadius: '14px', background: '#fff', border: '1px solid #f1d77b' }}>
+                      {pendingProfiles.map((profile, i) => (
+                        <div key={profile.id} className="admin-user-pending-item user-rise" style={{ padding: '14px 16px', borderRadius: '14px', background: '#fff', border: '1px solid #f1d77b', animationDelay: `${i * 70}ms` }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                            <div>
-                              <strong>{profile.name}</strong> <span style={{ color: '#666', fontSize: '12px' }}>{profile.email}</span>
-                              <div style={{ fontSize: '11px', color: '#777', marginTop: '4px' }}>Registrado el {profile.created_at ? new Date(profile.created_at).toLocaleDateString() : '—'}</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+                              <div className="user-avatar">{profile.name[0]}</div>
+                              <div style={{ minWidth: 0 }}>
+                                <strong>{profile.name}</strong> <span style={{ color: '#666', fontSize: '12px' }}>{profile.email}</span>
+                                <div style={{ fontSize: '11px', color: '#777', marginTop: '4px' }}>Registrado el {profile.created_at ? new Date(profile.created_at).toLocaleDateString() : '—'}</div>
+                              </div>
                             </div>
                             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                               <button
@@ -3875,7 +3929,7 @@ function AdminContent() {
                                 style={{ padding: '8px 14px', fontSize: '11px' }}
                                 onClick={() => handleApproveProfile(profile.id)}
                               >
-                                Aprobar cuenta
+                                ✓ Aprobar cuenta
                               </button>
                             </div>
                           </div>
@@ -3885,80 +3939,68 @@ function AdminContent() {
                   )}
                 </div>
               )}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '30px' }}>
-                <div style={{ overflowX: 'auto' }}>
-                  <table className="pjl-table">
-                    <thead><tr><th>NOMBRE</th><th>EMAIL (USUARIO)</th><th>ROL</th><th>ESTADO</th><th>ÚLT. ACCESO</th><th>ACCIONES</th></tr></thead>
-                    <tbody>
-                      {allUsers.filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()) || u.email.toLowerCase().includes(searchTerm.toLowerCase())).map(u => (
-                        <tr key={u.id}>
-                          <td style={{ fontWeight: 800 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                              <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'var(--navy)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 900 }}>
-                                {u.name[0]}
-                              </div>
-                              {u.name}
-                            </div>
-                          </td>
-                          <td><code>{u.email}</code></td>
-                          <td><span className={`premium-label ${u.role === 'desarrollador' ? 'badge-active' : ''}`}>{u.role.toUpperCase()}</span></td>
-                          <td>
-                            <span style={{
-                              padding: '4px 8px',
-                              borderRadius: '4px',
-                              fontSize: '10px',
-                              fontWeight: 700,
-                              background: u.status === 'activo' ? '#dcfce7' : '#fee2e2',
-                              color: u.status === 'activo' ? '#166534' : '#991b1b'
-                            }}>
-                              {u.status?.toUpperCase() || 'ACTIVO'}
-                            </span>
-                          </td>
-                          <td style={{ fontSize: '11px', color: '#666' }}>{u.lastActive ? new Date(u.lastActive).toLocaleString() : '-'}</td>
-                          <td>
-                            <div style={{ display: 'flex', gap: '5px' }}>
-                              <button onClick={() => openEdit('usuarios', u)} className="btn-premium btn-premium-outline" style={{ padding: '5px 12px', fontSize: '0.65rem' }}>EDITAR</button>
-                              <button onClick={() => void deleteItem('users', u.id)} className="btn-premium" style={{ color: '#ef4444', padding: '5px 12px', fontSize: '0.65rem', background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.2)' }}>ELIMINAR</button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                      {allUsers.filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()) || u.email.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
-                        <tr>
-                          <td colSpan={6} style={{ padding: 0 }}>
-                            <div className="pjl-empty-state" style={{ border: 'none', background: 'transparent' }}>
-                              <div className="empty-icon">🔍</div>
-                              <h4 className="empty-title">Sin usuarios encontrados</h4>
-                              <p className="empty-desc">Ningún usuario coincide con «{searchTerm}». Verificá el nombre o el correo.</p>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+
+              <div className="users-layout" style={{ display: 'grid', gridTemplateColumns: '1fr 330px', gap: '28px', alignItems: 'start' }}>
+                {/* LISTA DE USUARIOS */}
+                <div className="users-grid">
+                  {filteredUsers.map((u, i) => {
+                    const role = roleMeta[u.role] || roleMeta.viewer;
+                    const status = statusMeta[u.status || 'activo'] || statusMeta.activo;
+                    const permCount = u.permissions?.filter(p => p !== 'dashboard').length || 0;
+                    return (
+                      <div key={u.id} className="user-card user-rise" style={{ animationDelay: `${i * 70}ms` }}>
+                        <div className="user-card-head">
+                          <div className="user-avatar is-lg">{u.name[0]}</div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <strong className="user-card-name">{u.name}</strong>
+                            <code className="user-card-email">{u.email}</code>
+                          </div>
+                          <span className="user-role-badge" style={{ color: role.color, background: role.bg }}>{role.label}</span>
+                        </div>
+                        <div className="user-card-meta">
+                          <span className="user-status-pill" style={{ color: status.color, background: status.bg }}>● {status.label}</span>
+                          <span className="user-perm-chip" title={u.permissions?.join(', ') || 'Sin módulos'}>🛡 {permCount} módulo{permCount === 1 ? '' : 's'}</span>
+                          <span className="user-last-active">🕒 {u.lastActive ? new Date(u.lastActive).toLocaleDateString() : 'Sin actividad'}</span>
+                        </div>
+                        <div className="user-card-actions">
+                          <button onClick={() => openEdit('usuarios', u)} className="btn-premium btn-premium-outline" style={{ padding: '7px 14px', fontSize: '10.5px' }}>✏️ Editar accesos</button>
+                          <button onClick={() => void deleteItem('users', u.id)} className="user-delete-btn">🗑 Eliminar</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {filteredUsers.length === 0 && (
+                    <div className="pjl-empty-state">
+                      <div className="empty-icon">🔍</div>
+                      <h4 className="empty-title">Sin usuarios encontrados</h4>
+                      <p className="empty-desc">Ningún usuario coincide con «{searchTerm}». Verificá el nombre o el correo.</p>
+                    </div>
+                  )}
                 </div>
 
                 {/* ROLE PERMISSIONS INFO */}
-                <div className="pjl-card" style={{ padding: '25px', background: 'var(--cream)', border: '1px solid var(--gold-pale)' }}>
-                  <h4 className="serif" style={{ color: 'var(--navy)', marginBottom: '15px', borderBottom: '1px solid var(--gold-pale)', paddingBottom: '10px' }}>Permisos por Rol</h4>
-                  <div style={{ display: 'grid', gap: '15px' }}>
-                    <div style={{ padding: '12px', background: '#fff', borderRadius: '10px', border: '1px solid var(--gold-pale)' }}>
-                      <p style={{ fontWeight: 800, color: 'var(--navy)', fontSize: '12px', margin: '0 0 5px' }}>SUPERADMIN</p>
-                      <p style={{ fontSize: '11px', color: '#666', margin: 0 }}>Acceso total. Puede gestionar usuarios, configuración del sistema y branding.</p>
-                    </div>
-                    <div style={{ padding: '12px', background: '#fff', borderRadius: '10px', border: '1px solid var(--gold-pale)' }}>
-                      <p style={{ fontWeight: 800, color: 'var(--gold)', fontSize: '12px', margin: '0 0 5px' }}>EDITOR</p>
-                      <p style={{ fontSize: '11px', color: '#666', margin: 0 }}>Puede crear y editar noticias, actividades, capillas y contenido general.</p>
-                    </div>
-                    <div style={{ padding: '12px', background: '#fff', borderRadius: '10px', border: '1px solid var(--gold-pale)' }}>
-                      <p style={{ fontWeight: 800, color: '#999', fontSize: '12px', margin: '0 0 5px' }}>VIEWER</p>
-                      <p style={{ fontSize: '11px', color: '#666', margin: 0 }}>Acceso de solo lectura. Puede ver estadísticas y listados sin modificar datos.</p>
-                    </div>
+                <div className="pjl-card roles-info-card">
+                  <h4 className="serif" style={{ color: 'var(--navy)', margin: '0 0 14px', borderBottom: '1px solid var(--gold-pale)', paddingBottom: '10px' }}>Permisos por Rol</h4>
+                  <div style={{ display: 'grid', gap: '12px' }}>
+                    {[
+                      { icon: '👑', title: 'SUPERADMIN', color: '#b45309', desc: 'Acceso total: usuarios, configuración del sistema y branding.' },
+                      { icon: '✏️', title: 'EDITOR', color: '#8a6516', desc: 'Crea y edita noticias, actividades, capillas y contenido general según los módulos habilitados.' },
+                      { icon: '👁️', title: 'VIEWER', color: '#64748b', desc: 'Solo lectura de estadísticas y listados, limitado a los módulos asignados.' },
+                    ].map((r, i) => (
+                      <div key={r.title} className="roles-info-item user-rise" style={{ animationDelay: `${200 + i * 80}ms` }}>
+                        <span className="roles-info-icon">{r.icon}</span>
+                        <div>
+                          <p style={{ fontWeight: 800, color: r.color, fontSize: '12px', margin: '0 0 4px' }}>{r.title}</p>
+                          <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>{r.desc}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
             </div>
-          )}
+            );
+          })()}
 
           {/* CONFIGURACIÓN */}
           {mod === 'configuracion' && (
@@ -4379,20 +4421,22 @@ function AdminContent() {
                       borderRadius: '16px', 
                       border: '1px solid var(--gold-pale)' 
                     }}>
-                      {NAV_ITEMS.filter(n => !['usuarios', 'configuracion'].includes(n.id)).map(n => {
+                      {NAV_ITEMS.filter(n => !NON_DELEGABLE_MODULES.includes(n.id as Module)).map(n => {
                         const icon = (branding[n.iconKey as keyof Branding] as string) || n.defaultIcon;
+                        const checked = (form.permissions || []).includes(n.id);
                         return (
-                        <label key={n.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', background: '#fff', padding: '10px', borderRadius: '10px', border: '1px solid #eee', transition: '0.2s' }} className="hover-lift">
-                          <input 
-                            type="checkbox" 
-                            style={{ accentColor: 'var(--gold)' }}
-                            checked={(form.permissions || []).includes(n.id)} 
+                        <label key={n.id} className={`perm-chip ${checked ? 'checked' : ''}`}>
+                          <input
+                            type="checkbox"
+                            style={{ display: 'none' }}
+                            checked={checked}
                             onChange={e => {
                               const perms = form.permissions || [];
                               if (e.target.checked) setForm({...form, permissions: [...perms, n.id]});
                               else setForm({...form, permissions: perms.filter((p: string) => p !== n.id)});
                             }}
                           />
+                          <span className="perm-chip-check">{checked ? '✓' : ''}</span>
                           <span>{icon} {n.label}</span>
                         </label>
                         );
