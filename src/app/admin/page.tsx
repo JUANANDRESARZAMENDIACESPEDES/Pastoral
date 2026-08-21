@@ -352,6 +352,7 @@ function AdminContent() {
   const [theme, setTheme] = useLS<ThemePalette>('theme', DEFAULT_THEME_PALETTE);
   const [liveHeroImages, setLiveHeroImages] = useLS<HeroSlide[]>('hero', []);
   const [heroIntervalSecs, setHeroIntervalSecs] = useLS<number>('heroInterval', 3);
+  const [editingSlideId, setEditingSlideId] = useState<string | null>(null);
   const [chapels, setChapels] = useLS<Chapel[]>('chapels', []);
   const [pageStats, setPageStats] = useLS<PageStat[]>('stats', DEFAULT_STATS);
   const [logs, setLogs] = useLS<any[]>('logs', []);
@@ -3087,36 +3088,165 @@ function AdminContent() {
           )}
 
           {/* CARRUSEL HERO */}
-          {mod === 'carrusel' && (
+          {mod === 'carrusel' && (() => {
+            const posMap: Record<string, string> = {
+              'Top': 'center top',
+              'Bottom': 'center bottom',
+              'Left': 'left center',
+              'Right': 'right center',
+            };
+            const currentSlide = liveHeroImages.find(s => s.id === editingSlideId) || liveHeroImages[0];
+            const currentIndex = currentSlide ? liveHeroImages.findIndex(s => s.id === currentSlide.id) : -1;
+            const updateSlide = (patch: Partial<HeroSlide>) => {
+              if (!currentSlide) return;
+              setLiveHeroImages(liveHeroImages.map(s => s.id === currentSlide.id ? { ...s, ...patch } : s));
+            };
+            const moveSlide = (from: number, to: number) => {
+              if (to < 0 || to >= liveHeroImages.length) return;
+              const arr = [...liveHeroImages];
+              const [item] = arr.splice(from, 1);
+              arr.splice(to, 0, item);
+              setLiveHeroImages(arr);
+            };
+            return (
             <div className="animate-reveal pjl-card" style={{ padding: '40px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                <div>
-                  <h3 className="serif" style={{ margin: 0 }}>Administrador del Carrusel Hero</h3>
-                  <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--text-muted)' }}>Las fotos, textos y segundos siguen siendo editables. El sitio ahora usa también la posición móvil y escritorio de cada slide.</p>
+              <div className="admin-section-header admin-stack-mobile" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '26px', flexWrap: 'wrap', gap: '16px' }}>
+                <div className="admin-section-title-group">
+                  <h3 className="serif admin-section-title" style={{ margin: 0 }}>Carrusel del Hero</h3>
+                  <p className="admin-section-desc">Gestioná las fotos de fondo de la página de inicio: subí imágenes, ordenalas y definí su enfoque para celular y computadora. Los textos se editan al final de esta página.</p>
                 </div>
-                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                     <label className="premium-label" style={{ fontSize: '0.65rem' }}>INTERVALO (SEG)</label>
-                    <input 
-                      type="number" 
-                      className="pjl-input" 
-                      style={{ width: '80px', padding: '8px', textAlign: 'center' }} 
-                      value={heroIntervalSecs} 
-                      onChange={e => setHeroIntervalSecs(Math.max(1, parseInt(e.target.value) || 3))} 
+                    <input
+                      type="number"
+                      className="pjl-input"
+                      style={{ width: '80px', padding: '8px', textAlign: 'center' }}
+                      value={heroIntervalSecs}
+                      onChange={e => setHeroIntervalSecs(Math.max(1, parseInt(e.target.value) || 3))}
                     />
                   </div>
                   <button className="btn-premium btn-premium-gold" onClick={() => {
-                    setLiveHeroImages([...liveHeroImages, { 
-                      id: Date.now().toString(), imageUrl: '', title: '', subtitle: '', 
-                      buttonText: '', buttonLink: '', mobilePosition: 'Centro (Default)', desktopPosition: 'Centro (Default)' 
+                    const newId = Date.now().toString();
+                    setLiveHeroImages([...liveHeroImages, {
+                      id: newId, imageUrl: '', title: '', subtitle: '',
+                      buttonText: '', buttonLink: '', mobilePosition: 'Centro (Default)', desktopPosition: 'Centro (Default)'
                     }]);
+                    setEditingSlideId(newId);
                   }}>+ AGREGAR SLIDE</button>
                 </div>
               </div>
 
+              {liveHeroImages.length === 0 ? (
+                <div className="pjl-empty-state">
+                  <div className="empty-icon">🎠</div>
+                  <h4 className="empty-title">El carrusel está vacío</h4>
+                  <p className="empty-desc">Agregá el primer slide y subí una imagen de fondo (resolución recomendada 1920×1080). Sin fotos, el sitio muestra un fondo azul de respaldo.</p>
+                  <button className="btn-premium btn-premium-gold" onClick={() => {
+                    const newId = Date.now().toString();
+                    setLiveHeroImages([{
+                      id: newId, imageUrl: '', title: '', subtitle: '',
+                      buttonText: '', buttonLink: '', mobilePosition: 'Centro (Default)', desktopPosition: 'Centro (Default)'
+                    }]);
+                    setEditingSlideId(newId);
+                  }}>+ Crear primer slide</button>
+                </div>
+              ) : (
+                <div className="carousel-admin-grid" style={{ display: 'grid', gridTemplateColumns: '290px 1fr', gap: '22px', alignItems: 'start' }}>
+
+                  {/* LISTA DE SLIDES */}
+                  <div className="carousel-slide-list" style={{ display: 'grid', gap: '10px' }}>
+                    <span className="toolbar-label" style={{ paddingLeft: '4px' }}>{liveHeroImages.length} slides · tocá uno para editar</span>
+                    {liveHeroImages.map((slide, i) => (
+                      <div
+                        key={slide.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => setEditingSlideId(slide.id)}
+                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setEditingSlideId(slide.id); }}
+                        className={`slide-thumb-row ${currentSlide?.id === slide.id ? 'selected' : ''}`}
+                      >
+                        <span className="slide-thumb-num">{i + 1}</span>
+                        <span className="slide-thumb-img">
+                          {slide.imageUrl
+                            ? <img src={slide.imageUrl} alt={`Miniatura slide ${i + 1}`} />
+                            : '🖼️'}
+                        </span>
+                        <span className="slide-thumb-meta">
+                          <strong>Slide {i + 1}</strong>
+                          <small>{slide.imageUrl ? 'Con imagen' : 'Sin imagen'}</small>
+                        </span>
+                        <span className="slide-thumb-actions" onClick={e => e.stopPropagation()}>
+                          <button title="Subir" disabled={i === 0} onClick={() => moveSlide(i, i - 1)}>↑</button>
+                          <button title="Bajar" disabled={i === liveHeroImages.length - 1} onClick={() => moveSlide(i, i + 1)}>↓</button>
+                          <button title="Eliminar" className="is-danger" onClick={() => {
+                            if (confirm(`¿Eliminar el Slide ${i + 1}?`)) {
+                              setLiveHeroImages(liveHeroImages.filter(s => s.id !== slide.id));
+                              if (editingSlideId === slide.id) setEditingSlideId(null);
+                              showToast('Slide eliminado');
+                            }
+                          }}>✕</button>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* EDITOR DEL SLIDE SELECCIONADO */}
+                  {currentSlide && (
+                    <div className="carousel-editor-panel">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+                        <h4 className="serif" style={{ margin: 0, color: 'var(--navy)', fontSize: '1.15rem' }}>
+                          Editando Slide {currentIndex + 1}
+                          {!currentSlide.imageUrl && <span style={{ fontSize: '11px', color: '#b45309', fontWeight: 700, marginLeft: '10px' }}>⚠ Falta la imagen</span>}
+                        </h4>
+                        <label className="btn-premium btn-premium-gold" style={{ cursor: 'pointer', padding: '10px 18px', whiteSpace: 'nowrap' }}>
+                          📤 Subir / Cambiar Foto
+                          <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, (url) => updateSlide({ imageUrl: url }))} />
+                        </label>
+                      </div>
+
+                      <div
+                        className="carousel-preview"
+                        style={{
+                          backgroundImage: currentSlide.imageUrl ? `url(${currentSlide.imageUrl})` : undefined,
+                          backgroundPosition: posMap[currentSlide.desktopPosition] || 'center center',
+                        }}
+                      >
+                        {!currentSlide.imageUrl && <span>Vista previa aparecerá aquí</span>}
+                      </div>
+
+                      <div style={{ marginTop: '18px', display: 'grid', gap: '15px' }}>
+                        <div>
+                          <label className="premium-label" style={{ fontSize: '0.7rem', marginBottom: '5px', display: 'block' }}>URL DE IMAGEN (1920×1080 RECOMENDADO)</label>
+                          <input type="text" className="pjl-input" placeholder="https://..." value={currentSlide.imageUrl} onChange={e => updateSlide({ imageUrl: e.target.value })} />
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }} className="carousel-pos-grid">
+                          <div>
+                            <label className="premium-label" style={{ fontSize: '0.7rem', marginBottom: '5px', display: 'block' }}>📱 ENFOQUE EN CELULAR</label>
+                            <select className="pjl-input" value={currentSlide.mobilePosition} onChange={e => updateSlide({ mobilePosition: e.target.value })}>
+                              <option>Centro (Default)</option><option>Top</option><option>Bottom</option><option>Left</option><option>Right</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="premium-label" style={{ fontSize: '0.7rem', marginBottom: '5px', display: 'block' }}>💻 ENFOQUE EN COMPUTADORA</label>
+                            <select className="pjl-input" value={currentSlide.desktopPosition} onChange={e => updateSlide({ desktopPosition: e.target.value })}>
+                              <option>Centro (Default)</option><option>Top</option><option>Bottom</option><option>Left</option><option>Right</option>
+                            </select>
+                          </div>
+                        </div>
+                        <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)' }}>
+                          💡 El enfoque controla qué parte de la foto se ve cuando la imagen se recorta. La vista previa usa el enfoque de computadora.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* GLOBAL HERO CONTENT CONFIGURATION */}
-              <div style={{ marginBottom: '30px', padding: '25px', background: 'var(--cream)', borderRadius: '18px', border: '1px solid var(--gold-pale)' }}>
-                <h4 className="serif" style={{ margin: '0 0 15px', color: 'var(--navy)', fontWeight: 800 }}>Contenido Fijo del Hero (Texto y Botones)</h4>
+              <div style={{ marginTop: '34px', paddingTop: '28px', borderTop: '2px solid var(--gold-pale)' }}>
+                <h4 className="serif" style={{ margin: '0 0 6px', color: 'var(--navy)', fontWeight: 800 }}>Textos Fijos del Hero</h4>
+                <p style={{ margin: '0 0 18px', fontSize: '12.5px', color: 'var(--text-muted)' }}>Estos textos se muestran sobre todas las fotos del carrusel.</p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                   <div>
                     <label className="premium-label" style={{ fontSize: '0.7rem', marginBottom: '5px', display: 'block' }}>ETIQUETA SUPERIOR (TAG)</label>
@@ -3140,71 +3270,9 @@ function AdminContent() {
                   </div>
                 </div>
               </div>
-
-              <div style={{ display: 'grid', gap: '20px' }}>
-                {liveHeroImages.map((slide, i) => (
-                  <div key={slide.id} className="hero-slide-admin-card" style={{ display: 'flex', gap: '20px', padding: '20px', background: 'var(--cream)', borderRadius: '15px', border: '1px solid var(--gold-pale)' }}>
-                    <div style={{ width: '150px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <div style={{ fontWeight: 700, color: 'var(--navy)', fontSize: '0.9rem' }}>Foto #{i + 1}</div>
-                      <div style={{ width: '100%', height: '100px', background: '#ddd', borderRadius: '10px', overflow: 'hidden' }}>
-                        {slide.imageUrl ? <img src={slide.imageUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Slide" /> : <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: '#999', fontSize: '0.8rem' }}>Sin Imagen</div>}
-                      </div>
-                      <div style={{ display: 'flex', gap: '5px' }}>
-                        <button disabled={i === 0} onClick={() => {
-                          const newArr = [...liveHeroImages];
-                          const temp = newArr[i];
-                          newArr[i] = newArr[i - 1];
-                          newArr[i - 1] = temp;
-                          setLiveHeroImages(newArr);
-                        }} className="btn-premium btn-premium-outline" style={{ padding: '5px', flex: 1 }}>↑</button>
-                        <button disabled={i === liveHeroImages.length - 1} onClick={() => {
-                          const newArr = [...liveHeroImages];
-                          const temp = newArr[i];
-                          newArr[i] = newArr[i + 1];
-                          newArr[i + 1] = temp;
-                          setLiveHeroImages(newArr);
-                        }} className="btn-premium btn-premium-outline" style={{ padding: '5px', flex: 1 }}>↓</button>
-                        <button onClick={() => {
-                          if(confirm('¿Seguro que desea eliminar esta foto?')) setLiveHeroImages(liveHeroImages.filter(s => s.id !== slide.id));
-                        }} className="btn-premium" style={{ padding: '5px', background: '#fee2e2', color: '#ef4444', border: '1px solid #fca5a5', flex: 1 }}>🗑️</button>
-                      </div>
-                    </div>
-                    <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                      <div style={{ gridColumn: 'span 2', display: 'flex', gap: '10px', alignItems: 'flex-end' }}>
-                        <div style={{ flex: 1 }}>
-                          <label className="premium-label" style={{ fontSize: '0.7rem', marginBottom: '5px', display: 'block' }}>URL IMAGEN (Resolución recomendada 1920x1080)</label>
-                          <input type="text" className="pjl-input" placeholder="https://" value={slide.imageUrl} onChange={e => setLiveHeroImages(liveHeroImages.map(s => s.id === slide.id ? {...s, imageUrl: e.target.value} : s))} />
-                        </div>
-                        <label className="btn-premium btn-premium-gold" style={{ cursor: 'pointer', padding: '12px 20px', whiteSpace: 'nowrap' }}>
-                          Subir Foto
-                          <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, (url) => setLiveHeroImages(liveHeroImages.map(s => s.id === slide.id ? {...s, imageUrl: url} : s)))} />
-                        </label>
-                      </div>
-                      <div>
-                        <label className="premium-label" style={{ fontSize: '0.7rem', marginBottom: '5px', display: 'block' }}>AJUSTE DE POSICIÓN IMAGEN (MÓVIL)</label>
-                        <select className="pjl-input" value={slide.mobilePosition} onChange={e => setLiveHeroImages(liveHeroImages.map(s => s.id === slide.id ? {...s, mobilePosition: e.target.value} : s))}>
-                          <option>Centro (Default)</option><option>Top</option><option>Bottom</option><option>Left</option><option>Right</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="premium-label" style={{ fontSize: '0.7rem', marginBottom: '5px', display: 'block' }}>AJUSTE DE POSICIÓN IMAGEN (ESCRITORIO)</label>
-                        <select className="pjl-input" value={slide.desktopPosition} onChange={e => setLiveHeroImages(liveHeroImages.map(s => s.id === slide.id ? {...s, desktopPosition: e.target.value} : s))}>
-                          <option>Centro (Default)</option><option>Top</option><option>Bottom</option><option>Left</option><option>Right</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {liveHeroImages.length === 0 && (
-                  <div className="pjl-empty-state" style={{ gridColumn: '1 / -1' }}>
-                    <div className="empty-icon">🎠</div>
-                    <h4 className="empty-title">El carrusel está vacío</h4>
-                    <p className="empty-desc">Subí la primera imagen del hero. Sin fotos, el sitio muestra un fondo azul de respaldo.</p>
-                  </div>
-                )}
-              </div>
             </div>
-          )}
+            );
+          })()}
 
           {/* CAPILLAS */}
           {mod === 'capillas' && (

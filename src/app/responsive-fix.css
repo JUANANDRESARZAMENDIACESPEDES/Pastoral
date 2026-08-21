@@ -93,8 +93,7 @@ th {
   .admin-dashboard-main-grid,
   .admin-dashboard-side-grid,
   .admin-dashboard-kpi-grid,
-  .admin-dashboard-summary-grid,
-  .hero-slide-admin-card
+  .admin-dashboard-summary-grid
 ) {
   min-width: 0;
   max-width: 100%;
@@ -435,7 +434,9 @@ th {
   }
 
   .drawer-backdrop {
-    z-index: 100000 !important;
+    /* Debe quedar POR DEBAJO del drawer (z-index 99998): si queda arriba,
+       el velo difuminado cubre el menú y los toques cierran en vez de elegir. */
+    z-index: 99997 !important;
   }
 
   .mobile-nav-drawer.open {
@@ -471,7 +472,6 @@ th {
 
   .admin-dashboard-card-head,
   .news-admin-card,
-  .hero-slide-admin-card,
   .territory-editor-grid > div,
   .identity-admin-grid > div,
   .identity-admin-hero-grid > div,
@@ -499,8 +499,7 @@ th {
   .territory-editor-grid,
   .identity-admin-grid,
   .identity-admin-hero-grid,
-  .docs-admin-summary-grid,
-  .hero-slide-admin-card {
+  .docs-admin-summary-grid {
     grid-template-columns: 1fr !important;
     gap: 12px !important;
   }
@@ -859,7 +858,6 @@ th {
   }
 
   /* Profile cards and overlapping admin blocks */
-  .hero-slide-admin-card,
   .news-admin-card,
   .territory-editor-grid > div,
   .identity-admin-grid > div,
@@ -886,15 +884,12 @@ th {
     overscroll-behavior-x: contain !important;
   }
 
-  .hero-slide-admin-card > div:first-child,
-  .hero-slide-admin-card > div:last-child,
   .news-admin-card > div:first-child,
   .news-admin-card > div:last-child {
     width: 100% !important;
     min-width: 0 !important;
   }
 
-  .hero-slide-admin-card img,
   .news-admin-card img,
   .territory-editor-grid img,
   .identity-admin-grid img,
