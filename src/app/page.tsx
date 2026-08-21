@@ -216,6 +216,23 @@ function HomeContent() {
     setMobileSubmenuOpen(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
+  // Navbar reactiva al scroll (compacta + sombra más profunda)
+  const [navScrolled, setNavScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setNavScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Sección activa del navbar (agrupa subpáginas con su botón padre)
+  const activeSection = (
+    {
+      estatuto: 'institucional',
+      historia: 'institucional',
+    } as Record<string, string>
+  )[currentPage] ?? currentPage;
+
   // Viewport real (evita mismatch de hidratación y reacciona a redimensionados)
   // Nota: se usa 'resize' porque MediaQueryList.addEventListener no existe
   // en Safari/iOS antiguos y su error rompe la hidratación completa.
@@ -577,68 +594,115 @@ function HomeContent() {
       </div>
 
       {/* 2. NAVBAR REFINADA */}
-      <nav className="top-nav">
+      <nav className={`top-nav ${navScrolled ? 'nav-scrolled' : ''}`}>
         <div className="container nav-content">
-          <div className="logo-area" style={{ cursor: 'pointer' }} onClick={() => navigate('home')}>
-            {branding.mainLogo ? <img src={branding.mainLogo} className="logo-img-circular site-logo-img" style={{ height: '60px', width: '60px' }} alt="Logotipo Principal PJL" /> : <div style={{ fontSize: '30px' }}>†</div>}
-            <div>
-              <h1>PJL LUQUE</h1>
+          <div
+            className="logo-area brand-lockup"
+            role="button"
+            tabIndex={0}
+            aria-label="PJL Luque — Ir al inicio"
+            onClick={() => navigate('home')}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('home'); } }}
+          >
+            <span className="brand-logo-wrap">
+              <span className="brand-logo-ring" aria-hidden="true"></span>
+              <span className="brand-logo-halo" aria-hidden="true"></span>
+              {branding.mainLogo ? (
+                <img src={branding.mainLogo} className="logo-img-circular site-logo-img brand-logo" style={{ height: '60px', width: '60px' }} alt="Logotipo Principal PJL" />
+              ) : (
+                <span className="brand-logo brand-logo-fallback">†</span>
+              )}
+            </span>
+            <span className="brand-text">
+              <h1>PJL <span className="brand-title-gold">LUQUE</span></h1>
               <p>Pastoral Juvenil Luqueña</p>
-            </div>
+            </span>
           </div>
-          <button 
-            className={`mobile-menu-toggle ${isMobileMenuOpen ? 'active' : ''}`} 
+          <button
+            className={`mobile-menu-toggle ${isMobileMenuOpen ? 'active' : ''}`}
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label="Abrir menú"
+            aria-label={isMobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+            aria-expanded={isMobileMenuOpen}
           >
             <span></span>
             <span></span>
             <span></span>
           </button>
           <ul className="nav-links">
-            <li className="nav-item">
-              <button type="button" onClick={() => navigate('home')} className="nav-btn">🏠 Inicio</button>
+            <li className={`nav-item ${activeSection === 'home' ? 'nav-item-active' : ''}`}>
+              <button type="button" onClick={() => navigate('home')} data-nav="home" aria-current={activeSection === 'home' ? 'page' : undefined} className={`nav-btn ${activeSection === 'home' ? 'is-active' : ''}`}>
+                <span className="nav-ico" aria-hidden="true">🏠</span>
+                <span className="nav-txt">Inicio</span>
+              </button>
             </li>
-            <li className="nav-item nav-item-featured">
-              <button type="button" onClick={() => navigate('institucional')} className="nav-btn">📖 Nosotros ▾</button>
+            <li className={`nav-item nav-item-featured ${activeSection === 'institucional' ? 'nav-item-active' : ''}`}>
+              <button type="button" onClick={() => navigate('institucional')} data-nav="institucional" aria-current={activeSection === 'institucional' ? 'page' : undefined} className={`nav-btn has-caret ${activeSection === 'institucional' ? 'is-active' : ''}`}>
+                <span className="nav-ico" aria-hidden="true">📖</span>
+                <span className="nav-txt">Nosotros</span>
+                <span className="nav-caret" aria-hidden="true">▾</span>
+              </button>
               <div className="dropdown-pjl dropdown-pjl-featured">
                 <button type="button" onClick={() => navigate('estatuto')} className="dropdown-link">Estatuto</button>
                 <button type="button" onClick={() => navigate('historia')} className="dropdown-link">Nuestra Historia</button>
                 <button type="button" onClick={() => navigate('institucional')} className="dropdown-link">Institucional</button>
               </div>
             </li>
-            <li className="nav-item">
-              <button type="button" onClick={() => navigate('consejo')} className="nav-btn" data-tooltip="Conoce la estructura y líderes">👥 Consejo PJL ▾</button>
+            <li className={`nav-item ${activeSection === 'consejo' ? 'nav-item-active' : ''}`}>
+              <button type="button" onClick={() => navigate('consejo')} data-nav="consejo" data-tooltip="Conoce la estructura y líderes" aria-current={activeSection === 'consejo' ? 'page' : undefined} className={`nav-btn has-caret ${activeSection === 'consejo' ? 'is-active' : ''}`}>
+                <span className="nav-ico" aria-hidden="true">👥</span>
+                <span className="nav-txt">Consejo PJL</span>
+                <span className="nav-caret" aria-hidden="true">▾</span>
+              </button>
               <div className="dropdown-pjl">
                 {councilTabs.map(t => (
                   <button key={t.id} type="button" onClick={() => { navigate('consejo'); setActiveConsejoTab(t.id); }} className="dropdown-link">{t.label}</button>
                 ))}
               </div>
             </li>
-            <li className="nav-item">
-              <button type="button" onClick={() => navigate('zonas')} className="nav-btn" data-tooltip="Explorar nuestras comunidades">🗺️ Zonas ▾</button>
+            <li className={`nav-item ${activeSection === 'zonas' ? 'nav-item-active' : ''}`}>
+              <button type="button" onClick={() => navigate('zonas')} data-nav="zonas" data-tooltip="Explorar nuestras comunidades" aria-current={activeSection === 'zonas' ? 'page' : undefined} className={`nav-btn has-caret ${activeSection === 'zonas' ? 'is-active' : ''}`}>
+                <span className="nav-ico" aria-hidden="true">🗺️</span>
+                <span className="nav-txt">Zonas</span>
+                <span className="nav-caret" aria-hidden="true">▾</span>
+              </button>
               <div className="dropdown-pjl">
                 {zonasInfo.map(z => (
                   <button key={z.id} type="button" onClick={() => { navigate('zonas'); setActiveZoneTab('capillas'); setSelectedZone(z.id); }} className="dropdown-link">{z.name ? `Zona ${z.id} – ${z.name}` : `Zona ${z.id}`}</button>
                 ))}
               </div>
             </li>
-            <li className="nav-item">
-              <button type="button" onClick={() => navigate('agenda')} className="nav-btn">📅 Agenda</button>
+            <li className={`nav-item ${activeSection === 'agenda' ? 'nav-item-active' : ''}`}>
+              <button type="button" onClick={() => navigate('agenda')} data-nav="agenda" aria-current={activeSection === 'agenda' ? 'page' : undefined} className={`nav-btn ${activeSection === 'agenda' ? 'is-active' : ''}`}>
+                <span className="nav-ico" aria-hidden="true">📅</span>
+                <span className="nav-txt">Agenda</span>
+              </button>
             </li>
-            <li className="nav-item">
-              <button type="button" onClick={() => navigate('noticias')} className="nav-btn">📰 Noticias</button>
+            <li className={`nav-item ${activeSection === 'noticias' ? 'nav-item-active' : ''}`}>
+              <button type="button" onClick={() => navigate('noticias')} data-nav="noticias" aria-current={activeSection === 'noticias' ? 'page' : undefined} className={`nav-btn ${activeSection === 'noticias' ? 'is-active' : ''}`}>
+                <span className="nav-ico" aria-hidden="true">📰</span>
+                <span className="nav-txt">Noticias</span>
+              </button>
             </li>
-            <li className="nav-item">
-              <button type="button" onClick={() => navigate('documentos')} className="nav-btn">📁 Documentos</button>
+            <li className={`nav-item ${activeSection === 'documentos' ? 'nav-item-active' : ''}`}>
+              <button type="button" onClick={() => navigate('documentos')} data-nav="documentos" aria-current={activeSection === 'documentos' ? 'page' : undefined} className={`nav-btn ${activeSection === 'documentos' ? 'is-active' : ''}`}>
+                <span className="nav-ico" aria-hidden="true">📁</span>
+                <span className="nav-txt">Documentos</span>
+              </button>
             </li>
-            <li className="nav-item">
-              <button type="button" onClick={() => navigate('contacto')} className="nav-btn">✉️ Contacto</button>
+            <li className={`nav-item ${activeSection === 'contacto' ? 'nav-item-active' : ''}`}>
+              <button type="button" onClick={() => navigate('contacto')} data-nav="contacto" aria-current={activeSection === 'contacto' ? 'page' : undefined} className={`nav-btn ${activeSection === 'contacto' ? 'is-active' : ''}`}>
+                <span className="nav-ico" aria-hidden="true">✉️</span>
+                <span className="nav-txt">Contacto</span>
+              </button>
             </li>
 
             <li className="nav-item">
-              <a href="#" className="nav-btn">🇻🇦 Vaticano ▾</a>
-              <div className="dropdown-pjl" style={{ minWidth: '220px', padding: '15px' }}>
+              <a href="#" data-nav="vaticano" className="nav-btn has-caret">
+                <span className="nav-ico" aria-hidden="true">🇻🇦</span>
+                <span className="nav-txt">Vaticano</span>
+                <span className="nav-caret" aria-hidden="true">▾</span>
+              </a>
+              <div className="dropdown-pjl dropdown-pjl-vatican" style={{ minWidth: '220px', padding: '15px' }}>
                 {/* @ts-ignore */}
                 <vaticannews-widget lang="es" fontSize="18"></vaticannews-widget>
               </div>
@@ -653,10 +717,13 @@ function HomeContent() {
       )}
       <div className={`mobile-nav-drawer ${isMobileMenuOpen ? 'open' : ''}`}>
         <div className="drawer-header">
-          <div className="logo-area" style={{ cursor: 'pointer' }} onClick={() => { navigate('home'); setIsMobileMenuOpen(false); }}>
-            {branding.mainLogo ? <img src={branding.mainLogo} className="logo-img-circular site-logo-img" style={{ height: '50px', width: '50px' }} alt="Logotipo Principal PJL" /> : <div style={{ fontSize: '24px' }}>†</div>}
+          <div className="logo-area brand-lockup" style={{ cursor: 'pointer' }} onClick={() => { navigate('home'); setIsMobileMenuOpen(false); }}>
+            <span className="brand-logo-wrap">
+              <span className="brand-logo-halo" aria-hidden="true"></span>
+              {branding.mainLogo ? <img src={branding.mainLogo} className="logo-img-circular site-logo-img brand-logo" style={{ height: '50px', width: '50px' }} alt="Logotipo Principal PJL" /> : <span className="brand-logo brand-logo-fallback" style={{ fontSize: '24px' }}>†</span>}
+            </span>
             <div>
-              <h2>PJL LUQUE</h2>
+              <h2>PJL <span className="brand-title-gold">LUQUE</span></h2>
               <p>Pastoral Juvenil</p>
             </div>
           </div>
@@ -665,13 +732,14 @@ function HomeContent() {
         <div className="drawer-body">
           <ul className="drawer-links">
             <li>
-              <Link href="/" onClick={(e) => { navigate('home', e); setIsMobileMenuOpen(false); }} className="drawer-btn">🏠 Inicio</Link>
+              <Link href="/" onClick={(e) => { navigate('home', e); setIsMobileMenuOpen(false); }} className={`drawer-btn ${activeSection === 'home' ? 'is-active' : ''}`}><span className="drawer-ico" aria-hidden="true">🏠</span><span>Inicio</span></Link>
             </li>
-            
+
             <li>
-              <button onClick={() => toggleMobileSubmenu('nosotros')} className="drawer-btn dropdown-toggle">
-                <span>📖 Nosotros</span>
-                <span>{mobileSubmenuOpen['nosotros'] ? '▴' : '▾'}</span>
+              <button onClick={() => toggleMobileSubmenu('nosotros')} className={`drawer-btn dropdown-toggle ${activeSection === 'institucional' ? 'is-active' : ''}`}>
+                <span className="drawer-ico" aria-hidden="true">📖</span>
+                <span>Nosotros</span>
+                <span className={`drawer-caret ${mobileSubmenuOpen['nosotros'] ? 'open' : ''}`}>▾</span>
               </button>
               {mobileSubmenuOpen['nosotros'] && (
                 <ul className="drawer-sublinks">
@@ -689,9 +757,10 @@ function HomeContent() {
             </li>
 
             <li>
-              <button onClick={() => toggleMobileSubmenu('consejo')} className="drawer-btn dropdown-toggle">
-                <span>👥 Consejo PJL</span>
-                <span>{mobileSubmenuOpen['consejo'] ? '▴' : '▾'}</span>
+              <button onClick={() => toggleMobileSubmenu('consejo')} className={`drawer-btn dropdown-toggle ${activeSection === 'consejo' ? 'is-active' : ''}`}>
+                <span className="drawer-ico" aria-hidden="true">👥</span>
+                <span>Consejo PJL</span>
+                <span className={`drawer-caret ${mobileSubmenuOpen['consejo'] ? 'open' : ''}`}>▾</span>
               </button>
               {mobileSubmenuOpen['consejo'] && (
                 <ul className="drawer-sublinks">
@@ -705,9 +774,10 @@ function HomeContent() {
             </li>
 
             <li>
-              <button onClick={() => toggleMobileSubmenu('zonas')} className="drawer-btn dropdown-toggle">
-                <span>🗺️ Zonas</span>
-                <span>{mobileSubmenuOpen['zonas'] ? '▴' : '▾'}</span>
+              <button onClick={() => toggleMobileSubmenu('zonas')} className={`drawer-btn dropdown-toggle ${activeSection === 'zonas' ? 'is-active' : ''}`}>
+                <span className="drawer-ico" aria-hidden="true">🗺️</span>
+                <span>Zonas</span>
+                <span className={`drawer-caret ${mobileSubmenuOpen['zonas'] ? 'open' : ''}`}>▾</span>
               </button>
               {mobileSubmenuOpen['zonas'] && (
                 <ul className="drawer-sublinks">
@@ -721,22 +791,23 @@ function HomeContent() {
             </li>
 
             <li>
-              <Link href="/?page=agenda" onClick={(e) => { navigate('agenda', e); setIsMobileMenuOpen(false); }} className="drawer-btn">📅 Agenda</Link>
+              <Link href="/?page=agenda" onClick={(e) => { navigate('agenda', e); setIsMobileMenuOpen(false); }} className={`drawer-btn ${activeSection === 'agenda' ? 'is-active' : ''}`}><span className="drawer-ico" aria-hidden="true">📅</span><span>Agenda</span></Link>
             </li>
             <li>
-              <Link href="/?page=noticias" onClick={(e) => { navigate('noticias', e); setIsMobileMenuOpen(false); }} className="drawer-btn">📰 Noticias</Link>
+              <Link href="/?page=noticias" onClick={(e) => { navigate('noticias', e); setIsMobileMenuOpen(false); }} className={`drawer-btn ${activeSection === 'noticias' ? 'is-active' : ''}`}><span className="drawer-ico" aria-hidden="true">📰</span><span>Noticias</span></Link>
             </li>
             <li>
-              <Link href="/?page=documentos" onClick={(e) => { navigate('documentos', e); setIsMobileMenuOpen(false); }} className="drawer-btn">📁 Documentos</Link>
+              <Link href="/?page=documentos" onClick={(e) => { navigate('documentos', e); setIsMobileMenuOpen(false); }} className={`drawer-btn ${activeSection === 'documentos' ? 'is-active' : ''}`}><span className="drawer-ico" aria-hidden="true">📁</span><span>Documentos</span></Link>
             </li>
             <li>
-              <Link href="/?page=contacto" onClick={(e) => { navigate('contacto', e); setIsMobileMenuOpen(false); }} className="drawer-btn">✉️ Contacto</Link>
+              <Link href="/?page=contacto" onClick={(e) => { navigate('contacto', e); setIsMobileMenuOpen(false); }} className={`drawer-btn ${activeSection === 'contacto' ? 'is-active' : ''}`}><span className="drawer-ico" aria-hidden="true">✉️</span><span>Contacto</span></Link>
             </li>
 
             <li>
               <button onClick={() => toggleMobileSubmenu('vaticano')} className="drawer-btn dropdown-toggle">
-                <span>🇻🇦 Vaticano</span>
-                <span>{mobileSubmenuOpen['vaticano'] ? '▴' : '▾'}</span>
+                <span className="drawer-ico" aria-hidden="true">🇻🇦</span>
+                <span>Vaticano</span>
+                <span className={`drawer-caret ${mobileSubmenuOpen['vaticano'] ? 'open' : ''}`}>▾</span>
               </button>
               {mobileSubmenuOpen['vaticano'] && (
                 <div className="drawer-vatican-widget" style={{ padding: '10px 15px' }}>
