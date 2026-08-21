@@ -6514,6 +6514,13 @@ textarea:focus-visible,
   letter-spacing: 0.06em;
   line-height: 1.12;
 }
+/* Cada palabra es indivisible: el título solo puede saltar de línea
+   entre palabras, nunca dentro de "LUQUEÑA". */
+.splash-word {
+  display: inline-block;
+  white-space: nowrap;
+  margin: 0 0.14em;
+}
 .splash-letter {
   display: inline-block;
   background: linear-gradient(180deg, #fdf3d7 0%, #eed49a 42%, #c8973a 78%, #a97b22 100%);

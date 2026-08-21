@@ -87,17 +87,13 @@ function SafeImg({ src, alt, style, className, fallback = '⛪', fallbackStyle }
   return <img src={src} alt={alt} style={style} className={className} loading="lazy" onError={() => setErr(true)} />;
 };
 
-/* Pantalla de carga: logo → nombre → lema, con fondo animado y barra de progreso. */
-function SplashScreen({ logo, onFinish }: { logo?: string; onFinish: () => void }) {
-  const [leaving, setLeaving] = useState(false);
-  useEffect(() => {
-    const t1 = setTimeout(() => setLeaving(true), 3200);
-    const t2 = setTimeout(onFinish, 3900);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, [onFinish]);
-  const title = 'PASTORAL JUVENIL LUQUEÑA';
+/* Pantalla de carga estática: se renderiza en el servidor y aparece ANTES
+   de que cargue JavaScript (es el primer pantallazo del sitio). */
+function SplashStatic() {
+  const words = ['PASTORAL', 'JUVENIL', 'LUQUEÑA'];
+  const offsets = [0, 8, 15];
   return (
-    <div className={`splash-screen ${leaving ? 'is-leaving' : ''}`} role="status" aria-label="Cargando Pastoral Juvenil Luqueña">
+    <div id="splash-pjl" className="splash-screen" role="status" aria-label="Cargando Pastoral Juvenil Luqueña">
       <div className="splash-bg" aria-hidden="true">
         <span className="splash-orb splash-orb-1" />
         <span className="splash-orb splash-orb-2" />
@@ -110,15 +106,15 @@ function SplashScreen({ logo, onFinish }: { logo?: string; onFinish: () => void 
         <div className="splash-logo-wrap">
           <span className="splash-ring" aria-hidden="true" />
           <span className="splash-halo" aria-hidden="true" />
-          {logo ? (
-            <img src={logo} alt="Logotipo de la Pastoral Juvenil Luqueña" className="splash-logo-img" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-          ) : (
-            <span className="splash-logo-fallback">⛪</span>
-          )}
+          <span className="splash-logo-fallback">⛪</span>
         </div>
-        <h1 className="splash-title" aria-label={title}>
-          {title.split('').map((ch, i) => (
-            <span key={i} className="splash-letter" style={{ animationDelay: `${0.75 + i * 0.045}s` }} aria-hidden="true">{ch === ' ' ? '\u00A0' : ch}</span>
+        <h1 className="splash-title" aria-label="Pastoral Juvenil Luqueña">
+          {words.map((word, w) => (
+            <span key={w} className="splash-word" aria-hidden="true">
+              {word.split('').map((ch, i) => (
+                <span key={i} className="splash-letter" style={{ animationDelay: `${0.75 + (offsets[w] + i) * 0.045}s` }}>{ch}</span>
+              ))}
+            </span>
           ))}
         </h1>
         <p className="splash-tagline">
@@ -353,6 +349,32 @@ function HomeContent() {
       document.body.style.overflow = '';
     }
   }, [splashDone, selectedProfile, selectedHistoryItem, selectedNews, isMobileMenuOpen]);
+
+  // Toma el control de la pantalla de carga estática: coloca el logo real del
+  // admin, reinicia la coreografía y la cierra con fundido al terminar.
+  useEffect(() => {
+    const splash = document.getElementById('splash-pjl');
+    if (!splash) { setSplashDone(true); return; }
+    const mainLogo = store.branding.get()?.mainLogo;
+    if (mainLogo) {
+      const fallbackNode = splash.querySelector('.splash-logo-fallback');
+      if (fallbackNode) {
+        const img = document.createElement('img');
+        img.src = mainLogo;
+        img.alt = 'Logotipo de la Pastoral Juvenil Luqueña';
+        img.className = 'splash-logo-img';
+        fallbackNode.replaceWith(img);
+      }
+    }
+    splash.querySelectorAll<HTMLElement>('.splash-letter, .splash-logo-wrap, .splash-tagline, .splash-bar, .splash-bar-fill, .splash-loading-text').forEach(el => {
+      el.style.animation = 'none';
+      void el.offsetWidth;
+      el.style.animation = '';
+    });
+    const t1 = window.setTimeout(() => splash.classList.add('is-leaving'), 3200);
+    const t2 = window.setTimeout(() => { splash.remove(); setSplashDone(true); }, 3900);
+    return () => { window.clearTimeout(t1); window.clearTimeout(t2); };
+  }, []);
 
   // --- SYNC LOGIC ---
   const syncData = () => {
@@ -604,9 +626,6 @@ function HomeContent() {
   return (
     <div className={isHighContrast ? 'high-contrast' : ''} style={{ '--font-size-base': `${fontSize}px` } as React.CSSProperties}>
       
-      {/* SPLASH SCREEN DE CARGA */}
-      {!splashDone && <SplashScreen logo={branding.mainLogo} onFinish={() => setSplashDone(true)} />}
-
       {/* FLOATING PERSISTENT LOGO */}
       {branding.mainLogo && (
         <div style={{
@@ -2806,7 +2825,7 @@ function HomeContent() {
 
 export default function Home() {
   return (
-    <Suspense fallback={<div className="admin-login-screen"><div className="loading-pjl">Cargando...</div></div>}>
+    <Suspense fallback={<SplashStatic />}>
       <HomeContent />
     </Suspense>
   );
