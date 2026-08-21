@@ -824,7 +824,7 @@ function HomeContent() {
             </section>
 
             {/* MISIÓN VISIÓN VALORES */}
-            <section className="section-pjl" style={{ background: 'var(--cream)' }} id="identidad">
+            <section className="section-pjl section-tint tint-violet" id="identidad">
               <div className="container">
                 <div className="section-head reveal" onClick={() => navigate('identidad')} style={{ cursor: 'pointer' }}>
                   <span style={{ display: 'block', marginBottom: '4px', fontSize: '12px', fontWeight: 700, letterSpacing: '2px', color: 'var(--gold)', textTransform: 'uppercase' }}>NUESTRA IDENTIDAD</span>
@@ -833,20 +833,23 @@ function HomeContent() {
                   <div className="line" style={{ margin: '0 auto' }}></div>
                 </div>
                 <div className="mvv-grid">
-                  <div className="mvv-card reveal glass-panel" style={{ animationDelay: '0.1s' }}>
+                  <div className="mvv-card reveal glass-panel click-card" style={{ animationDelay: '0.1s' }} onClick={() => navigate('identidad')}>
                     <div className="equipos-icon">🎯</div>
                     <h4>Misión</h4>
                     <p>{siteContent.mision || 'Acompañar a los jóvenes de la ciudad de Luque en su proceso de fe, formación integral y compromiso cristiano, desde los valores del Evangelio.'}</p>
+                    <span className="card-arrow">Conocer más →</span>
                   </div>
-                  <div className="mvv-card reveal glass-panel" style={{ animationDelay: '0.2s' }}>
+                  <div className="mvv-card reveal glass-panel click-card" style={{ animationDelay: '0.2s' }} onClick={() => navigate('identidad')}>
                     <div className="equipos-icon">🔭</div>
                     <h4>Visión</h4>
                     <p>{siteContent.vision || 'Ser una pastoral juvenil dinámica, inclusiva y transformadora, que forme jóvenes líderes capaces de incidir positivamente en su comunidad.'}</p>
+                    <span className="card-arrow">Conocer más →</span>
                   </div>
-                  <div className="mvv-card reveal glass-panel" style={{ animationDelay: '0.3s' }}>
+                  <div className="mvv-card reveal glass-panel click-card" style={{ animationDelay: '0.3s' }} onClick={() => navigate('identidad')}>
                     <div className="equipos-icon">💎</div>
                     <h4>Valores</h4>
                     <p>{siteContent.valores || 'Empatía, Servicio, Responsabilidad, Amor al prójimo, Respeto, Trabajo en equipo y Alegría cristiana.'}</p>
+                    <span className="card-arrow">Conocer más →</span>
                   </div>
                 </div>
               </div>
@@ -1049,7 +1052,7 @@ function HomeContent() {
 
 
             {/* EQUIPOS Y CONSEJO */}
-            <section className="section-pjl" id="equipos">
+            <section className="section-pjl section-tint tint-blue" id="equipos">
               <div className="container">
                 <div className="section-head reveal" onClick={() => navigate('equipos')} style={{ textAlign: 'center', cursor: 'pointer' }}>
                   <span style={{ display: 'block', marginBottom: '4px', fontSize: '12px', fontWeight: 700, letterSpacing: '2px', color: 'var(--gold)', textTransform: 'uppercase' }}>{siteContent.equiposTag}</span>
@@ -1058,32 +1061,32 @@ function HomeContent() {
                 </div>
                 <div className="mvv-grid">
                   {/* EFO */}
-                  <div className="mvv-card reveal" style={{ textAlign: 'center' }}>
+                  <div className="mvv-card reveal click-card" style={{ textAlign: 'center' }} onClick={() => { setActiveConsejoTab('efo'); navigate('consejo'); }}>
                     <div className="equipos-icon">🎓</div>
                     <h4>Equipo de Formación</h4>
-                    <p style={{ marginBottom: '25px', minHeight: '90px' }}>Responsable de los procesos formativos, retiros, talleres y capacitaciones para los jóvenes de la PJL.</p>
-                    <button className="btn-pjl" style={{ padding: '8px 25px', border: '1px solid var(--gold-pale)', color: 'var(--navy)', fontSize: '14px', borderRadius: '4px', fontWeight: 600 }} onClick={() => { setActiveConsejoTab('efo'); navigate('consejo'); }}>Explorar EFO</button>
+                    <p style={{ marginBottom: '18px', minHeight: '90px' }}>Responsable de los procesos formativos, retiros, talleres y capacitaciones para los jóvenes de la PJL.</p>
+                    <span className="card-arrow" style={{ justifyContent: 'center', width: '100%' }}>Explorar EFO →</span>
                   </div>
                   {/* ECO */}
-                  <div className="mvv-card reveal" style={{ textAlign: 'center', animationDelay: '0.1s' }}>
+                  <div className="mvv-card reveal click-card" style={{ textAlign: 'center', animationDelay: '0.1s' }} onClick={() => { setActiveConsejoTab('ecomu'); navigate('consejo'); }}>
                     <div className="equipos-icon">📡</div>
                     <h4>Equipo de Comunicación</h4>
-                    <p style={{ marginBottom: '25px', minHeight: '90px' }}>Gestiona las redes sociales, el boletín parroquial y toda la comunicación institucional de la PJL.</p>
-                    <button className="btn-pjl" style={{ padding: '8px 25px', border: '1px solid var(--gold-pale)', color: 'var(--navy)', fontSize: '14px', borderRadius: '4px', fontWeight: 600 }} onClick={() => { setActiveConsejoTab('ecomu'); navigate('consejo'); }}>Explorar ECOMU</button>
+                    <p style={{ marginBottom: '18px', minHeight: '90px' }}>Gestiona las redes sociales, el boletín parroquial y toda la comunicación institucional de la PJL.</p>
+                    <span className="card-arrow" style={{ justifyContent: 'center', width: '100%' }}>Explorar ECOMU →</span>
                   </div>
                   {/* CPJ */}
-                  <div className="mvv-card reveal" style={{ textAlign: 'center', animationDelay: '0.2s' }}>
+                  <div className="mvv-card reveal click-card" style={{ textAlign: 'center', animationDelay: '0.2s' }} onClick={() => { setActiveConsejoTab('coordinacion'); navigate('consejo'); }}>
                     <div className="equipos-icon">⛪</div>
                     <h4>Consejo Pastoral</h4>
-                    <p style={{ marginBottom: '25px', minHeight: '90px' }}>Órgano de gobierno y planificación estratégica de la Pastoral Juvenil Luqueña a nivel general.</p>
-                    <button className="btn-pjl" style={{ padding: '8px 25px', border: '1px solid var(--gold-pale)', color: 'var(--navy)', fontSize: '14px', borderRadius: '4px', fontWeight: 600 }} onClick={() => { setActiveConsejoTab('coordinacion'); navigate('consejo'); }}>Ver Miembros</button>
+                    <p style={{ marginBottom: '18px', minHeight: '90px' }}>Órgano de gobierno y planificación estratégica de la Pastoral Juvenil Luqueña a nivel general.</p>
+                    <span className="card-arrow" style={{ justifyContent: 'center', width: '100%' }}>Ver Miembros →</span>
                   </div>
                 </div>
               </div>
             </section>
 
             {/* GRID DE ZONAS */}
-            <section className="section-pjl" style={{ background: '#fff' }}>
+            <section className="section-pjl section-tint tint-green">
               <div className="container">
                 <div className="section-head reveal">
                   <span className="premium-label">{siteContent.zonasTag}</span>
@@ -1096,9 +1099,10 @@ function HomeContent() {
                     const total = zoneChapels.length;
                     const activos = zoneChapels.filter(c => c.estadoComunidad === 'Activo').length;
                     const nucleacion = zoneChapels.filter(c => c.estadoComunidad === 'Nucleación').length;
+                    const openZone = () => { setSelectedZone(z.id); navigate('zonas'); };
 
                     return (
-                      <div key={z.id} className="zone-card reveal" style={{ animationDelay: `${idx * 0.1}s` }}>
+                      <div key={z.id} className="zone-card reveal click-card" style={{ animationDelay: `${idx * 0.1}s` }} onClick={openZone}>
                         <div className="zone-card-header">
                           <h4>Zona {z.id}</h4>
                           {branding[`zona${z.id}Logo`] && <img src={branding[`zona${z.id}Logo`] as string} className="logo-img-circular" style={{ height: '40px', width: '40px' }} alt={`Logo zona ${z.id}`} />}
@@ -1113,7 +1117,7 @@ function HomeContent() {
                           </div>
 
                           <div style={{ marginTop: '0', marginBottom: '20px' }}>
-                            <button className="btn-premium btn-premium-gold" style={{ width: '100%', fontSize: '12px', borderRadius: '999px', padding: '14px 18px' }} onClick={() => { setSelectedZone(z.id); navigate('zonas'); }}>
+                            <button className="btn-premium btn-premium-gold" style={{ width: '100%', fontSize: '12px', borderRadius: '999px', padding: '14px 18px' }} onClick={(e) => { e.stopPropagation(); openZone(); }}>
                               VER COMUNIDADES
                             </button>
                           </div>
@@ -1126,7 +1130,7 @@ function HomeContent() {
                             ))}
                             {total > 3 && <p style={{ fontSize: '12px', color: 'var(--navy)', margin: '10px 0 0' }}>+ {total - 3} más...</p>}
                           </div>
-                          <button className="pjl-link" style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '5px', color: 'var(--gold)', border: 'none', background: 'none', cursor: 'pointer' }} onClick={() => { setSelectedZone(z.id); navigate('zonas'); }}>Explorar zona →</button>
+                          <span className="card-arrow">Explorar zona →</span>
                         </div>
                       </div>
                     );
@@ -1136,7 +1140,7 @@ function HomeContent() {
             </section>
 
             {/* NOTICIAS Y AGENDA SECTION */}
-            <section className="section-pjl" style={{ background: 'var(--cream)' }}>
+            <section className="section-pjl section-tint tint-gold">
               <div className="container agenda-split">
                 {/* Column 1: News */}
                 <div>
@@ -1223,7 +1227,7 @@ function HomeContent() {
 
         {/* ESTATUTO / OBJETIVO */}
         {currentPage === 'estatuto' && (
-          <section className="section-pjl">
+          <section className="section-pjl section-tint tint-violet">
             <div className="container">
               <div className="section-head">
                 <span className="premium-label">NORMATIVA</span>
@@ -1308,7 +1312,7 @@ function HomeContent() {
 
         {/* --- PAGE: INSTITUCIONAL --- */}
         {currentPage === 'institucional' && (
-          <section className="section-pjl">
+          <section className="section-pjl section-tint tint-gold">
              <div className="container">
                 <div className="section-head reveal">
                   <span className="premium-label">ORGANIZACIÓN</span>
@@ -1717,7 +1721,7 @@ function HomeContent() {
 
         {/* CONSEJO PJL */}
         {currentPage === 'consejo' && (
-          <section className="section-pjl">
+          <section className="section-pjl section-tint tint-blue">
             <div className="container">
               <div className="section-head reveal">
                 <span className="premium-label">EQUIPO LÍDER</span>
@@ -1847,7 +1851,7 @@ function HomeContent() {
 
         {/* INSTITUCIONAL */}
         {currentPage === 'institucional' && (
-          <section className="section-pjl" id="info-institucional">
+          <section className="section-pjl section-tint tint-green" id="info-institucional">
             <div className="container">
               <div className="section-head reveal" onClick={() => navigate('institucional')}>
                 <h3>Información Institucional</h3>
@@ -1877,7 +1881,7 @@ function HomeContent() {
 
         {/* --- PAGE: AGENDA --- */}
         {currentPage === 'agenda' && (
-          <section className="section-pjl" style={{ background: 'linear-gradient(135deg, var(--cream) 0%, #fff 100%)' }} id="agenda">
+          <section className="section-pjl section-tint tint-gold" id="agenda">
             <div className="container agenda-split">
               {/* Timeline (Left Column) */}
               <div>
@@ -1958,7 +1962,7 @@ function HomeContent() {
 
         {/* --- PAGE: NOTICIAS --- */}
         {currentPage === 'noticias' && (
-          <section className="section-pjl" style={{ background: 'var(--cream)' }} id="noticias">
+          <section className="section-pjl section-tint tint-blue" id="noticias">
             <div className="container">
               <div className="section-head reveal" onClick={() => navigate('noticias')}>
                 <span className="premium-label">COMUNIDAD</span>
@@ -2009,7 +2013,7 @@ function HomeContent() {
 
         {/* --- PAGE: DOCUMENTOS --- */}
         {currentPage === 'documentos' && (
-          <section className="section-pjl" style={{ background: 'var(--cream)' }} id="documentos-public">
+          <section className="section-pjl section-tint tint-green" id="documentos-public">
             <div className="container">
               <div className="section-head reveal" onClick={() => navigate('documentos')}>
                 <span className="premium-label">RECURSOS</span>
@@ -2205,7 +2209,7 @@ function HomeContent() {
 
         {/* --- PAGE: FAQ --- */}
         {currentPage === 'faq' && (
-          <section className="section-pjl" id="preguntas">
+          <section className="section-pjl section-tint tint-rose" id="preguntas">
             <div className="container" style={{ maxWidth: '900px' }}>
               <div className="section-head reveal" onClick={() => navigate('faq')}>
                 <span className="premium-label">AYUDA</span>
@@ -2238,7 +2242,7 @@ function HomeContent() {
 
         {/* --- PAGE: CONTACTO --- */}
         {currentPage === 'contacto' && (
-          <section className="section-pjl" style={{ background: 'var(--cream)' }} id="contacto">
+          <section className="section-pjl section-tint tint-violet" id="contacto">
             <div className="container">
               <div className="section-head reveal" onClick={() => navigate('contacto')}>
                 <span className="premium-label">CONÉCTATE</span>
