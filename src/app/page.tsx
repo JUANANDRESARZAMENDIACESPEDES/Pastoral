@@ -617,6 +617,8 @@ function HomeContent() {
               <h1>PJL <span className="brand-title-gold">LUQUE</span></h1>
               <p>Pastoral Juvenil Luqueña</p>
             </span>
+            <span className="brand-divider" aria-hidden="true"></span>
+            <span className="brand-tagline">Fe · Comunidad · Misión</span>
           </div>
           <button
             className={`mobile-menu-toggle ${isMobileMenuOpen ? 'active' : ''}`}
