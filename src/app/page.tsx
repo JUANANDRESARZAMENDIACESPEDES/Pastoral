@@ -64,6 +64,29 @@ const humanizeStatLabel = (path: string) => {
     .join(' ');
 };
 
+/* Imagen a prueba de enlaces rotos: si la URL falla o está vacía,
+   muestra un placeholder elegante en lugar del ícono de imagen rota. */
+function SafeImg({ src, alt, style, className, fallback = '⛪', fallbackStyle }: {
+  src?: string; alt: string; style?: React.CSSProperties; className?: string;
+  fallback?: string; fallbackStyle?: React.CSSProperties;
+}) {
+  const [err, setErr] = useState(false);
+  useEffect(() => { setErr(false); }, [src]);
+  if (!src || err) {
+    return (
+      <span
+        aria-label={alt}
+        role="img"
+        className={className ? `safe-img-fallback ${className}` : 'safe-img-fallback'}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', background: 'linear-gradient(135deg, #f3ede0 0%, #e9dfc8 100%)', fontSize: '28px', ...fallbackStyle }}
+      >
+        {fallback}
+      </span>
+    );
+  }
+  return <img src={src} alt={alt} style={style} className={className} loading="lazy" onError={() => setErr(true)} />;
+};
+
 const mapHeroPosition = (position?: string) => {
   switch (position) {
     case 'Top':
@@ -1178,7 +1201,7 @@ function HomeContent() {
                       <div key={z.id} className="zone-card reveal click-card" style={{ animationDelay: `${idx * 0.1}s` }} onClick={openZone}>
                         <div className="zone-card-header">
                           <h4>Zona {z.id}</h4>
-                          {branding[`zona${z.id}Logo`] && <img src={branding[`zona${z.id}Logo`] as string} className="logo-img-circular" style={{ height: '40px', width: '40px' }} alt={`Logo zona ${z.id}`} />}
+                          {branding[`zona${z.id}Logo`] && <SafeImg src={branding[`zona${z.id}Logo`] as string} className="logo-img-circular" style={{ height: '40px', width: '40px' }} alt={`Logo zona ${z.id}`} fallback="🛡️" fallbackStyle={{ fontSize: '20px' }} />}
                         </div>
                         <div className="zone-card-body">
                           <p style={{ fontFamily: 'var(--font-display)', fontWeight: 600, color: 'var(--gold)', marginBottom: '5px', fontSize: '18px' }}>{z.name}</p>
@@ -1427,7 +1450,7 @@ function HomeContent() {
                          onClick={() => { setActiveZoneTab('capillas'); setSelectedZone(z.id); }}>
                       <div className="zone-card-header">
                         <h4>Zona {z.id}</h4>
-                        {branding[`zona${z.id}Logo`] && <img src={branding[`zona${z.id}Logo`] as string} className="logo-img-circular" style={{ height: '40px', width: '40px' }} alt={`Logotipo de la Zona ${z.id}`} />}
+                        {branding[`zona${z.id}Logo`] && <SafeImg src={branding[`zona${z.id}Logo`] as string} className="logo-img-circular" style={{ height: '40px', width: '40px' }} alt={`Logotipo de la Zona ${z.id}`} fallback="🛡️" fallbackStyle={{ fontSize: '20px' }} />}
                       </div>
                       <div className="zone-card-body">
                         <p style={{ fontFamily: 'var(--font-display)', fontWeight: 600, color: 'var(--gold)', marginBottom: '5px', fontSize: '18px' }}>{z.name}</p>
@@ -1523,7 +1546,7 @@ function HomeContent() {
                       <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                         {c.logoUrl ? (
                           <div style={{ width: '50px', height: '50px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '2px solid var(--gold-pale)' }}>
-                            <img src={c.logoUrl} alt={`Escudo de la Comunidad ${c.comunidadNombre}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <SafeImg src={c.logoUrl} alt={`Escudo de la Comunidad ${c.comunidadNombre}`} fallback="⛪" fallbackStyle={{ fontSize: '22px' }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           </div>
                         ) : (
                           <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'var(--white)', border: '2px solid var(--gold-pale)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '20px' }}>
@@ -1562,7 +1585,7 @@ function HomeContent() {
                   
                   {branding[`zona${selectedZone}Logo`] && (
                     <div style={{ marginBottom: '30px', display: 'flex', justifyContent: 'center' }}>
-                      <img src={branding[`zona${selectedZone}Logo`] as string} className="logo-img-circular" style={{ height: '140px', width: '140px', border: '3px solid var(--gold)' }} alt={`Logo zona ${selectedZone}`} />
+                      <SafeImg src={branding[`zona${selectedZone}Logo`] as string} className="logo-img-circular" style={{ height: '140px', width: '140px', border: '3px solid var(--gold)' }} alt={`Logo zona ${selectedZone}`} fallback="🛡️" fallbackStyle={{ fontSize: '56px' }} />
                     </div>
                   )}
 
@@ -1589,7 +1612,7 @@ function HomeContent() {
                     {liveChapels.filter(c => c.zonaId === selectedZone).map((c, i) => (
                       <div key={c.id} className="chapel-premium-card reveal" style={{ animationDelay: `${i * 0.1}s` }}>
                         <div className="chapel-photo">
-                          <img src={c.photo || 'https://images.unsplash.com/photo-1548625361-195fe5772323?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80'} alt={`Foto de la Capilla ${c.name}`} />
+                          <SafeImg src={c.photo} alt={`Foto de la Capilla ${c.name}`} fallback="⛪" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           <span className={`chapel-status-tag ${c.estadoComunidad === 'Activo' ? 'is-active' : 'is-nucleation'}`}>
                             {c.estadoComunidad}
                           </span>
@@ -1599,7 +1622,7 @@ function HomeContent() {
                           <div className="detail-item" style={{ alignItems: 'center' }}>
                             {c.logoUrl ? (
                                <div style={{ width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1px solid var(--gold-pale)' }}>
-                                 <img src={c.logoUrl} alt={`Logo de la Comunidad ${c.comunidadNombre}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                 <SafeImg src={c.logoUrl} alt={`Logo de la Comunidad ${c.comunidadNombre}`} fallback="👥" fallbackStyle={{ fontSize: '18px' }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                </div>
                             ) : (
                                <span className="icon">👥</span>
@@ -1761,7 +1784,7 @@ function HomeContent() {
                           <tr key={c.id}>
                             <td style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                               {c.logoUrl ? (
-                                <img src={c.logoUrl} alt={`Logo de ${c.comunidadNombre}`} style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover' }} />
+                                <SafeImg src={c.logoUrl} alt={`Logo de ${c.comunidadNombre}`} fallback="⛪" fallbackStyle={{ fontSize: '16px', borderRadius: '50%' }} style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover' }} />
                               ) : (
                                 <span style={{ fontSize: '1.2rem' }}>⛪</span>
                               )}

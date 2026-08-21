@@ -75,6 +75,28 @@ const canPreviewInFrame = (doc: Partial<DocItem>) => {
   return kind === 'pdf' || kind === 'image';
 };
 
+/* Imagen a prueba de enlaces rotos: si la URL falla o está vacía,
+   muestra un placeholder elegante en lugar del ícono de imagen rota. */
+function SafeImg({ src, alt, style, fallback = '⛪', fallbackStyle }: {
+  src?: string; alt: string; style?: React.CSSProperties;
+  fallback?: string; fallbackStyle?: React.CSSProperties;
+}) {
+  const [err, setErr] = useState(false);
+  useEffect(() => { setErr(false); }, [src]);
+  if (!src || err) {
+    return (
+      <span
+        aria-label={alt}
+        role="img"
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', background: 'linear-gradient(135deg, #f3ede0 0%, #e9dfc8 100%)', fontSize: '20px', ...fallbackStyle }}
+      >
+        {fallback}
+      </span>
+    );
+  }
+  return <img src={src} alt={alt} style={style} onError={() => setErr(true)} />;
+}
+
 /* Contador animado que sube hasta el valor real */
 function CountUp({ value, duration = 1100 }: { value: number; duration?: number }) {
   const [display, setDisplay] = useState(0);
@@ -2397,7 +2419,7 @@ function AdminContent() {
                       <p className="premium-label" style={{ fontSize: '10px', marginBottom: '10px' }}>{lg.label}</p>
                       <div className="identity-mini-body">
                         <div className={`identity-mini-preview ${lg.dark ? 'is-dark' : ''}`}>
-                          {branding[lg.key] ? <img src={branding[lg.key] as string} alt={lg.label} /> : <span>🖼️</span>}
+                          <SafeImg src={branding[lg.key] as string} alt={lg.label} fallback="🖼️" fallbackStyle={{ fontSize: '22px', background: 'transparent' }} />
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '0 0 8px' }}>{lg.desc}</p>
@@ -2432,7 +2454,7 @@ function AdminContent() {
                       </div>
                       <div className="identity-zone-body">
                         <div className="identity-zone-shield">
-                          {branding[`zona${z}Logo`] ? <img src={branding[`zona${z}Logo`] as string} alt={`Escudo Zona ${z}`} /> : <span>🛡️</span>}
+                          <SafeImg src={branding[`zona${z}Logo`] as string} alt={`Escudo Zona ${z}`} fallback="🛡️" fallbackStyle={{ fontSize: '26px', background: 'transparent' }} />
                         </div>
                         <label className="btn-premium btn-premium-outline identity-zone-upload">
                           SUBIR ESCUDO
@@ -3537,7 +3559,7 @@ function AdminContent() {
                       <tr key={c.id}>
                         <td style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'var(--cream)', border: '1px solid var(--gold-pale)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>
-                            {c.logoUrl ? <img src={c.logoUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={`Logo de la Capilla ${c.name}`} /> : '⛪'}
+                            <SafeImg src={c.logoUrl} alt={`Logo de la Capilla ${c.name}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           </div>
                           <span style={{ fontWeight: 700 }}>{c.name}</span>
                         </td>
@@ -4458,7 +4480,7 @@ function AdminContent() {
                   <label className="premium-label">LOGOTIPO / ESCUDO PERSONAL</label>
                   <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
                     <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'var(--cream)', border: '2px solid var(--gold-pale)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {form.logoUrl ? <img src={form.logoUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Previsualización de Logo" /> : '⛪'}
+                      <SafeImg src={form.logoUrl} alt="Previsualización de Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                     <label className="btn-premium btn-premium-gold" style={{ padding: '8px 15px', fontSize: '10px' }}>
                       SUBIR LOGO
