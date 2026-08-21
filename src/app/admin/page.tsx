@@ -130,6 +130,104 @@ function KpiCard({ icon, label, value, sub, tone, delay, text }: {
   );
 }
 
+/* Gráfico de dona animado e interactivo */
+const DONUT_COLORS = ['#1A2744', '#C8973A', '#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EF4444', '#EC4899'];
+function DonutChart({ items }: { items: { label: string; visits: number }[] }) {
+  const [drawn, setDrawn] = useState(false);
+  const [active, setActive] = useState<number | null>(null);
+  useEffect(() => {
+    const t = setTimeout(() => setDrawn(true), 250);
+    return () => clearTimeout(t);
+  }, []);
+  const total = items.reduce((acc, s) => acc + (s.visits || 0), 0);
+  if (!items.length || total === 0) {
+    return <p style={{ color: '#bbb', textAlign: 'center', padding: '20px 0', fontSize: '13px', fontStyle: 'italic' }}>Sin datos de visitas aún</p>;
+  }
+  const r = 54, cx = 75, cy = 75, strokeW = 20;
+  const circ = 2 * Math.PI * r;
+  let cumulative = 0;
+  const segs = items.map((s, i) => {
+    const pct = (s.visits || 0) / total;
+    const start = cumulative;
+    cumulative += pct;
+    return { ...s, pct, start, color: DONUT_COLORS[i % DONUT_COLORS.length] };
+  });
+  const activeSeg = active !== null ? segs[active] : null;
+  return (
+    <div className="donut-wrap">
+      <div className="donut-svg-box">
+        <svg viewBox="0 0 150 150" width="150" height="150" role="img" aria-label="Distribución de visitas por sección">
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f0ece4" strokeWidth={strokeW} />
+          {segs.map((seg, i) => (
+            <circle
+              key={i}
+              cx={cx} cy={cy} r={r}
+              fill="none"
+              stroke={seg.color}
+              strokeWidth={active === i ? strokeW + 7 : strokeW}
+              strokeLinecap="butt"
+              strokeDasharray={`${drawn ? Math.max(seg.pct * circ - 2.5, 0) : 0} ${circ}`}
+              strokeDashoffset={-(seg.start * circ)}
+              transform={`rotate(-90 ${cx} ${cy})`}
+              onMouseEnter={() => setActive(i)}
+              onMouseLeave={() => setActive(null)}
+              style={{
+                cursor: 'pointer',
+                transition: `stroke-dasharray 1.1s cubic-bezier(0.22,1,0.36,1) ${i * 0.13}s, stroke-width 0.25s ease, opacity 0.25s ease`,
+                opacity: active === null || active === i ? 1 : 0.28,
+              }}
+            />
+          ))}
+        </svg>
+        <div className="donut-center">
+          {activeSeg ? (
+            <>
+              <div className="donut-center-pct">{Math.round(activeSeg.pct * 100)}%</div>
+              <div className="donut-center-label">{activeSeg.label}</div>
+            </>
+          ) : (
+            <>
+              <div className="donut-center-total"><CountUp value={total} /></div>
+              <div className="donut-center-label">VISITAS</div>
+            </>
+          )}
+        </div>
+      </div>
+      <div className="donut-legend">
+        {segs.map((seg, i) => (
+          <button
+            key={i}
+            className={`donut-legend-row ${active === i ? 'is-active' : ''}`}
+            onMouseEnter={() => setActive(i)}
+            onMouseLeave={() => setActive(null)}
+            onFocus={() => setActive(i)}
+            onBlur={() => setActive(null)}
+          >
+            <span className="donut-dot" style={{ background: seg.color }} />
+            <span className="donut-legend-label">{seg.label}</span>
+            <span className="donut-legend-val">{Math.round(seg.pct * 100)}%</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* Contraste WCAG entre dos colores hex */
+function hexLuminance(hex: string): number {
+  const h = (hex || '').replace('#', '');
+  if (h.length !== 6) return 0;
+  const rgb = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
+  const f = (c: number) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+  return 0.2126 * f(rgb[0]) + 0.7152 * f(rgb[1]) + 0.0722 * f(rgb[2]);
+}
+function contrastRatio(a: string, b: string): number {
+  const l1 = hexLuminance(a), l2 = hexLuminance(b);
+  return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+}
+const NAVY_POOL = ['#1A2744', '#1A3B2B', '#3B1A3A', '#441A1A', '#0F1F3D', '#2C3E50', '#23306B', '#14343B'];
+const GOLD_POOL = ['#C8973A', '#D4AF37', '#B8860B', '#DAA520', '#E6BE6A', '#A0783A', '#C9A227', '#D69E35'];
+
 function useLS<T>(key: keyof typeof store, def: T) {
   const [val, setVal] = useState<T>(def);
 
@@ -1636,51 +1734,8 @@ function AdminContent() {
                   {/* DISTRIBUTION DONUT (SVG) */}
                   <div className="admin-analytics-card pop-in" style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', flex: 1, animationDelay: '0.3s' }}>
                     <h3 style={{ margin: '0 0 16px', color: 'var(--navy)', fontSize: '15px', fontWeight: 700 }}>🥧 Distribución por Sección</h3>
-                    {(() => {
-                      const data = (Array.isArray(pageStats) ? pageStats : []).filter(s => (s?.visits || 0) > 0);
-                      const total = data.reduce((acc, s) => acc + (s?.visits || 0), 0);
-                      const colors = ['#1A2744', '#C8973A', '#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EF4444', '#EC4899'];
-                      if (total === 0) return <p style={{ color: '#bbb', textAlign: 'center', padding: '20px 0', fontSize: '13px', fontStyle: 'italic' }}>Sin datos de visitas aún</p>;
-                      let cumulative = 0;
-                      const segments = data.slice(0, 6).map((s, i) => {
-                        const pct = (s.visits || 0) / total;
-                        const start = cumulative;
-                        cumulative += pct;
-                        return { label: s.label, visits: s.visits, pct, start, color: colors[i % colors.length] };
-                      });
-                      const r = 55, cx = 70, cy = 70, strokeW = 22;
-                      const circ = 2 * Math.PI * r;
-                      return (
-                        <div className="admin-donut-layout" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                          <svg width="140" height="140" viewBox="0 0 140 140" style={{ flexShrink: 0 }}>
-                            {segments.map((seg, i) => (
-                              <circle
-                                key={i}
-                                cx={cx} cy={cy} r={r}
-                                fill="none"
-                                stroke={seg.color}
-                                strokeWidth={strokeW}
-                                strokeDasharray={`${seg.pct * circ} ${circ}`}
-                                strokeDashoffset={-seg.start * circ}
-                                transform={`rotate(-90 ${cx} ${cy})`}
-                                style={{ transition: '1s ease' }}
-                              />
-                            ))}
-                            <text x={cx} y={cy - 4} textAnchor="middle" style={{ fontSize: '18px', fontWeight: 900, fill: 'var(--navy)' }}>{total}</text>
-                            <text x={cx} y={cy + 13} textAnchor="middle" style={{ fontSize: '8px', fill: '#888', letterSpacing: 1 }}>VISITAS</text>
-                          </svg>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, minWidth: 0 }}>
-                            {segments.map((seg, i) => (
-                              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '7px', minWidth: 0 }}>
-                                <span style={{ width: '10px', height: '10px', borderRadius: '2px', background: seg.color, flexShrink: 0 }} />
-                                <span style={{ fontSize: '11px', color: 'var(--navy)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{seg.label}</span>
-                                <span style={{ fontSize: '11px', fontWeight: 700, color: '#888', flexShrink: 0 }}>{Math.round(seg.pct * 100)}%</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })()}
+                    <p style={{ margin: '-10px 0 14px', fontSize: '11px', color: '#999' }}>Pasá el mouse por la dona o la leyenda para explorar</p>
+                    <DonutChart items={(Array.isArray(pageStats) ? pageStats : []).filter(s => (s?.visits || 0) > 0).slice(0, 6).map(s => ({ label: s.label, visits: s.visits || 0 }))} />
                   </div>
 
                   {/* DISPOSITIVOS */}
@@ -1896,52 +1951,186 @@ function AdminContent() {
           )}
 
           {/* APARIENCIA */}
-          {mod === 'apariencia' && (
-            <div className="animate-reveal pjl-card" style={{ padding: '40px', maxWidth: '820px' }}>
-              <h3 className="serif" style={{ marginBottom: '8px' }}>Paleta de Colores &amp; Tiempos Litúrgicos</h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '30px' }}>
-                Elige un preset litúrgico, o personaliza los colores con el selector o ingresando el código hexadecimal.
-              </p>
+          {mod === 'apariencia' && (() => {
+            const ratio = contrastRatio(navyHex, goldHex);
+            const grade = ratio >= 7
+              ? { t: 'AAA · Excelente', c: '#059669', bg: '#d1fae5' }
+              : ratio >= 4.5
+                ? { t: 'AA · Buena', c: '#16a34a', bg: '#dcfce7' }
+                : ratio >= 3
+                  ? { t: 'Contraste aceptable', c: '#d97706', bg: '#fef3c7' }
+                  : { t: 'Contraste bajo', c: '#dc2626', bg: '#fee2e2' };
+            return (
+            <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '22px' }}>
 
-              {/* PRESETS */}
-              <div style={{ marginBottom: '36px' }}>
-                <label className="premium-label" style={{ display: 'block', marginBottom: '14px' }}>PRESETS LITÚRGICOS</label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
-                  {[
-                    { label: 'T. Ordinario',  gold: '#C8973A', navy: '#1A3B2B' },
-                    { label: 'Cuaresma/Adv.', gold: '#C8973A', navy: '#3B1A3A' },
-                    { label: 'Pascua/Nav.',   gold: '#D4AF37', navy: '#1A2744' },
-                    { label: 'Mártires/Esp.', gold: '#C8973A', navy: '#441A1A' },
-                  ].map(preset => (
-                    <button
-                      key={preset.label}
-                      className="liturgical-preset-btn"
-                      onClick={() => {
-                        applyThemeColor(preset.navy, preset.gold);
-                        setNavyHex(preset.navy);
-                        setGoldHex(preset.gold);
-                        showToast(`Temporada: ${preset.label} aplicada ✔`);
-                      }}
-                    >
-                      <div style={{ display: 'flex', gap: '6px', marginBottom: '4px' }}>
-                        <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: preset.navy, border: '2px solid rgba(0,0,0,0.1)' }} />
-                        <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: preset.gold, border: '2px solid rgba(0,0,0,0.1)' }} />
-                      </div>
-                      <span className="premium-label" style={{ fontSize: '10px' }}>{preset.label}</span>
-                    </button>
-                  ))}
+              {/* HEADER */}
+              <div className="ap-header pop-in">
+                <div>
+                  <h3 className="serif" style={{ marginBottom: '6px' }}>🎨 Apariencia del Sitio</h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}>
+                    Presets litúrgicos, colores personalizados e iconos. Cada cambio se refleja al instante en todo el panel.
+                  </p>
+                </div>
+                <div className="ap-contrast-badge" style={{ color: grade.c, background: grade.bg }} title={`Relación de contraste: ${ratio.toFixed(2)}:1`}>
+                  <span className="ap-contrast-ratio">{ratio.toFixed(1)}</span>
+                  <span>{grade.t}</span>
                 </div>
               </div>
 
-              <div style={{ borderTop: '1px solid var(--gold-pale)', margin: '0 0 30px' }} />
+              <div className="ap-grid">
 
-              {/* MANUAL COLOR PICKERS */}
-              <h4 className="serif" style={{ fontSize: '1.15rem', marginBottom: '20px' }}>Personalización Manual</h4>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '28px', marginBottom: '32px' }}>
+                {/* PRESETS LITÚRGICOS */}
+                <div className="ap-card pop-in" style={{ animationDelay: '0.08s' }}>
+                  <label className="premium-label" style={{ display: 'block', marginBottom: '14px' }}>PRESETS LITÚRGICOS</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
+                    {[
+                      { label: 'T. Ordinario',  gold: '#C8973A', navy: '#1A3B2B' },
+                      { label: 'Cuaresma/Adv.', gold: '#C8973A', navy: '#3B1A3A' },
+                      { label: 'Pascua/Nav.',   gold: '#D4AF37', navy: '#1A2744' },
+                      { label: 'Mártires/Esp.', gold: '#C8973A', navy: '#441A1A' },
+                    ].map((preset, pi) => (
+                      <button
+                        key={preset.label}
+                        className="liturgical-preset-btn ap-preset-btn pop-in"
+                        style={{ animationDelay: `${0.12 + pi * 0.06}s` }}
+                        onClick={() => {
+                          applyThemeColor(preset.navy, preset.gold);
+                          setNavyHex(preset.navy);
+                          setGoldHex(preset.gold);
+                          showToast(`Temporada: ${preset.label} aplicada ✔`);
+                        }}
+                      >
+                        <span className="ap-preset-spheres" aria-hidden="true">
+                          <i style={{ background: preset.navy }} />
+                          <i style={{ background: preset.gold }} />
+                        </span>
+                        <span className="premium-label" style={{ fontSize: '10px' }}>{preset.label}</span>
+                        <span className="ap-preset-mini" style={{ background: `linear-gradient(135deg, ${preset.navy} 62%, ${preset.gold} 62%)` }} aria-hidden="true" />
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* PALETAS GUARDADAS */}
+                  <div style={{ borderTop: '1px solid var(--gold-pale)', marginTop: '22px', paddingTop: '20px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', gap: '10px', flexWrap: 'wrap' }}>
+                      <label className="premium-label" style={{ display: 'block' }}>PALETAS GUARDADAS (MÁX. 5)</label>
+                      <button
+                        className="btn-premium btn-premium-gold"
+                        style={{ fontSize: '11px', padding: '6px 14px' }}
+                        onClick={() => {
+                          const entry = { navy: navyHex, gold: goldHex };
+                          const already = savedPalettes.some(p => p.navy === entry.navy && p.gold === entry.gold);
+                          if (already) { showToast('Esta paleta ya fue guardada'); return; }
+                          const updated = [entry, ...savedPalettes].slice(0, 5);
+                          setSavedPalettes(updated);
+                          localStorage.setItem('pjl_saved_palettes', JSON.stringify(updated));
+                          showToast('Paleta guardada ✔');
+                        }}
+                      >+ Guardar actual</button>
+                    </div>
+                    {savedPalettes.length === 0 ? (
+                      <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>No hay paletas guardadas todavía. Personalizá los colores y presioná «Guardar actual».</p>
+                    ) : (
+                      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                        {savedPalettes.map((p, i) => (
+                          <div key={i} className="ap-saved-item pop-in" style={{ animationDelay: `${0.2 + i * 0.06}s` }}>
+                            <button
+                              title={`${p.navy} / ${p.gold}`}
+                              className="ap-swatch-btn"
+                              onClick={() => { setNavyHex(p.navy); setGoldHex(p.gold); applyThemeColor(p.navy, p.gold); showToast('Paleta aplicada ✔'); }}
+                            >
+                              <i style={{ background: p.navy }} />
+                              <i style={{ background: p.gold }} />
+                            </button>
+                            <button
+                              onClick={() => { const upd = savedPalettes.filter((_, idx) => idx !== i); setSavedPalettes(upd); localStorage.setItem('pjl_saved_palettes', JSON.stringify(upd)); }}
+                              style={{ fontSize: '10px', color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                            >× Quitar</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* COLUMNA DERECHA: MOCKUP EN VIVO + ACCIONES */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+
+                  {/* VISTA PREVIA EN VIVO */}
+                  <div className="ap-card pop-in" style={{ animationDelay: '0.16s' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', gap: '8px', flexWrap: 'wrap' }}>
+                      <label className="premium-label" style={{ display: 'block' }}>VISTA PREVIA EN VIVO</label>
+                      <span style={{ fontSize: '10px', color: '#999' }}>Se actualiza al instante ✨</span>
+                    </div>
+                    <div className="ap-mockup" style={{ background: navyHex }}>
+                      <div className="ap-mockup-nav">
+                        <span className="ap-mockup-logo" style={{ background: goldHex }}>✝</span>
+                        <span className="ap-mockup-title">PJL LUQUE</span>
+                        <span className="ap-mockup-links">
+                          <i style={{ background: goldHex }} />
+                          <i style={{ background: goldHex, opacity: 0.65 }} />
+                          <i style={{ background: goldHex, opacity: 0.35 }} />
+                        </span>
+                      </div>
+                      <div className="ap-mockup-hero">
+                        <span className="ap-mockup-line" style={{ width: '68%', background: 'rgba(255,255,255,0.92)' }} />
+                        <span className="ap-mockup-line" style={{ width: '46%', background: goldHex }} />
+                        <span className="ap-mockup-line thin" style={{ width: '82%', background: 'rgba(255,255,255,0.28)' }} />
+                        <span className="ap-mockup-btn" style={{ background: goldHex, color: navyHex }}>Explorar</span>
+                      </div>
+                      <div className="ap-mockup-footer" style={{ background: goldHex }} />
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', marginTop: '14px', flexWrap: 'wrap' }}>
+                      <button className="ap-hex-chip" onClick={() => { if (navigator.clipboard) navigator.clipboard.writeText(navyHex).then(() => showToast('Hex copiado ✔')); }} title="Click para copiar">
+                        <i style={{ background: navyHex }} /> {navyHex.toUpperCase()}
+                      </button>
+                      <button className="ap-hex-chip" onClick={() => { if (navigator.clipboard) navigator.clipboard.writeText(goldHex).then(() => showToast('Hex copiado ✔')); }} title="Click para copiar">
+                        <i style={{ background: goldHex }} /> {goldHex.toUpperCase()}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* ACCIONES */}
+                  <div className="ap-card pop-in" style={{ animationDelay: '0.24s' }}>
+                    <label className="premium-label" style={{ display: 'block', marginBottom: '14px' }}>ACCIONES RÁPIDAS</label>
+                    <div style={{ display: 'grid', gap: '10px' }}>
+                      <button
+                        className="btn-premium btn-premium-gold quick-action-btn"
+                        onClick={() => {
+                          const n = NAVY_POOL[Math.floor(Math.random() * NAVY_POOL.length)];
+                          const g = GOLD_POOL[Math.floor(Math.random() * GOLD_POOL.length)];
+                          applyThemeColor(n, g);
+                          setNavyHex(n);
+                          setGoldHex(g);
+                          showToast('Paleta aleatoria generada 🎲');
+                        }}
+                      ><span className="quick-action-icon">🎲</span> Sorpréndeme: paleta aleatoria <span className="quick-action-arrow">→</span></button>
+                      <button
+                        className="btn-premium btn-premium-outline quick-action-btn"
+                        onClick={() => {
+                          const def = { gold: '#C8973A', navy: '#1A2744' };
+                          applyThemeColor(def.navy, def.gold);
+                          setNavyHex(def.navy);
+                          setGoldHex(def.gold);
+                          showToast('Colores restaurados al original ✔');
+                        }}
+                      ><span className="quick-action-icon">↺</span> Restaurar originales <span className="quick-action-arrow">→</span></button>
+                      <button className="btn-premium btn-premium-outline quick-action-btn" onClick={() => showToast('Paleta de colores guardada ✔')}>
+                        <span className="quick-action-icon">💾</span> Guardar apariencia <span className="quick-action-arrow">→</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* PERSONALIZACIÓN MANUAL */}
+              <h4 className="serif" style={{ fontSize: '1.25rem', margin: '6px 0 4px' }}>Personalización Manual</h4>
+              <p style={{ color: 'var(--text-muted)', fontSize: '12.5px', marginBottom: '18px' }}>Ajustá cada color con el selector, el código hex o la intensidad. Click en un mini-swatch para copiar el código.</p>
+              <div className="ap-grid">
 
                 {/* NAVY */}
-                <div className="form-group">
-                  <label className="premium-label" style={{ display: 'block', marginBottom: '10px' }}>Color Primario (Fondo, Footer, Encabezados)</label>
+                <div className="form-group ap-color-card pop-in" style={{ animationDelay: '0.3s' }}>
+                  <label className="premium-label" style={{ display: 'block', marginBottom: '10px' }}>🎨 Color Primario (Fondo, Footer, Encabezados)</label>
                   <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
                     <input
                       type="color"
@@ -1970,7 +2159,7 @@ function AdminContent() {
                       />
                       <div style={{ marginTop: '8px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                         {['#1A2744', '#1A3B2B', '#3B1A3A', '#441A1A', '#0F1F3D', '#2C3E50'].map(c => (
-                          <button key={c} onClick={() => { setNavyHex(c); applyThemeColor(c, goldHex); }}
+                          <button key={c} className="ap-mini-swatch" onClick={() => { setNavyHex(c); applyThemeColor(c, goldHex); if (navigator.clipboard) navigator.clipboard.writeText(c).then(() => showToast(`${c.toUpperCase()} copiado ✔`)); }}
                             style={{ width: '22px', height: '22px', borderRadius: '4px', background: c, border: navyHex === c ? '2px solid var(--gold)' : '1px solid #ccc', cursor: 'pointer' }} />
                         ))}
                       </div>
@@ -1991,8 +2180,8 @@ function AdminContent() {
                 </div>
 
                 {/* GOLD */}
-                <div className="form-group">
-                  <label className="premium-label" style={{ display: 'block', marginBottom: '10px' }}>Color Secundario (Bordes, Botones, Detalles)</label>
+                <div className="form-group ap-color-card pop-in" style={{ animationDelay: '0.38s' }}>
+                  <label className="premium-label" style={{ display: 'block', marginBottom: '10px' }}>✨ Color Secundario (Bordes, Botones, Detalles)</label>
                   <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
                     <input
                       type="color"
@@ -2021,7 +2210,7 @@ function AdminContent() {
                       />
                       <div style={{ marginTop: '8px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                         {['#C8973A', '#D4AF37', '#B8860B', '#DAA520', '#E6BE6A', '#A0783A'].map(c => (
-                          <button key={c} onClick={() => { setGoldHex(c); applyThemeColor(navyHex, c); }}
+                          <button key={c} className="ap-mini-swatch" onClick={() => { setGoldHex(c); applyThemeColor(navyHex, c); if (navigator.clipboard) navigator.clipboard.writeText(c).then(() => showToast(`${c.toUpperCase()} copiado ✔`)); }}
                             style={{ width: '22px', height: '22px', borderRadius: '4px', background: c, border: goldHex === c ? '2px solid var(--navy)' : '1px solid #ccc', cursor: 'pointer' }} />
                         ))}
                       </div>
@@ -2042,65 +2231,11 @@ function AdminContent() {
                 </div>
               </div>
 
-              {/* PREVIEW */}
-              <div style={{ background: navyHex, borderRadius: '12px', padding: '20px 28px', marginBottom: '28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ color: '#fff', fontFamily: 'var(--font-display)', fontSize: '16px' }}>Vista previa de la paleta</span>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: goldHex, border: '2px solid rgba(255,255,255,0.3)' }} />
-                  <span style={{ color: goldHex, fontWeight: 700, fontFamily: 'monospace', fontSize: '13px' }}>{goldHex.toUpperCase()}</span>
-                  <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px' }}>/</span>
-                  <span style={{ color: 'rgba(255,255,255,0.7)', fontFamily: 'monospace', fontSize: '13px' }}>{navyHex.toUpperCase()}</span>
-                </div>
-              </div>
-
-              {/* SAVED PALETTES */}
-              <div style={{ borderTop: '1px solid var(--gold-pale)', margin: '0 0 28px', paddingTop: '28px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                  <label className="premium-label" style={{ display: 'block' }}>PALETAS GUARDADAS (MÁX. 5)</label>
-                  <button
-                    className="btn-premium btn-premium-gold"
-                    style={{ fontSize: '11px', padding: '6px 14px' }}
-                    onClick={() => {
-                      const entry = { navy: navyHex, gold: goldHex };
-                      const already = savedPalettes.some(p => p.navy === entry.navy && p.gold === entry.gold);
-                      if (already) { showToast('Esta paleta ya fue guardada'); return; }
-                      const updated = [entry, ...savedPalettes].slice(0, 5);
-                      setSavedPalettes(updated);
-                      localStorage.setItem('pjl_saved_palettes', JSON.stringify(updated));
-                      showToast('Paleta guardada ✔');
-                    }}
-                  >+ Guardar actual</button>
-                </div>
-                {savedPalettes.length === 0 ? (
-                  <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>No hay paletas guardadas todavía. Personalizá los colores y presá «Guardar actual».</p>
-                ) : (
-                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                    {savedPalettes.map((p, i) => (
-                      <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                        <button
-                          title={`${p.navy} / ${p.gold}`}
-                          onClick={() => { setNavyHex(p.navy); setGoldHex(p.gold); applyThemeColor(p.navy, p.gold); showToast('Paleta aplicada ✔'); }}
-                          style={{ display: 'flex', gap: '4px', background: 'none', border: '2px solid var(--gold-pale)', borderRadius: '10px', padding: '6px 10px', cursor: 'pointer', transition: '0.2s' }}
-                          onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--gold)'}
-                          onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--gold-pale)'}
-                        >
-                          <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: p.navy, border: '1px solid rgba(0,0,0,0.1)' }} />
-                          <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: p.gold, border: '1px solid rgba(0,0,0,0.1)' }} />
-                        </button>
-                        <button
-                          onClick={() => { const upd = savedPalettes.filter((_, idx) => idx !== i); setSavedPalettes(upd); localStorage.setItem('pjl_saved_palettes', JSON.stringify(upd)); }}
-                          style={{ fontSize: '10px', color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                        >× Quitar</button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div style={{ borderTop: '1px solid var(--gold-pale)', margin: '0 0 28px', paddingTop: '28px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '14px', flexWrap: 'wrap', marginBottom: '16px' }}>
+              {/* ICONOS DEL PANEL */}
+              <div className="ap-card pop-in" style={{ animationDelay: '0.46s' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '14px', flexWrap: 'wrap', marginBottom: '18px' }}>
                   <div>
-                    <label className="premium-label" style={{ display: 'block', marginBottom: '6px' }}>ICONOS DEL PANEL ADMIN</label>
+                    <label className="premium-label" style={{ display: 'block', marginBottom: '6px' }}>🧩 ICONOS DEL PANEL ADMIN</label>
                     <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0, maxWidth: '640px' }}>
                       Cambiá el icono de cada botón del menú lateral sin afectar el frontend público.
                     </p>
@@ -2132,19 +2267,17 @@ function AdminContent() {
                     Restaurar iconos
                   </button>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
-                  {NAV_ITEMS.map(item => {
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                  {NAV_ITEMS.map((item, idx) => {
                     const currentIcon = (branding[item.iconKey as keyof Branding] as string) || item.defaultIcon;
                     return (
-                      <div key={item.id} style={{ padding: '16px', borderRadius: '16px', background: '#fff', border: '1px solid var(--gold-pale)', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+                      <div key={item.id} className="ap-icon-card pop-in" style={{ animationDelay: `${0.5 + idx * 0.035}s` }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '10px' }}>
                           <div>
                             <p className="premium-label" style={{ marginBottom: '4px' }}>{item.label}</p>
-                            <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Icono del botón del menú</p>
+                            <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Icono del menú</p>
                           </div>
-                          <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--cream)', border: '1px solid var(--gold-pale)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>
-                            {currentIcon}
-                          </div>
+                          <div className="ap-icon-preview">{currentIcon}</div>
                         </div>
                         <input
                           type="text"
@@ -2160,26 +2293,9 @@ function AdminContent() {
                   })}
                 </div>
               </div>
-
-              <div style={{ display: 'flex', gap: '14px' }}>
-                <button
-                  onClick={() => {
-                    const def = { gold: '#C8973A', navy: '#1A2744' };
-                    applyThemeColor(def.navy, def.gold);
-                    setNavyHex(def.navy);
-                    setGoldHex(def.gold);
-                    showToast('Colores restaurados al original ✔');
-                  }}
-                  className="btn-premium btn-premium-outline"
-                >
-                  Restaurar Originales
-                </button>
-                <button className="btn-premium btn-premium-gold" onClick={() => showToast('Paleta de colores guardada ✔')}>
-                  Guardar Apariencia
-                </button>
-              </div>
             </div>
-          )}
+            );
+          })()}
 
           {/* IDENTIDAD */}
           {mod === 'identidad' && (() => {
