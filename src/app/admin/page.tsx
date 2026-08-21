@@ -1700,7 +1700,11 @@ function AdminContent() {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {logs.length === 0 ? (
-                    <p style={{ textAlign: 'center', color: '#bbb', padding: '20px', fontSize: '13px', fontStyle: 'italic' }}>No hay actividad registrada aún.</p>
+                    <div className="pjl-empty-state" style={{ border: 'none', background: 'var(--cream)' }}>
+                      <div className="empty-icon">📜</div>
+                      <h4 className="empty-title">Sin actividad todavía</h4>
+                      <p className="empty-desc">Cada acción que hagas en el panel (crear, editar, eliminar) quedará registrada aquí.</p>
+                    </div>
                   ) : (
                     logs.map(log => (
                       <div key={log.id} style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 15px', background: 'var(--cream)', borderRadius: '12px', border: '1px solid var(--gold-pale)' }}>
@@ -2239,8 +2243,11 @@ function AdminContent() {
           {/* CONTENIDO REORGANIZADO */}
           {mod === 'contenido' && (
             <div className="animate-reveal pjl-card" style={{ padding: '40px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', borderBottom: '2px solid var(--gold-pale)', paddingBottom: '15px' }}>
-                <h3 className="serif">Gestión de Contenido</h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', borderBottom: '2px solid var(--gold-pale)', paddingBottom: '15px', flexWrap: 'wrap', gap: '14px' }}>
+                <div>
+                  <h3 className="serif" style={{ margin: 0 }}>Gestión de Contenido</h3>
+                  <p className="admin-section-desc">Edita todos los textos visibles del sitio: página de inicio, información institucional, misión, historia y calendario.</p>
+                </div>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   {[
                     { id: 'institucional', label: 'INSTITUCIONAL' },
@@ -2948,7 +2955,13 @@ function AdminContent() {
                   <tbody>
                     {logs.length === 0 ? (
                       <tr>
-                        <td colSpan={5} style={{ textAlign: 'center', padding: '50px', opacity: 0.5 }}>No hay actividad registrada aún.</td>
+                        <td colSpan={5} style={{ padding: 0 }}>
+                          <div className="pjl-empty-state" style={{ border: 'none', background: 'transparent' }}>
+                            <div className="empty-icon">📜</div>
+                            <h4 className="empty-title">Historial vacío</h4>
+                            <p className="empty-desc">Cuando empieces a gestionar el contenido, todas las acciones quedarán registradas en este historial.</p>
+                          </div>
+                        </td>
                       </tr>
                     ) : (
                       logs.map(log => (
@@ -2992,7 +3005,10 @@ function AdminContent() {
               {newsView === 'list' && (
                 <>
                   <div className="admin-section-header admin-stack-mobile" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                    <h3 className="serif admin-section-title">Gestión de Noticias</h3>
+                    <div className="admin-section-title-group">
+                      <h3 className="serif admin-section-title">Gestión de Noticias</h3>
+                      <p className="admin-section-desc">Redacta, publica y administra las noticias que aparecen en el sitio. También podés asociar eventos a cada noticia.</p>
+                    </div>
                     <button className="btn-premium btn-premium-gold admin-section-action" onClick={() => { setSelectedArticle(null); setNewsView('article'); }}>+ PUBLICAR NOTICIA</button>
                   </div>
                   <div className="news-admin-grid">
@@ -3179,7 +3195,13 @@ function AdminContent() {
                     </div>
                   </div>
                 ))}
-                {liveHeroImages.length === 0 && <p style={{ color: 'var(--text-muted)' }}>No hay fotos en el carrusel. Se mostrará fondo azul.</p>}
+                {liveHeroImages.length === 0 && (
+                  <div className="pjl-empty-state" style={{ gridColumn: '1 / -1' }}>
+                    <div className="empty-icon">🎠</div>
+                    <h4 className="empty-title">El carrusel está vacío</h4>
+                    <p className="empty-desc">Subí la primera imagen del hero. Sin fotos, el sitio muestra un fondo azul de respaldo.</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -3187,6 +3209,15 @@ function AdminContent() {
           {/* CAPILLAS */}
           {mod === 'capillas' && (
             <div className="animate-reveal pjl-card" style={{ padding: '40px' }}>
+              <div className="admin-section-header admin-stack-mobile" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <div className="admin-section-title-group">
+                  <h3 className="serif admin-section-title" style={{ margin: 0 }}>Territorio y Comunidades</h3>
+                  <p className="admin-section-desc">Administra las capillas, comunidades juveniles y la organización territorial de las 4 zonas pastorales.</p>
+                </div>
+                {capillasView === 'capillas' && (
+                  <button className="btn-premium btn-premium-gold admin-section-action" onClick={() => openNew('capillas')}>+ REGISTRAR CAPILLA</button>
+                )}
+              </div>
               <div style={{ display: 'flex', gap: '10px', marginBottom: '24px', flexWrap: 'wrap' }}>
                 <button
                   className={`btn-premium ${capillasView === 'capillas' ? 'btn-premium-gold' : 'btn-premium-outline'}`}
@@ -3205,19 +3236,22 @@ function AdminContent() {
               </div>
               {capillasView === 'capillas' && (
               <>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '15px' }}>
-                <h3 className="serif" style={{ margin: 0 }}>Gestión de Capillas y Comunidades</h3>
-                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                  <input
-                    type="text"
-                    className="pjl-input"
-                    placeholder="Buscar capilla o zona..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    style={{ minWidth: '250px' }}
-                  />
-                  <button className="btn-premium btn-premium-gold" onClick={() => openNew('capillas')}>+ REGISTRAR CAPILLA</button>
-                </div>
+              <div className="admin-toolbar" style={{ marginBottom: '24px' }}>
+                <span className="toolbar-label">Buscar</span>
+                <input
+                  type="text"
+                  className="pjl-input"
+                  placeholder="Nombre de capilla o número de zona..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{ minWidth: '250px', flex: 1, maxWidth: '360px', background: '#fff' }}
+                />
+                {(searchTerm) && (
+                  <button className="btn-premium btn-premium-outline" style={{ padding: '8px 14px', fontSize: '11px' }} onClick={() => setSearchTerm('')}>Limpiar</button>
+                )}
+                <span style={{ marginLeft: 'auto', fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>
+                  {chapels.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.zonaId.toString().includes(searchTerm)).length} de {chapels.length} capillas
+                </span>
               </div>
               <div style={{ overflowX: 'auto' }}>
                 <table className="pjl-table">
@@ -3249,6 +3283,29 @@ function AdminContent() {
                         </td>
                       </tr>
                     ))}
+                    {chapels.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.zonaId.toString().includes(searchTerm)).length === 0 && (
+                      <tr>
+                        <td colSpan={6} style={{ padding: 0 }}>
+                          <div className="pjl-empty-state" style={{ border: 'none', background: 'transparent' }}>
+                            <div className="empty-icon">🔍</div>
+                            <h4 className="empty-title">Sin resultados</h4>
+                            <p className="empty-desc">No hay capillas que coincidan con «{searchTerm}». Probá con otro nombre o número de zona.</p>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                    {chapels.length === 0 && (
+                      <tr>
+                        <td colSpan={6} style={{ padding: 0 }}>
+                          <div className="pjl-empty-state" style={{ border: 'none', background: 'transparent' }}>
+                            <div className="empty-icon">⛪</div>
+                            <h4 className="empty-title">Todavía no hay capillas registradas</h4>
+                            <p className="empty-desc">Registrá la primera capilla para empezar a armar el mapa territorial de la pastoral.</p>
+                            <button className="btn-premium btn-premium-gold" onClick={() => openNew('capillas')}>+ Registrar primera capilla</button>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -3383,13 +3440,33 @@ function AdminContent() {
                             <button onClick={() => deleteItem('activities', a.id)} className="btn-premium" style={{ color: '#EF4444', padding: '6px 12px', fontSize: '10px', border: '1px solid #EF4444' }}>BORRAR</button>
                           </div>
                         </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+                       </tr>
+                     ))}
+                     {activities.filter(a => (a.title || '').toLowerCase().includes(searchTerm.toLowerCase()) || (a.category || '').toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
+                       <tr>
+                         <td colSpan={5} style={{ padding: 0 }}>
+                           <div className="pjl-empty-state" style={{ border: 'none', background: 'transparent' }}>
+                             <div className="empty-icon">🗓️</div>
+                             <h4 className="empty-title">
+                               {activities.length === 0 ? 'La agenda está vacía' : 'Sin resultados'}
+                             </h4>
+                             <p className="empty-desc">
+                               {activities.length === 0
+                                 ? 'Creá la primera actividad para que aparezca en la agenda pública y en Google Calendar.'
+                                 : `Ninguna actividad coincide con «${searchTerm}». Probá con otro término.`}
+                             </p>
+                             {activities.length === 0 && (
+                               <button className="btn-premium btn-premium-gold" onClick={() => openNew('actividades')}>+ Agregar actividad</button>
+                             )}
+                           </div>
+                         </td>
+                       </tr>
+                     )}
+                   </tbody>
+                 </table>
+               </div>
+             </div>
+           )}
 
           {/* DOCUMENTOS */}
           {mod === 'documentos' && (
@@ -3484,12 +3561,20 @@ function AdminContent() {
                           </button>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+                     </div>
+                   );
+                 })}
+                 {docs.length === 0 && (
+                   <div className="pjl-empty-state" style={{ gridColumn: '1 / -1' }}>
+                     <div className="empty-icon">📚</div>
+                     <h4 className="empty-title">La biblioteca está vacía</h4>
+                     <p className="empty-desc">Registrá el primer archivo para que quede disponible en el centro de descargas del sitio público.</p>
+                     <button className="btn-premium btn-premium-gold" onClick={() => openNew('documentos')}>+ Registrar archivo</button>
+                   </div>
+                 )}
+               </div>
+             </div>
+           )}
 
           {/* PERFILES */}
           {mod === 'perfiles' && (
@@ -3581,12 +3666,19 @@ function AdminContent() {
                           </span>
                         )}
                       </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+                     </div>
+                   </div>
+                 ))}
+                 {profiles.filter(p => p.teamKey === activeProfileTeam).length === 0 && (
+                   <div className="pjl-empty-state" style={{ gridColumn: '1 / -1' }}>
+                     <div className="empty-icon">👤</div>
+                     <h4 className="empty-title">Sin miembros en este equipo</h4>
+                     <p className="empty-desc">Usá el botón «+ Agregar Miembro» para cargar al primer integrante. Aparecerá automáticamente en la sección Consejo del sitio.</p>
+                   </div>
+                 )}
+               </div>
+             </div>
+           )}
 
           {/* USUARIOS */}
           {mod === 'usuarios' && (
@@ -3667,10 +3759,10 @@ function AdminContent() {
                           <td><code>{u.email}</code></td>
                           <td><span className={`premium-label ${u.role === 'desarrollador' ? 'badge-active' : ''}`}>{u.role.toUpperCase()}</span></td>
                           <td>
-                            <span style={{ 
-                              padding: '4px 8px', 
-                              borderRadius: '4px', 
-                              fontSize: '10px', 
+                            <span style={{
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              fontSize: '10px',
                               fontWeight: 700,
                               background: u.status === 'activo' ? '#dcfce7' : '#fee2e2',
                               color: u.status === 'activo' ? '#166534' : '#991b1b'
@@ -3687,6 +3779,17 @@ function AdminContent() {
                           </td>
                         </tr>
                       ))}
+                      {allUsers.filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()) || u.email.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
+                        <tr>
+                          <td colSpan={6} style={{ padding: 0 }}>
+                            <div className="pjl-empty-state" style={{ border: 'none', background: 'transparent' }}>
+                              <div className="empty-icon">🔍</div>
+                              <h4 className="empty-title">Sin usuarios encontrados</h4>
+                              <p className="empty-desc">Ningún usuario coincide con «{searchTerm}». Verificá el nombre o el correo.</p>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -3715,7 +3818,14 @@ function AdminContent() {
 
           {/* CONFIGURACIÓN */}
           {mod === 'configuracion' && (
-            <div className="animate-reveal" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
+            <div className="animate-reveal">
+              <div className="admin-section-header" style={{ marginBottom: '24px' }}>
+                <div className="admin-section-title-group">
+                  <h3 className="serif admin-section-title" style={{ margin: 0 }}>Configuración General</h3>
+                  <p className="admin-section-desc">Redes sociales, integraciones externas y herramientas de mantenimiento del sitio.</p>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
               
               {/* COL 1: REDES Y MANTENIMIENTO */}
               <div style={{ display: 'grid', gap: '30px' }}>
@@ -3857,6 +3967,7 @@ function AdminContent() {
                     <button className="btn-premium btn-premium-gold" onClick={() => showToast('Datos SEO guardados ✔')}>GUARDAR SEO</button>
                   </div>
                 </div>
+              </div>
               </div>
 
             </div>

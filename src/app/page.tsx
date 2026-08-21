@@ -829,14 +829,17 @@ function HomeContent() {
                 </div>
                 <div className="mvv-grid">
                   <div className="mvv-card reveal glass-panel" style={{ animationDelay: '0.1s' }}>
+                    <div className="equipos-icon">🎯</div>
                     <h4>Misión</h4>
                     <p>{siteContent.mision || 'Acompañar a los jóvenes de la ciudad de Luque en su proceso de fe, formación integral y compromiso cristiano, desde los valores del Evangelio.'}</p>
                   </div>
                   <div className="mvv-card reveal glass-panel" style={{ animationDelay: '0.2s' }}>
+                    <div className="equipos-icon">🔭</div>
                     <h4>Visión</h4>
                     <p>{siteContent.vision || 'Ser una pastoral juvenil dinámica, inclusiva y transformadora, que forme jóvenes líderes capaces de incidir positivamente en su comunidad.'}</p>
                   </div>
                   <div className="mvv-card reveal glass-panel" style={{ animationDelay: '0.3s' }}>
+                    <div className="equipos-icon">💎</div>
                     <h4>Valores</h4>
                     <p>{siteContent.valores || 'Empatía, Servicio, Responsabilidad, Amor al prójimo, Respeto, Trabajo en equipo y Alegría cristiana.'}</p>
                   </div>
@@ -1051,18 +1054,21 @@ function HomeContent() {
                 <div className="mvv-grid">
                   {/* EFO */}
                   <div className="mvv-card reveal" style={{ textAlign: 'center' }}>
+                    <div className="equipos-icon">🎓</div>
                     <h4>Equipo de Formación</h4>
                     <p style={{ marginBottom: '25px', minHeight: '90px' }}>Responsable de los procesos formativos, retiros, talleres y capacitaciones para los jóvenes de la PJL.</p>
                     <button className="btn-pjl" style={{ padding: '8px 25px', border: '1px solid var(--gold-pale)', color: 'var(--navy)', fontSize: '14px', borderRadius: '4px', fontWeight: 600 }} onClick={() => { setActiveConsejoTab('efo'); navigate('consejo'); }}>Explorar EFO</button>
                   </div>
                   {/* ECO */}
                   <div className="mvv-card reveal" style={{ textAlign: 'center', animationDelay: '0.1s' }}>
+                    <div className="equipos-icon">📡</div>
                     <h4>Equipo de Comunicación</h4>
                     <p style={{ marginBottom: '25px', minHeight: '90px' }}>Gestiona las redes sociales, el boletín parroquial y toda la comunicación institucional de la PJL.</p>
                     <button className="btn-pjl" style={{ padding: '8px 25px', border: '1px solid var(--gold-pale)', color: 'var(--navy)', fontSize: '14px', borderRadius: '4px', fontWeight: 600 }} onClick={() => { setActiveConsejoTab('ecomu'); navigate('consejo'); }}>Explorar ECOMU</button>
                   </div>
                   {/* CPJ */}
                   <div className="mvv-card reveal" style={{ textAlign: 'center', animationDelay: '0.2s' }}>
+                    <div className="equipos-icon">⛪</div>
                     <h4>Consejo Pastoral</h4>
                     <p style={{ marginBottom: '25px', minHeight: '90px' }}>Órgano de gobierno y planificación estratégica de la Pastoral Juvenil Luqueña a nivel general.</p>
                     <button className="btn-pjl" style={{ padding: '8px 25px', border: '1px solid var(--gold-pale)', color: 'var(--navy)', fontSize: '14px', borderRadius: '4px', fontWeight: 600 }} onClick={() => { setActiveConsejoTab('coordinacion'); navigate('consejo'); }}>Ver Miembros</button>
@@ -1154,7 +1160,13 @@ function HomeContent() {
                         <Link href="/" onClick={(e) => { e.stopPropagation(); navigate('noticias', e); }}>Leer artículo completo <span style={{ fontSize: '16px' }}>➞</span></Link>
                       </div>
                     ))}
-                    {liveNews.length === 0 && <p style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No hay noticias publicadas aún.</p>}
+                    {liveNews.length === 0 && (
+                      <div className="pjl-empty-state">
+                        <div className="empty-icon">📰</div>
+                        <h4 className="empty-title">Aún no hay noticias publicadas</h4>
+                        <p className="empty-desc">Las novedades de la comunidad aparecerán aquí. Podés explorar la agenda mientras tanto.</p>
+                      </div>
+                    )}
                   </div>
                   <div style={{ marginTop: '30px' }}>
                     <button className="btn-pjl" style={{ padding: '12px 30px', border: '1px solid var(--navy)', color: 'var(--navy)', background: 'transparent', fontWeight: 600, display: 'inline-block' }} onClick={() => navigate('noticias')}>+ Ver Todas las Noticias</button>
@@ -1184,7 +1196,13 @@ function HomeContent() {
                         </div>
                       );
                     })}
-                    {liveActivities.length === 0 && <p style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No hay eventos próximos agendados.</p>}
+                    {liveActivities.length === 0 && (
+                      <div className="pjl-empty-state">
+                        <div className="empty-icon">🗓️</div>
+                        <h4 className="empty-title">Agenda en preparación</h4>
+                        <p className="empty-desc">Todavía no hay eventos próximos. Muy pronto vamos a anunciar nuevas actividades.</p>
+                      </div>
+                    )}
                   </div>
 
                   <div style={{ marginTop: '40px' }}>
@@ -1272,10 +1290,10 @@ function HomeContent() {
                     </div>
                   ))
                 ) : (
-                  <div style={{ textAlign: 'center', padding: '80px 0' }}>
-                    <div style={{ fontSize: '60px', marginBottom: '20px' }}>📜</div>
-                    <p style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '18px' }}>Nuestra historia se está escribiendo en el corazón de los jóvenes...</p>
-                    <p style={{ fontSize: '14px', marginTop: '10px' }}>El administrador puede añadir eventos históricos desde el Panel Admin.</p>
+                  <div className="pjl-empty-state" style={{ maxWidth: '560px', margin: '0 auto' }}>
+                    <div className="empty-icon">📜</div>
+                    <h4 className="empty-title">Nuestra historia se está escribiendo</h4>
+                    <p className="empty-desc">Muy pronto vas a conocer los hitos que marcaron el camino de la Pastoral Juvenil Luqueña, año por año.</p>
                   </div>
                 )}
               </div>
@@ -1439,7 +1457,12 @@ function HomeContent() {
                   ))}
                 </div>
                 {liveChapels.filter(c => c.comunidadNombre && (globalCommFilter === 'all' || c.zonaId == globalCommFilter)).length === 0 && (
-                  <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px', fontStyle: 'italic' }}>No se encontraron comunidades con los criterios seleccionados.</p>
+                  <div className="pjl-empty-state">
+                    <div className="empty-icon">⛪</div>
+                    <h4 className="empty-title">No hay comunidades en esta vista</h4>
+                    <p className="empty-desc">Probá con otra zona o mirá el mapa territorial para explorar todo el territorio pastoral.</p>
+                    <button className="btn-premium btn-premium-gold" onClick={() => setGlobalCommFilter('all')}>Ver todas las zonas</button>
+                  </div>
                 )}
               </div>
             </div>
@@ -1522,7 +1545,11 @@ function HomeContent() {
                       </div>
                     ))}
                     {liveChapels.filter(c => c.zonaId === selectedZone).length === 0 && (
-                      <p style={{ textAlign: 'center', gridColumn: 'span 3', color: 'var(--text-muted)', padding: '40px', fontStyle: 'italic' }}>No hay capillas registradas en esta zona.</p>
+                      <div className="pjl-empty-state" style={{ gridColumn: '1 / -1' }}>
+                        <div className="empty-icon">⛪</div>
+                        <h4 className="empty-title">Capillas en actualización</h4>
+                        <p className="empty-desc">Todavía no hay capillas registradas en esta zona. Volvé a visitarla pronto.</p>
+                      </div>
                     )}
                   </div>
                 )}
@@ -1554,7 +1581,11 @@ function HomeContent() {
                       </div>
                     ))}
                     {liveProfiles.filter(p => p.teamKey === `zona${selectedZone}`).length === 0 && (
-                       <p style={{ textAlign: 'center', gridColumn: 'span 3', color: 'var(--text-muted)', padding: '40px', fontStyle: 'italic' }}>No hay coordinadores registrados en esta zona.</p>
+                      <div className="pjl-empty-state" style={{ gridColumn: '1 / -1' }}>
+                        <div className="empty-icon">👥</div>
+                        <h4 className="empty-title">Coordinadores en actualización</h4>
+                        <p className="empty-desc">El equipo de coordinación de esta zona se estará publicando próximamente.</p>
+                      </div>
                     )}
                   </div>
                 )}
@@ -1615,7 +1646,11 @@ function HomeContent() {
                       </div>
                     ))}
                     {liveChapels.filter(c => c.zonaId === selectedZone && c.comunidadNombre).length === 0 && (
-                      <p style={{ textAlign: 'center', gridColumn: 'span 3', color: 'var(--text-muted)', padding: '40px', fontStyle: 'italic' }}>No hay comunidades registradas con nombre en esta zona.</p>
+                      <div className="pjl-empty-state" style={{ gridColumn: '1 / -1' }}>
+                        <div className="empty-icon">✨</div>
+                        <h4 className="empty-title">Comunidades en actualización</h4>
+                        <p className="empty-desc">Aún no hay comunidades juveniles con nombre registradas en esta zona.</p>
+                      </div>
                     )}
                   </div>
                 )}
@@ -1749,6 +1784,13 @@ function HomeContent() {
                         </div>
                       );
                     })}
+                    {!liveProfiles.some(p => ['zona1','zona2','zona3','zona4','coordinacion','efo','ecomu','eli','mmpjl'].includes(p.teamKey || '')) && (
+                      <div className="pjl-empty-state" style={{ gridColumn: '1 / -1' }}>
+                        <div className="empty-icon">🤝</div>
+                        <h4 className="empty-title">Representantes en actualización</h4>
+                        <p className="empty-desc">Los coordinadores zonales y de equipo se estarán publicando próximamente.</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -1785,6 +1827,13 @@ function HomeContent() {
                       </div>
                     </div>
                   ))}
+                  {liveProfiles.filter(p => p.teamKey === activeConsejoTab).length === 0 && (
+                    <div className="pjl-empty-state" style={{ gridColumn: '1 / -1' }}>
+                      <div className="empty-icon">👥</div>
+                      <h4 className="empty-title">Integrantes en actualización</h4>
+                      <p className="empty-desc">Estamos preparando la información de este equipo. Muy pronto vas a conocer a sus miembros.</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1860,7 +1909,13 @@ function HomeContent() {
                         </div>
                       </div>
                     );
-                  }) : <p style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No hay actividades programadas por el momento.</p>}
+                  }) : (
+                    <div className="pjl-empty-state">
+                      <div className="empty-icon">🗓️</div>
+                      <h4 className="empty-title">Agenda en preparación</h4>
+                      <p className="empty-desc">No hay actividades programadas por el momento. Podés sincronizar la agenda con Google Calendar para no perderte nada.</p>
+                    </div>
+                  )}
                 </div>
               </div>
               
@@ -1935,6 +1990,13 @@ function HomeContent() {
                     <button className="btn-premium btn-premium-outline" style={{ marginTop: '20px', padding: '8px 15px', fontSize: '0.7rem' }}>LEER NOTICIA COMPLETA</button>
                   </div>
                 ))}
+                {liveNews.length === 0 && (
+                  <div className="pjl-empty-state" style={{ gridColumn: '1 / -1' }}>
+                    <div className="empty-icon">📰</div>
+                    <h4 className="empty-title">El boletín está en preparación</h4>
+                    <p className="empty-desc">Todavía no hay noticias publicadas. Mientras tanto, podés visitar la agenda o seguirnos en nuestras redes sociales.</p>
+                  </div>
+                )}
               </div>
             </div>
           </section>
@@ -2107,12 +2169,31 @@ function HomeContent() {
                   })}
               </div>
 
-              {liveDocs.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '80px 0' }}>
-                  <div style={{ fontSize: '50px', marginBottom: '15px' }}>📁</div>
-                  <p style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No hay documentos disponibles en este momento.</p>
-                </div>
-              )}
+              {(() => {
+                const visibleDocs = liveDocs.filter(d => {
+                  const matchQuery = d.name.toLowerCase().includes(docSearch.toLowerCase()) || (d.description || '').toLowerCase().includes(docSearch.toLowerCase());
+                  const matchCat = docCategory === 'all' || d.category === docCategory;
+                  return matchQuery && matchCat;
+                });
+                if (visibleDocs.length > 0) return null;
+                if (liveDocs.length === 0) {
+                  return (
+                    <div className="pjl-empty-state" style={{ marginTop: '10px' }}>
+                      <div className="empty-icon">📁</div>
+                      <h4 className="empty-title">Biblioteca en preparación</h4>
+                      <p className="empty-desc">Los estatutos, materiales formativos y documentos institucionales estarán disponibles aquí muy pronto.</p>
+                    </div>
+                  );
+                }
+                return (
+                  <div className="pjl-empty-state" style={{ marginTop: '10px' }}>
+                    <div className="empty-icon">🔍</div>
+                    <h4 className="empty-title">Sin resultados</h4>
+                    <p className="empty-desc">No encontramos documentos que coincidan con tu búsqueda. Probá con otro término o cambiá la categoría.</p>
+                    <button className="btn-premium btn-premium-gold" onClick={() => { setDocSearch(''); setDocCategory('all'); }}>Limpiar filtros</button>
+                  </div>
+                );
+              })()}
             </div>
           </section>
         )}
@@ -2138,6 +2219,13 @@ function HomeContent() {
                     </div>
                   </div>
                 ))}
+                {liveFaq.length === 0 && (
+                  <div className="pjl-empty-state">
+                    <div className="empty-icon">💬</div>
+                    <h4 className="empty-title">Todavía no hay preguntas cargadas</h4>
+                    <p className="empty-desc">Si tenés alguna consulta, escribinos por nuestras redes o desde la sección de contacto.</p>
+                  </div>
+                )}
               </div>
             </div>
           </section>
