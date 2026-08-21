@@ -87,6 +87,56 @@ function SafeImg({ src, alt, style, className, fallback = '⛪', fallbackStyle }
   return <img src={src} alt={alt} style={style} className={className} loading="lazy" onError={() => setErr(true)} />;
 };
 
+/* Pantalla de carga: logo → nombre → lema, con fondo animado y barra de progreso. */
+function SplashScreen({ logo, onFinish }: { logo?: string; onFinish: () => void }) {
+  const [leaving, setLeaving] = useState(false);
+  useEffect(() => {
+    const t1 = setTimeout(() => setLeaving(true), 3200);
+    const t2 = setTimeout(onFinish, 3900);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [onFinish]);
+  const title = 'PASTORAL JUVENIL LUQUEÑA';
+  return (
+    <div className={`splash-screen ${leaving ? 'is-leaving' : ''}`} role="status" aria-label="Cargando Pastoral Juvenil Luqueña">
+      <div className="splash-bg" aria-hidden="true">
+        <span className="splash-orb splash-orb-1" />
+        <span className="splash-orb splash-orb-2" />
+        <span className="splash-orb splash-orb-3" />
+        {Array.from({ length: 14 }).map((_, i) => (
+          <span key={i} className="splash-ember" style={{ left: `${(i * 7.3 + 4) % 96}%`, animationDelay: `${(i * 0.37) % 3.2}s`, animationDuration: `${3.4 + (i % 5) * 0.55}s` }} />
+        ))}
+      </div>
+      <div className="splash-content">
+        <div className="splash-logo-wrap">
+          <span className="splash-ring" aria-hidden="true" />
+          <span className="splash-halo" aria-hidden="true" />
+          {logo ? (
+            <img src={logo} alt="Logotipo de la Pastoral Juvenil Luqueña" className="splash-logo-img" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+          ) : (
+            <span className="splash-logo-fallback">⛪</span>
+          )}
+        </div>
+        <h1 className="splash-title" aria-label={title}>
+          {title.split('').map((ch, i) => (
+            <span key={i} className="splash-letter" style={{ animationDelay: `${0.75 + i * 0.045}s` }} aria-hidden="true">{ch === ' ' ? '\u00A0' : ch}</span>
+          ))}
+        </h1>
+        <p className="splash-tagline">
+          <span className="splash-flame" aria-hidden="true">🔥</span>
+          <em>«Avivando la llama de Cristo en tu corazón»</em>
+        </p>
+        <div className="splash-loader">
+          <div className="splash-bar">
+            <span className="splash-bar-fill" />
+            <span className="splash-bar-shine" />
+          </div>
+          <p className="splash-loading-text">Cargando<span className="splash-dots"><i>.</i><i>.</i><i>.</i></span></p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const mapHeroPosition = (position?: string) => {
   switch (position) {
     case 'Top':
@@ -293,15 +343,16 @@ function HomeContent() {
   const [heroIntervalSecs, setHeroIntervalSecs] = useState<number>(3);
   const [liveHeroIndex, setLiveHeroIndex] = useState(0);
   const [liveDocs, setLiveDocs] = useState<DocItem[]>([]);
+  const [splashDone, setSplashDone] = useState(false);
 
   // Prevent background scrolling when modals or mobile menu is open
   useEffect(() => {
-    if (selectedProfile || selectedHistoryItem || selectedNews || isMobileMenuOpen) {
+    if (!splashDone || selectedProfile || selectedHistoryItem || selectedNews || isMobileMenuOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
     }
-  }, [selectedProfile, selectedHistoryItem, selectedNews, isMobileMenuOpen]);
+  }, [splashDone, selectedProfile, selectedHistoryItem, selectedNews, isMobileMenuOpen]);
 
   // --- SYNC LOGIC ---
   const syncData = () => {
@@ -553,6 +604,9 @@ function HomeContent() {
   return (
     <div className={isHighContrast ? 'high-contrast' : ''} style={{ '--font-size-base': `${fontSize}px` } as React.CSSProperties}>
       
+      {/* SPLASH SCREEN DE CARGA */}
+      {!splashDone && <SplashScreen logo={branding.mainLogo} onFinish={() => setSplashDone(true)} />}
+
       {/* FLOATING PERSISTENT LOGO */}
       {branding.mainLogo && (
         <div style={{
