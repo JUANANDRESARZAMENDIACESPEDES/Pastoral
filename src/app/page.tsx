@@ -87,52 +87,6 @@ function SafeImg({ src, alt, style, className, fallback = '⛪', fallbackStyle }
   return <img src={src} alt={alt} style={style} className={className} loading="lazy" onError={() => setErr(true)} />;
 };
 
-/* Pantalla de carga estática: se renderiza en el servidor y aparece ANTES
-   de que cargue JavaScript (es el primer pantallazo del sitio). */
-function SplashStatic() {
-  const words = ['PASTORAL', 'JUVENIL', 'LUQUEÑA'];
-  const offsets = [0, 8, 15];
-  return (
-    <div id="splash-pjl" className="splash-screen" role="status" aria-label="Cargando Pastoral Juvenil Luqueña">
-      <div className="splash-bg" aria-hidden="true">
-        <span className="splash-orb splash-orb-1" />
-        <span className="splash-orb splash-orb-2" />
-        <span className="splash-orb splash-orb-3" />
-        {Array.from({ length: 14 }).map((_, i) => (
-          <span key={i} className="splash-ember" style={{ left: `${(i * 7.3 + 4) % 96}%`, animationDelay: `${(i * 0.37) % 3.2}s`, animationDuration: `${3.4 + (i % 5) * 0.55}s` }} />
-        ))}
-      </div>
-      <div className="splash-content">
-        <div className="splash-logo-wrap">
-          <span className="splash-ring" aria-hidden="true" />
-          <span className="splash-halo" aria-hidden="true" />
-          <span className="splash-logo-fallback">⛪</span>
-        </div>
-        <h1 className="splash-title" aria-label="Pastoral Juvenil Luqueña">
-          {words.map((word, w) => (
-            <span key={w} className="splash-word" aria-hidden="true">
-              {word.split('').map((ch, i) => (
-                <span key={i} className="splash-letter" style={{ animationDelay: `${0.75 + (offsets[w] + i) * 0.045}s` }}>{ch}</span>
-              ))}
-            </span>
-          ))}
-        </h1>
-        <p className="splash-tagline">
-          <span className="splash-flame" aria-hidden="true">🔥</span>
-          <em>«Avivando la llama de Cristo en tu corazón»</em>
-        </p>
-        <div className="splash-loader">
-          <div className="splash-bar">
-            <span className="splash-bar-fill" />
-            <span className="splash-bar-shine" />
-          </div>
-          <p className="splash-loading-text">Cargando<span className="splash-dots"><i>.</i><i>.</i><i>.</i></span></p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const mapHeroPosition = (position?: string) => {
   switch (position) {
     case 'Top':
@@ -2825,7 +2779,7 @@ function HomeContent() {
 
 export default function Home() {
   return (
-    <Suspense fallback={<SplashStatic />}>
+    <Suspense fallback={null}>
       <HomeContent />
     </Suspense>
   );
