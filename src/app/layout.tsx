@@ -43,13 +43,14 @@ export default function RootLayout({
     <html lang="es" className={`${displayFont.variable} ${bodyFont.variable} ${accentFont.variable}`} suppressHydrationWarning>
       <head>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
-        {/* Critical CSS: oculta la navbar hasta que React añade .nav-entered,
-            garantizando que la animación de entrada siempre se vea completa */}
+        {/* Critical CSS: la navbar nace oculta y SOLO la animación la revela
+            (fill-mode), así nunca se expone el menú estático aunque el CSS
+            principal tarde en cargar */}
         <style
           dangerouslySetInnerHTML={{
             __html: [
-              '.top-nav:not(.nav-entered) .brand-logo-wrap,.top-nav:not(.nav-entered) .brand-text,.top-nav:not(.nav-entered) .nav-links .nav-item{opacity:0}',
-              '@media (prefers-reduced-motion:reduce){.top-nav .brand-logo-wrap,.top-nav .brand-text,.nav-links .nav-item{opacity:1 !important}}',
+              '.top-nav .brand-logo-wrap,.top-nav .brand-text,.top-nav .nav-links .nav-item{opacity:0}',
+              '@media (prefers-reduced-motion:reduce){.top-nav .brand-logo-wrap,.top-nav .brand-text,.top-nav .nav-links .nav-item{opacity:1 !important}}',
             ].join(''),
           }}
         />

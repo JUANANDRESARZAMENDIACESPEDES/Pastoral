@@ -5818,21 +5818,22 @@ textarea:focus-visible,
 }
 
 /* ---------- NAVBAR PÚBLICO — ENTRADA ESCALONADA CON DIFUMINADO ---------- */
-/* Estado inicial: todo oculto hasta que React añade .nav-entered.
-   Así la secuencia es determinista y nunca hay flash del menú. */
-.top-nav:not(.nav-entered) .brand-logo-wrap,
-.top-nav:not(.nav-entered) .brand-text,
-.top-nav:not(.nav-entered) .nav-links .nav-item {
+/* Estado inicial permanente: oculto. Únicamente la animación (fill-mode both)
+   revela cada elemento, sin ventanas donde el menú se vea estático. */
+.top-nav .brand-logo-wrap,
+.top-nav .brand-text,
+.top-nav .nav-links .nav-item {
   opacity: 0;
 }
-/* Curva suave en ambos extremos + desenfoque que se disipa:
-   la aparición se percibe como un velo que se levanta, no un salto */
+/* Aparición con velo que se disipa y aterrizaje progresivo:
+   el desenfoque se disuelve en etapas para un final suave, sin golpe seco */
 @keyframes navFadeDown {
-  from { opacity: 0; transform: translateY(-14px); filter: blur(6px); }
-  55% { opacity: 0.75; filter: blur(2px); }
-  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+  0% { opacity: 0; transform: translateY(-16px); filter: blur(8px); }
+  45% { opacity: 0.65; transform: translateY(-6px); filter: blur(4px); }
+  80% { opacity: 0.96; transform: translateY(-1px); filter: blur(0.6px); }
+  100% { opacity: 1; transform: translateY(0); filter: blur(0); }
 }
-.top-nav.nav-entered .nav-links .nav-item { animation: navFadeDown 0.9s cubic-bezier(0.45, 0, 0.25, 1) both; }
+.top-nav.nav-entered .nav-links .nav-item { animation: navFadeDown 1.05s cubic-bezier(0.4, 0, 0.15, 1) both; }
 .top-nav.nav-entered .nav-links .nav-item:nth-child(1) { animation-delay: 0.06s; }
 .top-nav.nav-entered .nav-links .nav-item:nth-child(2) { animation-delay: 0.12s; }
 .top-nav.nav-entered .nav-links .nav-item:nth-child(3) { animation-delay: 0.18s; }
@@ -5843,19 +5844,21 @@ textarea:focus-visible,
 .top-nav.nav-entered .nav-links .nav-item:nth-child(8) { animation-delay: 0.48s; }
 .top-nav.nav-entered .nav-links .nav-item:nth-child(9) { animation-delay: 0.54s; }
 
-/* Entrada de la marca: el escudo emerge desenfocado y aterriza con rebote,
-   el texto se desliza disipándose nítidamente */
+/* Entrada de la marca: el escudo emerge desenfocado, rebota y se asienta
+   de forma gradual; el texto se desliza aclarándose sin corte brusco */
 @keyframes brandLogoDrop {
-  0% { opacity: 0; transform: translateY(-20px) scale(0.75); filter: blur(6px); }
-  60% { opacity: 1; transform: translateY(3px) scale(1.05); filter: blur(0); }
+  0% { opacity: 0; transform: translateY(-18px) scale(0.8); filter: blur(8px); }
+  55% { opacity: 1; transform: translateY(2px) scale(1.04); filter: blur(1.2px); }
+  80% { opacity: 1; transform: translateY(-1px) scale(1); filter: blur(0.3px); }
   100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
 }
 @keyframes brandTextSlide {
-  from { opacity: 0; transform: translateX(-14px); filter: blur(4px); }
-  to { opacity: 1; transform: translateX(0); filter: blur(0); }
+  0% { opacity: 0; transform: translateX(-16px); filter: blur(6px); }
+  70% { opacity: 0.95; transform: translateX(2px); filter: blur(1px); }
+  100% { opacity: 1; transform: translateX(0); filter: blur(0); }
 }
-.top-nav.nav-entered .brand-logo-wrap { animation: brandLogoDrop 0.95s cubic-bezier(0.34, 1.4, 0.64, 1) both 0.05s; }
-.top-nav.nav-entered .brand-text { animation: brandTextSlide 0.8s cubic-bezier(0.45, 0, 0.25, 1) both 0.28s; }
+.top-nav.nav-entered .brand-logo-wrap { animation: brandLogoDrop 1.05s cubic-bezier(0.34, 1.3, 0.64, 1) both 0.05s; }
+.top-nav.nav-entered .brand-text { animation: brandTextSlide 0.9s cubic-bezier(0.4, 0, 0.15, 1) both 0.28s; }
 
 @keyframes dropLinkIn {
   from { opacity: 0; transform: translateX(-12px); }
@@ -5874,9 +5877,9 @@ textarea:focus-visible,
 
 @media (prefers-reduced-motion: reduce) {
   /* Sin animaciones el estado oculto inicial debe anularse */
-  .top-nav:not(.nav-entered) .brand-logo-wrap,
-  .top-nav:not(.nav-entered) .brand-text,
-  .top-nav:not(.nav-entered) .nav-links .nav-item {
+  .top-nav .brand-logo-wrap,
+  .top-nav .brand-text,
+  .top-nav .nav-links .nav-item {
     opacity: 1 !important;
   }
   .nav-links .nav-item,
