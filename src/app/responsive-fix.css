@@ -86,8 +86,6 @@ th {
   .admin-content-area,
   .news-admin-grid,
   .territory-editor-grid,
-  .identity-admin-grid,
-  .identity-admin-hero-grid,
   .docs-admin-summary-grid,
   .admin-dashboard-grid,
   .admin-dashboard-main-grid,
@@ -191,8 +189,6 @@ th {
 
   .news-admin-grid,
   .territory-editor-grid,
-  .identity-admin-grid,
-  .identity-admin-hero-grid,
   .docs-admin-summary-grid,
   .admin-dashboard-grid,
   .admin-dashboard-main-grid,
@@ -294,8 +290,6 @@ th {
   .admin-content-area,
   .news-admin-grid,
   .territory-editor-grid,
-  .identity-admin-grid,
-  .identity-admin-hero-grid,
   .docs-admin-summary-grid,
   .admin-dashboard-grid,
   .admin-dashboard-main-grid,
@@ -473,8 +467,6 @@ th {
   .admin-dashboard-card-head,
   .news-admin-card,
   .territory-editor-grid > div,
-  .identity-admin-grid > div,
-  .identity-admin-hero-grid > div,
   .docs-admin-summary-grid > div {
     width: 100% !important;
     min-width: 0 !important;
@@ -497,8 +489,6 @@ th {
   .admin-dashboard-actions,
   .news-admin-grid,
   .territory-editor-grid,
-  .identity-admin-grid,
-  .identity-admin-hero-grid,
   .docs-admin-summary-grid {
     grid-template-columns: 1fr !important;
     gap: 12px !important;
@@ -686,8 +676,6 @@ th {
   .hero-pjl .container,
   .news-admin-grid,
   .territory-editor-grid,
-  .identity-admin-grid,
-  .identity-admin-hero-grid,
   .docs-admin-summary-grid,
   .admin-dashboard-grid,
   .admin-dashboard-main-grid,
@@ -721,8 +709,6 @@ th {
   .table-responsive,
   .news-admin-grid > div:first-child,
   .territory-editor-grid > div:first-child,
-  .identity-admin-grid > div:first-child,
-  .identity-admin-hero-grid > div:first-child,
   .docs-admin-summary-grid > div:first-child,
   .admin-content-area div[style*="overflow-x: auto"],
   .admin-content-area div[style*="overflowX: 'auto'"],
@@ -860,8 +846,6 @@ th {
   /* Profile cards and overlapping admin blocks */
   .news-admin-card,
   .territory-editor-grid > div,
-  .identity-admin-grid > div,
-  .identity-admin-hero-grid > div,
   .docs-admin-summary-grid > div,
   .admin-dashboard-card-head,
   .admin-dashboard-actions > * {
@@ -892,8 +876,6 @@ th {
 
   .news-admin-card img,
   .territory-editor-grid img,
-  .identity-admin-grid img,
-  .identity-admin-hero-grid img,
   .docs-admin-summary-grid img {
     width: 100% !important;
     max-width: 100% !important;
@@ -978,8 +960,6 @@ th {
   .admin-content-area .section-head,
   .admin-content-area .news-admin-grid > div,
   .admin-content-area .territory-editor-grid > div,
-  .admin-content-area .identity-admin-grid > div,
-  .admin-content-area .identity-admin-hero-grid > div,
   .admin-content-area .docs-admin-summary-grid > div {
     padding-left: 16px !important;
     padding-right: 16px !important;

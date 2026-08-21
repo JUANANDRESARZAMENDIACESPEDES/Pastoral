@@ -2119,126 +2119,152 @@ function AdminContent() {
           )}
 
           {/* IDENTIDAD */}
-          {mod === 'identidad' && (
-            <div className="animate-reveal identity-admin-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
-              
-              {/* LOGOS SECTION */}
-              <div className="pjl-card" style={{ padding: '40px', background: 'linear-gradient(145deg, #ffffff, #fcfcfc)', border: '1px solid var(--gold-pale)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '25px' }}>
-                  <div style={{ width: '45px', height: '45px', background: 'var(--navy)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', color: 'var(--gold)' }}>🎨</div>
-                  <div>
-                    <h3 className="serif" style={{ color: 'var(--navy)', margin: 0 }}>Identidad de Marca</h3>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '12px' }}>Gestión de logotipos y colores por zona</p>
-                  </div>
+          {mod === 'identidad' && (() => {
+            const syncOk = supabaseStatus?.ok === true;
+            const syncState = syncOk ? 'ok' : supabaseStatus ? 'warn' : '';
+            const syncText = syncOk
+              ? 'Sincronizado · los cambios llegan a todos los dispositivos'
+              : supabaseStatus
+                ? 'Sin nube · los cambios quedan solo en este dispositivo'
+                : 'Verificando sincronización…';
+            const activosCount = [branding.mainLogo, branding.whiteLogo, branding.favLogo, branding.zona1Logo, branding.zona2Logo, branding.zona3Logo, branding.zona4Logo].filter(Boolean).length;
+            return (
+            <div className="animate-reveal pjl-card identity-shell">
+
+              {/* HEADER */}
+              <div className="admin-section-header admin-stack-mobile" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '14px', marginBottom: '26px' }}>
+                <div className="admin-section-title-group">
+                  <h3 className="serif admin-section-title" style={{ margin: 0 }}>Identidad de Marca</h3>
+                  <p className="admin-section-desc">Logos, colores y escudos oficiales de la Pastoral. Cada cambio se refleja automáticamente en el sitio público.</p>
                 </div>
-
-                <div className="identity-admin-hero-grid" style={{ display: 'grid', gridTemplateColumns: '1.15fr 0.85fr', gap: '16px', marginBottom: '18px' }}>
-                  <div style={{ padding: '20px', borderRadius: '22px', background: 'linear-gradient(135deg, var(--navy), #31456f)', color: '#fff', position: 'relative', overflow: 'hidden' }}>
-                    <div style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', opacity: 0.7, marginBottom: '12px' }}>Vista de marca</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                      <div style={{ width: '62px', height: '62px', borderRadius: '18px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                        {branding.mainLogo ? <img src={branding.mainLogo} alt="Logo principal" style={{ width: '82%', height: '82%', objectFit: 'contain' }} /> : <span style={{ fontSize: '24px' }}>⛪</span>}
-                      </div>
-                      <div>
-                        <div className="serif" style={{ fontSize: '1.4rem', lineHeight: 1.1 }}>PJL Admin</div>
-                        <div style={{ fontSize: '12px', opacity: 0.8, marginTop: '6px' }}>Panel premium de identidad visual institucional</div>
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{ display: 'grid', gap: '12px' }}>
-                    <div style={{ padding: '16px', borderRadius: '18px', border: '1px solid var(--gold-pale)', background: '#fff' }}>
-                      <div style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--text-muted)', marginBottom: '6px' }}>Activos visuales</div>
-                      <div style={{ color: 'var(--navy)', fontSize: '28px', fontWeight: 900, lineHeight: 1 }}>{[branding.mainLogo, branding.whiteLogo, branding.favLogo, branding.zona1Logo, branding.zona2Logo, branding.zona3Logo, branding.zona4Logo].filter(Boolean).length}</div>
-                    </div>
-                    <div style={{ padding: '16px', borderRadius: '18px', border: '1px solid var(--gold-pale)', background: 'var(--cream)' }}>
-                      <div style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--text-muted)', marginBottom: '6px' }}>Marca de agua</div>
-                      <div style={{ color: 'var(--navy)', fontWeight: 800 }}>{branding.logoWatermark ? 'Activa en el sitio' : 'Desactivada'}</div>
-                    </div>
-                  </div>
+                <div className={`identity-sync-badge ${syncState}`}>
+                  <span className="identity-sync-dot" />
+                  <span>{syncText}</span>
                 </div>
+              </div>
 
-                <div style={{ display: 'grid', gap: '15px' }}>
-                  {/* MAIN LOGO CARD */}
-                  <div style={{ padding: '20px', background: 'var(--cream)', borderRadius: '18px', border: '1px solid var(--gold-pale)', display: 'flex', gap: '20px', alignItems: 'center' }}>
-                     <div style={{ width: '80px', height: '80px', background: '#fff', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 5px 15px rgba(0,0,0,0.05)', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.03)' }}>
-                        {branding.mainLogo ? <img src={branding.mainLogo} style={{ width: '80%', height: '80%', objectFit: 'contain' }} alt="Logo" /> : <span style={{ fontSize: '30px', opacity: 0.2 }}>⛪</span>}
-                     </div>
-                     <div style={{ flex: 1 }}>
-                        <p className="premium-label" style={{ marginBottom: '5px' }}>LOGO PRINCIPAL DEL SITIO</p>
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                          <label className="btn-premium btn-premium-gold" style={{ padding: '8px 16px', fontSize: '11px' }}>
-                            CAMBIAR LOGO
-                            <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, (url) => { setBranding({...branding, mainLogo: url}); showToast('Logo principal actualizado ✔'); })} />
-                          </label>
-                        </div>
-                     </div>
-                  </div>
-
-                  {/* LOGO WATERMARK TOGGLE */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', background: 'var(--white)', borderRadius: '15px', border: '1px solid var(--gold-pale)' }}>
+              {/* HERO PREVIEW */}
+              <div className="identity-hero-grid" style={{ display: 'grid', gridTemplateColumns: '1.15fr 0.85fr', gap: '16px', marginBottom: '28px' }}>
+                <div className="identity-hero">
+                  <div className="identity-hero-shine" />
+                  <div className="identity-hero-tag">Vista de marca</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative' }}>
+                    <div className="identity-hero-logo">
+                      {branding.mainLogo ? <img src={branding.mainLogo} alt="Logo principal" /> : <span>⛪</span>}
+                    </div>
                     <div>
-                      <p style={{ fontWeight: 700, color: 'var(--navy)', margin: 0, fontSize: '13px' }}>Marca de Agua del Logo</p>
-                      <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Muestra el logo de fondo en todo el sitio</p>
+                      <div className="serif" style={{ fontSize: '1.5rem', lineHeight: 1.1 }}>PJL Luqueña</div>
+                      <div style={{ fontSize: '12px', opacity: 0.8, marginTop: '6px' }}>Así se ve tu logo en el encabezado del sitio</div>
                     </div>
-                    <label className="pjl-switch">
-                      <input type="checkbox" checked={!!branding.logoWatermark} onChange={(e) => setBranding({...branding, logoWatermark: e.target.checked})} />
-                      <span className="pjl-slider"></span>
-                    </label>
                   </div>
-
-                  {/* EXTRA LOGOS (WHITE & FAVICON) */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                    {[
-                      { key: 'whiteLogo', label: 'LOGO BLANCO', desc: 'Para fondos oscuros' },
-                      { key: 'favLogo', label: 'FAVICON / SELLO', desc: 'Icono de pestaña' }
-                    ].map(lg => (
-                      <div key={lg.key} style={{ padding: '15px', background: 'var(--white)', borderRadius: '15px', border: '1px solid var(--gold-pale)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <p className="premium-label" style={{ fontSize: '10px', marginBottom: '0' }}>{lg.label}</p>
-                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                          <div style={{ width: '45px', height: '45px', background: lg.key === 'whiteLogo' ? 'var(--navy)' : 'var(--cream)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--gold-pale)', overflow: 'hidden' }}>
-                            {branding[lg.key] ? <img src={branding[lg.key] as string} style={{ width: '80%', height: '80%', objectFit: 'contain' }} alt={lg.label} /> : <span style={{ fontSize: '18px', opacity: 0.2 }}>🖼️</span>}
-                          </div>
-                          <label className="btn-premium btn-premium-outline" style={{ padding: '6px 12px', fontSize: '9px', flex: 1, textAlign: 'center' }}>
-                            SUBIR
-                            <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, (url) => setBranding({...branding, [lg.key]: url}))} />
-                          </label>
-                        </div>
-                      </div>
-                    ))}
+                </div>
+                <div style={{ display: 'grid', gap: '12px' }}>
+                  <div className="identity-stat-box">
+                    <span className="identity-stat-icon">🖼️</span>
+                    <div>
+                      <div className="identity-stat-label">ACTIVOS VISUALES</div>
+                      <div className="identity-stat-value">{activosCount} <small>de 7</small></div>
+                    </div>
                   </div>
-
-                  {/* ZONES LOGOS & COLORS GRID */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                    {[1, 2, 3, 4].map(z => (
-                      <div key={z} style={{ padding: '18px', background: 'var(--white)', borderRadius: '15px', border: '1px solid var(--gold-pale)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                           <span className="premium-label" style={{ color: 'var(--navy)' }}>ZONA {z}</span>
-                           <div style={{ position: 'relative', width: '30px', height: '30px', borderRadius: '8px', border: '2px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', background: branding[`zona${z}Color`] as string || '#C8973A' }}>
-                              <input 
-                                type="color" 
-                                style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} 
-                                value={branding[`zona${z}Color`] as string || '#C8973A'} 
-                                onChange={(e) => setBranding({...branding, [`zona${z}Color`]: e.target.value})} 
-                              />
-                           </div>
-                        </div>
-                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                          <div style={{ width: '45px', height: '45px', background: 'var(--cream)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--gold-pale)', overflow: 'hidden' }}>
-                            {branding[`zona${z}Logo`] ? <img src={branding[`zona${z}Logo`] as string} style={{ width: '80%', height: '80%', objectFit: 'contain' }} alt={`Logo Z${z}`} /> : <span style={{ fontSize: '20px', opacity: 0.2 }}>🛡️</span>}
-                          </div>
-                          <label className="btn-premium btn-premium-outline" style={{ padding: '6px 12px', fontSize: '10px', flex: 1, textAlign: 'center' }}>
-                            SUBIR ESCUDO
-                            <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, (url) => { setBranding({...branding, [`zona${z}Logo`]: url}); showToast(`Escudo Zona ${z} actualizado ✔`); })} />
-                          </label>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="identity-stat-box is-cream">
+                    <span className="identity-stat-icon">💧</span>
+                    <div>
+                      <div className="identity-stat-label">MARCA DE AGUA</div>
+                      <div className="identity-stat-value" style={{ fontSize: '15px' }}>{branding.logoWatermark ? 'Activa en el sitio' : 'Desactivada'}</div>
+                    </div>
                   </div>
                 </div>
               </div>
 
+              {/* LOGOS PRINCIPALES */}
+              <div className="identity-section-label"><span>Logos principales</span></div>
+              <div className="identity-blocks">
+
+                <div className="identity-logo-row identity-rise">
+                  <div className="identity-logo-preview">
+                    {branding.mainLogo ? <img src={branding.mainLogo} alt="Logo principal" /> : <span>⛪</span>}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p className="premium-label" style={{ marginBottom: '4px' }}>LOGO PRINCIPAL DEL SITIO</p>
+                    <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '0 0 12px' }}>Aparece en el menú de navegación, el pie de página y los documentos.</p>
+                    <label className="btn-premium btn-premium-gold" style={{ padding: '9px 18px', fontSize: '11px' }}>
+                      CAMBIAR LOGO
+                      <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, (url) => { setBranding({...branding, mainLogo: url}); showToast('Logo principal actualizado ✔'); })} />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="identity-toggle-row identity-rise" style={{ animationDelay: '70ms' }}>
+                  <span className="identity-toggle-icon">💧</span>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontWeight: 700, color: 'var(--navy)', margin: 0, fontSize: '13px' }}>Marca de Agua del Logo</p>
+                    <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Muestra el logo suave de fondo en todo el sitio</p>
+                  </div>
+                  <label className="pjl-switch">
+                    <input type="checkbox" checked={!!branding.logoWatermark} onChange={(e) => setBranding({...branding, logoWatermark: e.target.checked})} />
+                    <span className="pjl-slider"></span>
+                  </label>
+                </div>
+
+                <div className="identity-duo-grid">
+                  {[
+                    { key: 'whiteLogo', label: 'LOGO BLANCO', desc: 'Para fondos oscuros', dark: true },
+                    { key: 'favLogo', label: 'FAVICON / SELLO', desc: 'Icono de la pestaña', dark: false }
+                  ].map((lg, i) => (
+                    <div key={lg.key} className="identity-mini-card identity-rise" style={{ animationDelay: `${140 + i * 70}ms` }}>
+                      <p className="premium-label" style={{ fontSize: '10px', marginBottom: '10px' }}>{lg.label}</p>
+                      <div className="identity-mini-body">
+                        <div className={`identity-mini-preview ${lg.dark ? 'is-dark' : ''}`}>
+                          {branding[lg.key] ? <img src={branding[lg.key] as string} alt={lg.label} /> : <span>🖼️</span>}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '0 0 8px' }}>{lg.desc}</p>
+                          <label className="btn-premium btn-premium-outline" style={{ padding: '7px 14px', fontSize: '10px' }}>
+                            SUBIR
+                            <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, (url) => { setBranding({...branding, [lg.key]: url}); showToast(`${lg.label} actualizado ✔`); })} />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ZONAS PASTORALES */}
+              <div className="identity-section-label" style={{ marginTop: '30px' }}><span>Zonas pastorales</span></div>
+              <div className="identity-zones-grid">
+                {[1, 2, 3, 4].map((z, i) => {
+                  const zColor = (branding[`zona${z}Color`] as string) || '#C8973A';
+                  return (
+                    <div key={z} className="identity-zone-card identity-rise" style={{ animationDelay: `${i * 80}ms` }}>
+                      <div className="identity-zone-bar" style={{ background: zColor }} />
+                      <div className="identity-zone-head">
+                        <span className="identity-zone-name">Zona {z}</span>
+                        <label className="identity-color-swatch" title="Elegir color de la zona" style={{ background: zColor }}>
+                          <input
+                            type="color"
+                            value={zColor}
+                            onChange={(e) => setBranding({...branding, [`zona${z}Color`]: e.target.value})}
+                          />
+                        </label>
+                      </div>
+                      <div className="identity-zone-body">
+                        <div className="identity-zone-shield">
+                          {branding[`zona${z}Logo`] ? <img src={branding[`zona${z}Logo`] as string} alt={`Escudo Zona ${z}`} /> : <span>🛡️</span>}
+                        </div>
+                        <label className="btn-premium btn-premium-outline identity-zone-upload">
+                          SUBIR ESCUDO
+                          <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, (url) => { setBranding({...branding, [`zona${z}Logo`]: url}); showToast(`Escudo Zona ${z} actualizado ✔`); })} />
+                        </label>
+                      </div>
+                      <div className="identity-zone-hex">{zColor.toUpperCase()}</div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          )}
+            );
+          })()}
 
 
           {/* CONTENIDO REORGANIZADO */}
