@@ -75,6 +75,61 @@ const canPreviewInFrame = (doc: Partial<DocItem>) => {
   return kind === 'pdf' || kind === 'image';
 };
 
+/* Contador animado que sube hasta el valor real */
+function CountUp({ value, duration = 1100 }: { value: number; duration?: number }) {
+  const [display, setDisplay] = useState(0);
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof requestAnimationFrame === 'undefined') { setDisplay(value); return; }
+    let raf = 0;
+    const start = performance.now();
+    const from = 0;
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setDisplay(Math.round(from + (value - from) * eased));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value, duration]);
+  return <>{display.toLocaleString('es-ES')}</>;
+}
+
+/* Tarjeta KPI con brillo al hover y pulso al hacer click */
+function KpiCard({ icon, label, value, sub, tone, delay, text }: {
+  icon: string; label: string; value: number | string; sub: string;
+  tone: 'navy' | 'gold' | 'green' | 'blue' | 'violet' | 'rose'; delay: number; text?: boolean;
+}) {
+  const [burst, setBurst] = useState(false);
+  const handleClick = () => {
+    setBurst(false);
+    requestAnimationFrame(() => setBurst(true));
+    setTimeout(() => setBurst(false), 700);
+  };
+  return (
+    <div
+      className={`kpi-card kpi-${tone} pop-in ${burst ? 'kpi-burst' : ''}`}
+      style={{ animationDelay: `${delay}s` }}
+      onClick={handleClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={e => { if (e.key === 'Enter') handleClick(); }}
+    >
+      <span className="kpi-shine" aria-hidden="true"></span>
+      <span className={`kpi-orb kpi-orb-${tone}`} aria-hidden="true"></span>
+      <div className="kpi-top">
+        <span className="kpi-icon" aria-hidden="true">{icon}</span>
+        <span className="kpi-label">{label}</span>
+      </div>
+      <div className="kpi-value">
+        {text ? <span className="kpi-text">{value}</span> : <CountUp value={Number(value) || 0} />}
+      </div>
+      <div className="kpi-sub">{sub}</div>
+      {burst && <span className="kpi-ring" aria-hidden="true"></span>}
+    </div>
+  );
+}
+
 function useLS<T>(key: keyof typeof store, def: T) {
   const [val, setVal] = useState<T>(def);
 
@@ -1496,53 +1551,33 @@ function AdminContent() {
           {mod === 'dashboard' && (
             <div className="animate-reveal">
 
-              {/* TOP KPI CARDS - PREMIUM DESIGN (FOTO 3 STYLE) */}
-              <div className="admin-dashboard-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '25px', marginBottom: '40px' }}>
-                <div className="pjl-card hover-lift" style={{ padding: '30px', background: 'linear-gradient(135deg, var(--navy) 0%, #2E3F6B 100%)', border: 'none', color: '#fff' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px', fontWeight: 600, letterSpacing: '1px' }}>VISITAS TOTALES</span>
-                      <h3 style={{ color: '#fff', fontSize: '36px', margin: '10px 0 0', fontFamily: 'var(--font-display)' }}>{liveVisits.toLocaleString('es-ES')}</h3>
-                    </div>
-                    <div style={{ background: 'rgba(255,255,255,0.1)', padding: '12px', borderRadius: '12px', fontSize: '24px' }}>📈</div>
-                  </div>
-                  <div style={{ marginTop: '20px', fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
-                    Actualización automática del navegador
-                  </div>
+              {/* BIENVENIDA */}
+              <div className="dash-welcome pop-in">
+                <div className="dash-welcome-text">
+                  <span className="dash-welcome-hi">✨ Panel de control en vivo</span>
+                  <h3 className="serif">¡Hola, {(currentUser?.name || 'Admin').split(' ')[0]}! 👋</h3>
+                  <p>{new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · Todo sincronizado con la nube</p>
                 </div>
+                <div className="dash-welcome-badge">
+                  <span className="dash-live-dot"></span> DATOS EN VIVO
+                </div>
+              </div>
 
-                <div className="pjl-card hover-lift" style={{ padding: '30px', border: '1px solid var(--gold-pale)', background: '#fff' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '13px', fontWeight: 600, letterSpacing: '1px' }}>INTERACCIONES</span>
-                      <h3 style={{ color: 'var(--navy)', fontSize: '36px', margin: '10px 0 0', fontFamily: 'var(--font-display)' }}>{(Array.isArray(pageStats) ? pageStats : []).reduce((acc, s) => acc + (s?.interactions || 0), 0).toLocaleString('es-ES')}</h3>
-                    </div>
-                    <div style={{ background: 'var(--cream)', padding: '12px', borderRadius: '12px', fontSize: '24px' }}>⚡</div>
-                  </div>
-                  <div style={{ marginTop: '20px', fontSize: '12px', color: 'var(--text-muted)' }}>
-                    Puntos de contacto activos
-                  </div>
-                </div>
-
-                <div className="pjl-card hover-lift" style={{ padding: '30px', border: '1px solid var(--gold-pale)', background: '#fff' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '13px', fontWeight: 600, letterSpacing: '1px' }}>TOP SECCIÓN</span>
-                      <h3 style={{ color: 'var(--navy)', fontSize: '22px', margin: '15px 0 0', fontWeight: 800, fontFamily: 'var(--font-display)', textTransform: 'uppercase' }}>{(Array.isArray(pageStats) ? pageStats : []).sort((a, b) => (b?.visits || 0) - (a?.visits || 0))[0]?.label || '—'}</h3>
-                    </div>
-                    <div style={{ background: 'var(--cream)', padding: '12px', borderRadius: '12px', fontSize: '24px' }}>💎</div>
-                  </div>
-                  <div style={{ marginTop: '10px', fontSize: '12px', color: 'var(--text-muted)' }}>
-                    Preferencia del usuario
-                  </div>
-                </div>
+              {/* KPI CARDS ANIMADAS */}
+              <div className="admin-dashboard-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '18px', marginBottom: '30px' }}>
+                <KpiCard icon="📈" label="VISITAS TOTALES" value={liveVisits} sub="Registradas automáticamente" tone="navy" delay={0.05} />
+                <KpiCard icon="⚡" label="INTERACCIONES" value={(Array.isArray(pageStats) ? pageStats : []).reduce((acc, s) => acc + (s?.interactions || 0), 0)} sub="Puntos de contacto activos" tone="gold" delay={0.12} />
+                <KpiCard icon="👥" label="USUARIOS" value={allUsers.length} sub="Cuentas registradas en la nube" tone="blue" delay={0.19} />
+                <KpiCard icon="📨" label="SOLICITUDES PENDIENTES" value={pendingProfiles.length} sub="Esperando aprobación" tone="rose" delay={0.26} />
+                <KpiCard icon="⛪" label="COMUNIDADES ACTIVAS" value={chapels.filter(c => c.estadoComunidad === 'Activo').length} sub={`De ${chapels.length} comunidades totales`} tone="green" delay={0.33} />
+                <KpiCard icon="📅" label="EVENTOS PRÓXIMOS" value={activities.filter(a => a.active && a.date && new Date(`${a.date}T23:59:59`) >= new Date()).length} sub="En el calendario pastoral" tone="violet" delay={0.4} />
               </div>
 
               {/* MAIN ANALYTICS GRID */}
               <div className="admin-dashboard-main-grid" style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '20px', marginBottom: '20px' }}>
 
                 {/* VISITS BY SECTION — HORIZONTAL BARS */}
-                <div className="admin-analytics-card" style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: '16px', padding: '28px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
+                <div className="admin-analytics-card pop-in" style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: '16px', padding: '28px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', animationDelay: '0.2s' }}>
                   <div className="admin-dashboard-card-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                     <div>
                       <h3 style={{ margin: 0, color: 'var(--navy)', fontSize: '16px', fontWeight: 700 }}>📊 Visitas por Sección</h3>
@@ -1575,10 +1610,10 @@ function AdminContent() {
                               </div>
                             </div>
                             <div style={{ height: '7px', background: '#f0ece4', borderRadius: '4px', overflow: 'hidden', marginBottom: '2px' }}>
-                              <div style={{ height: '100%', width: `${pct}%`, background: i === 0 ? 'var(--gold)' : 'var(--navy)', borderRadius: '4px', transition: '1s ease' }} />
+                              <div className="stat-bar-fill" style={{ height: '100%', width: `${pct}%`, background: i === 0 ? 'var(--gold)' : 'var(--navy)', borderRadius: '4px', transition: '1s ease', animationDelay: `${0.3 + i * 0.07}s` }} />
                             </div>
                             <div style={{ height: '4px', background: '#ecfdf5', borderRadius: '4px', overflow: 'hidden' }}>
-                              <div style={{ height: '100%', width: `${intPct}%`, background: '#10B981', borderRadius: '4px', transition: '1s ease' }} />
+                              <div className="stat-bar-fill stat-bar-fill-green" style={{ height: '100%', width: `${intPct}%`, background: '#10B981', borderRadius: '4px', transition: '1s ease', animationDelay: `${0.45 + i * 0.07}s` }} />
                             </div>
                           </div>
                         );
@@ -1599,7 +1634,7 @@ function AdminContent() {
                 <div className="admin-dashboard-side-grid" style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
 
                   {/* DISTRIBUTION DONUT (SVG) */}
-                  <div className="admin-analytics-card" style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', flex: 1 }}>
+                  <div className="admin-analytics-card pop-in" style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', flex: 1, animationDelay: '0.3s' }}>
                     <h3 style={{ margin: '0 0 16px', color: 'var(--navy)', fontSize: '15px', fontWeight: 700 }}>🥧 Distribución por Sección</h3>
                     {(() => {
                       const data = (Array.isArray(pageStats) ? pageStats : []).filter(s => (s?.visits || 0) > 0);
@@ -1649,7 +1684,7 @@ function AdminContent() {
                   </div>
 
                   {/* DISPOSITIVOS */}
-                  <div className="admin-analytics-card" style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', flex: 1 }}>
+                  <div className="admin-analytics-card pop-in" style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', flex: 1, animationDelay: '0.4s' }}>
                     <h3 style={{ margin: '0 0 16px', color: 'var(--navy)', fontSize: '15px', fontWeight: 700 }}>📱 Dispositivos</h3>
                     {(() => {
                       const data = Array.isArray(pageStats) ? pageStats : [];
@@ -1673,7 +1708,7 @@ function AdminContent() {
                                 <span style={{ color: '#888' }}>{Math.round(dev.pct)}% ({dev.value.toLocaleString()})</span>
                               </div>
                               <div style={{ height: '6px', background: '#f0ece4', borderRadius: '3px', overflow: 'hidden' }}>
-                                <div style={{ height: '100%', width: `${dev.pct}%`, background: dev.color, borderRadius: '3px', transition: '1s ease' }} />
+                                <div className="stat-bar-fill" style={{ height: '100%', width: `${dev.pct}%`, background: dev.color, borderRadius: '3px', transition: '1s ease', animationDelay: `${0.5 + i * 0.1}s` }} />
                               </div>
                             </div>
                           ))}
@@ -1683,7 +1718,7 @@ function AdminContent() {
                   </div>
 
                   {/* QUICK ACTIONS */}
-                  <div className="admin-analytics-card" style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: '16px', padding: '22px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
+                  <div className="admin-analytics-card pop-in" style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: '16px', padding: '22px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', animationDelay: '0.5s' }}>
                     <h3 style={{ margin: '0 0 14px', color: 'var(--navy)', fontSize: '15px', fontWeight: 700 }}>⚡ Accesos Rápidos</h3>
                     <div style={{ display: 'grid', gap: '8px' }}>
                       {[
@@ -1692,8 +1727,9 @@ function AdminContent() {
                         { icon: '🎠', label: 'Carrusel Hero', mod: 'carrusel' },
                         { icon: '🎨', label: 'Identidad Visual', mod: 'identidad' },
                       ].map((a, i) => (
-                        <button key={i} onClick={() => navigateMod(a.mod as any)} style={{ width: '100%', textAlign: 'left', padding: '9px 14px', background: 'var(--cream)', border: '1px solid var(--gold-pale)', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 600, color: 'var(--navy)', display: 'flex', alignItems: 'center', gap: '8px', transition: '0.2s' }}>
-                          <span>{a.icon}</span> {a.label}
+                        <button key={i} onClick={() => navigateMod(a.mod as any)} className="quick-action-btn" style={{ width: '100%', textAlign: 'left', padding: '9px 14px', background: 'var(--cream)', border: '1px solid var(--gold-pale)', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 600, color: 'var(--navy)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span className="quick-action-icon">{a.icon}</span> {a.label}
+                          <span className="quick-action-arrow">→</span>
                         </button>
                       ))}
                     </div>
@@ -1710,10 +1746,10 @@ function AdminContent() {
                   { label: 'Perfiles', total: profiles.length, active: profiles.length, icon: '👤', color: '#F59E0B' },
                   { label: 'Slides Hero', total: liveHeroImages.length, active: liveHeroImages.length, icon: '🎠', color: '#EF4444' },
                 ].map((item, i) => (
-                  <div key={i} style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: '12px', padding: '16px', textAlign: 'center', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
-                    <div style={{ fontSize: '24px', marginBottom: '6px' }}>{item.icon}</div>
+                  <div key={i} className="mini-stat-card pop-in" style={{ animationDelay: `${0.15 + i * 0.08}s` }}>
+                    <div className="mini-stat-icon" style={{ background: `${item.color}18`, color: item.color }}>{item.icon}</div>
                     <div style={{ fontSize: '10px', color: '#888', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '4px' }}>{item.label}</div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--navy)', lineHeight: 1 }}>{item.total}</div>
+                    <div className="mini-stat-total">{item.total}</div>
                     <div style={{ fontSize: '10px', color: item.color, fontWeight: 600, marginTop: '3px' }}>{item.active} activos</div>
                   </div>
                 ))}
@@ -1735,7 +1771,7 @@ function AdminContent() {
                     </div>
                   ) : (
                     logs.map(log => (
-                      <div key={log.id} style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 15px', background: 'var(--cream)', borderRadius: '12px', border: '1px solid var(--gold-pale)' }}>
+                      <div key={log.id} className="dash-log-row" style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 15px', background: 'var(--cream)', borderRadius: '12px', border: '1px solid var(--gold-pale)' }}>
                         <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--navy)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 900, flexShrink: 0 }}>
                           {log.userName[0]}
                         </div>
