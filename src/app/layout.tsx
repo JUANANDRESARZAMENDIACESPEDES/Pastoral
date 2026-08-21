@@ -45,6 +45,9 @@ export default function RootLayout({
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
       </head>
       <body suppressHydrationWarning>
+        {/* Marca <html> ANTES de pintar el splash: solo fuera de /admin.
+            Al ir antes del div, no hay ningún destello en el panel. */}
+        <script dangerouslySetInnerHTML={{ __html: "if(location.pathname.indexOf('/admin')!==0){document.documentElement.className+=' show-splash';}" }} />
         {/* Pantalla de carga estática: vive FUERA del árbol que React intercambia,
             por eso se ve desde el primer pintado y sobrevive a la hidratación. */}
         <div id="splash-pjl" className="splash-screen" role="status" aria-label="Cargando Pastoral Juvenil Luqueña">
@@ -81,7 +84,6 @@ export default function RootLayout({
             </div>
           </div>
         </div>
-        <script dangerouslySetInnerHTML={{ __html: "if(location.pathname.indexOf('/admin')===0){var s=document.getElementById('splash-pjl');if(s&&s.parentNode)s.parentNode.removeChild(s);}" }} />
         <noscript><style>{"#splash-pjl{display:none!important}"}</style></noscript>
         <ThemeLoader />
         {children}

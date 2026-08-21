@@ -6374,7 +6374,8 @@ textarea:focus-visible,
 .splash-screen {
   position: fixed;
   inset: 0;
-  z-index: 99999;
+  /* Por encima de TODO (navbar 99999, drawer 99998, modales 2000...) */
+  z-index: 2147483000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6384,12 +6385,19 @@ textarea:focus-visible,
     linear-gradient(160deg, #101a30 0%, #16233f 45%, #0d1526 100%);
   overflow: hidden;
   animation: splashIn 0.5s ease both;
-  transition: opacity 0.65s ease, visibility 0.65s;
-}
-.splash-screen.is-leaving {
-  opacity: 0;
+  /* Oculta por defecto: el script inline del layout la muestra solo
+     fuera de /admin, así jamás destella en el panel. */
   visibility: hidden;
+  transition: opacity 0.7s ease, visibility 0.7s, filter 0.7s ease, transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+html.show-splash .splash-screen { visibility: visible; }
+/* Salida cinematográfica: fundido + desenfoque + zoom suave */
+.splash-screen.is-leaving {
+  opacity: 0 !important;
+  visibility: hidden !important;
   pointer-events: none;
+  filter: blur(16px);
+  transform: scale(1.07);
 }
 @keyframes splashIn {
   from { opacity: 0; }
@@ -6451,6 +6459,12 @@ textarea:focus-visible,
   text-align: center;
   padding: 24px;
   max-width: min(92vw, 780px);
+  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.55s ease;
+}
+/* El contenido se eleva y encoge mientras el fondo se difumina */
+.splash-screen.is-leaving .splash-content {
+  transform: translateY(-30px) scale(0.94);
+  opacity: 0;
 }
 
 /* 1) LOGO: pop elástico + anillo cónico giratorio + halo pulsante */
