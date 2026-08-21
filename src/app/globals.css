@@ -336,6 +336,8 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
 }
 @media (min-width: 1481px) {
   .brand-divider { display: block; }
+}
+@media (min-width: 1680px) {
   .brand-tagline {
     display: block;
     animation: brandTextSlide 0.55s cubic-bezier(0.22, 1, 0.36, 1) both 0.3s;
@@ -381,14 +383,14 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
 
 /* ---------- ENLACES ---------- */
 .nav-links {
+  /* El menú absorbe todo el espacio libre entre la marca y el borde
+     derecho, y sus botones quedan centrados dentro de ese espacio */
+  flex: 1 1 auto;
   display: flex;
-  gap: 7px;
+  gap: clamp(3px, 0.4vw, 7px);
   align-items: center;
+  justify-content: center;
   flex-wrap: nowrap;
-  /* El menú flota centrado entre la marca y el borde derecho:
-     el vacío se reparte de forma equilibrada a ambos lados */
-  margin-left: auto;
-  margin-right: auto;
   min-width: 0;
 }
 .nav-item {
@@ -433,18 +435,19 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
   pointer-events: none;
 }
 
-/* ---------- BOTÓN BASE (píldora fantasma) ---------- */
+/* ---------- BOTÓN BASE (píldora fantasma, escala fluida) ---------- */
 .nav-btn {
   position: relative;
   isolation: isolate;
   overflow: hidden;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: clamp(4px, 0.35vw, 7px);
   min-height: 44px;
-  padding: 10px 14px;
+  padding: 10px clamp(8px, 0.8vw, 14px);
   border-radius: 14px;
   font-weight: 800;
+  font-size: clamp(11.5px, 0.82vw, 14px);
   color: var(--navy);
   background: rgba(255, 255, 255, 0.62);
   border: 1px solid rgba(200, 151, 58, 0.18);
@@ -894,23 +897,6 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
   .logo-area p {
     font-size: 10px;
     letter-spacing: 1.3px;
-  }
-
-  .nav-links {
-    gap: 5px;
-  }
-
-  .nav-btn {
-    min-height: 42px;
-    padding: 9px 11px;
-    gap: 6px;
-    border-radius: 13px;
-    font-size: 13px;
-  }
-
-  .nav-item::after {
-    left: 12px;
-    right: 12px;
   }
 }
 
