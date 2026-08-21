@@ -6342,6 +6342,31 @@ textarea:focus-visible,
   .nav-active-dot { animation: none !important; }
 }
 
+/* ---------- FIX NAVBAR: anti-solape del lema en pantallas grandes ----------
+   El bloque base da ancho completo al contenedor del navbar entre 1481-1880px,
+   pero a partir de 1881px volvía a limitarse a 1300px mientras el lema
+   "Fe · Comunidad · Misión" ya es visible (≥1680px) → se pisaba con los botones. */
+@media (min-width: 1881px) {
+  .top-nav .container {
+    max-width: none;
+    width: 100%;
+    padding-left: clamp(24px, 2.5vw, 52px);
+    padding-right: clamp(24px, 2.5vw, 52px);
+  }
+}
+/* Defensa extra: si el espacio aprieta, el lema se recorta con puntos
+   en vez de invadir los botones; la marca puede ceder ancho. */
+@media (min-width: 1680px) {
+  .brand-tagline {
+    max-width: 230px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+@media (min-width: 1481px) {
+  .logo-area.brand-lockup { flex-shrink: 1; }
+}
+
 /* ---------- ESTADO VACÍO REUTILIZABLE ---------- */
 .pjl-empty-state {
   display: flex;
