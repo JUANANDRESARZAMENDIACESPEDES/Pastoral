@@ -428,9 +428,10 @@ th {
   }
 
   .drawer-backdrop {
-    /* Debe quedar POR DEBAJO del drawer (z-index 99998): si queda arriba,
-       el velo difuminado cubre el menú y los toques cierran en vez de elegir. */
-    z-index: 99997 !important;
+    /* Debe quedar POR DEBAJO del drawer (z-index 100001): si queda arriba,
+       el velo difuminado cubre el menú y los toques cierran en vez de elegir.
+       Pero siempre POR ENCIMA de la navbar (.top-nav, 99999). */
+    z-index: 100000 !important;
   }
 
   .mobile-nav-drawer.open {

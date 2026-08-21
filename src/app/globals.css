@@ -3706,7 +3706,9 @@ input:checked + .pjl-slider:before {
   width: min(85vw, 320px);
   height: 100dvh;
   background: linear-gradient(180deg, var(--navy) 0%, #0e1828 100%);
-  z-index: 99998;
+  /* Debe quedar POR ENCIMA de .top-nav (99999): en tablet la navbar es sticky
+     y con un valor menor la barra blanca tapaba el menú abierto */
+  z-index: 100001;
   display: flex;
   flex-direction: column;
   transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
@@ -3723,7 +3725,8 @@ input:checked + .pjl-slider:before {
   inset: 0;
   background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(4px);
-  z-index: 99997;
+  /* Encima de la navbar (99999) pero debajo del drawer (100001) */
+  z-index: 100000;
   animation: fadeOverlay 0.3s ease both;
 }
 
