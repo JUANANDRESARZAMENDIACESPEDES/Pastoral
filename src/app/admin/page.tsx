@@ -3645,12 +3645,28 @@ function AdminContent() {
            )}
 
           {/* PERFILES */}
-          {mod === 'perfiles' && (
+          {mod === 'perfiles' && (() => {
+            const teamMeta: Record<string, { label: string; icon: string }> = {
+              coordinacion: { label: 'Coordinación', icon: '⛪' },
+              efo: { label: 'EFO', icon: '🎓' },
+              ecomu: { label: 'ECOMU', icon: '📡' },
+              eli: { label: 'ELI', icon: '🕊️' },
+              mmpjl: { label: 'Música', icon: '🎵' },
+              zona1: { label: 'Zona 1', icon: '📍' },
+              zona2: { label: 'Zona 2', icon: '📍' },
+              zona3: { label: 'Zona 3', icon: '📍' },
+              zona4: { label: 'Zona 4', icon: '📍' },
+            };
+            const teamProfiles = profiles.filter(p => p.teamKey === activeProfileTeam);
+            return (
             <div className="animate-reveal pjl-card" style={{ padding: '40px' }}>
-              <div className="admin-section-header admin-stack-mobile" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                <h3 className="serif admin-section-title" style={{ margin: 0 }}>Gestión de Currículos y Perfiles</h3>
-                <button 
-                  className="btn-premium btn-premium-gold admin-section-action" 
+              <div className="admin-section-header admin-stack-mobile" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
+                <div className="admin-section-title-group">
+                  <h3 className="serif admin-section-title" style={{ margin: 0 }}>Gestión de Currículos y Perfiles</h3>
+                  <p className="admin-section-desc">Armá el consejo pastoral: foto, cargo, historia y CV de cada integrante. Todo se publica automáticamente en la sección Consejo del sitio.</p>
+                </div>
+                <button
+                  className="btn-premium btn-premium-gold admin-section-action"
                   onClick={() => {
                     const newProfile: MemberProfile = {
                       id: Date.now(),
@@ -3665,88 +3681,122 @@ function AdminContent() {
                     showToast('Miembro agregado ✔');
                   }}
                 >
-                  + AGREGAR MIEMBRO A ESTE EQUIPO
+                  + Agregar Miembro
                 </button>
               </div>
-              <div className="custom-scrollbar admin-chip-scroll" style={{ display: 'flex', gap: '12px', marginBottom: '40px', overflowX: 'auto', padding: '15px', borderRadius: '20px', border: '1px solid var(--gold-pale)', background: 'linear-gradient(to right, var(--cream), white)', boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.02)' }}>
-                {['coordinacion', 'efo', 'ecomu', 'eli', 'mmpjl', 'zona1', 'zona2', 'zona3', 'zona4'].map(tk => (
-                  <button 
-                    key={tk} 
-                    onClick={() => setActiveProfileTeam(tk)} 
-                    className={`btn-premium ${activeProfileTeam === tk ? 'btn-premium-gold' : ''}`} 
-                    style={{ 
-                      fontSize: '0.85rem', 
-                      whiteSpace: 'nowrap', 
-                      padding: '10px 24px', 
-                      borderRadius: '30px',
-                      background: activeProfileTeam === tk ? 'var(--gold)' : 'transparent',
-                      color: activeProfileTeam === tk ? 'var(--navy)' : 'var(--navy)',
-                      border: activeProfileTeam === tk ? 'none' : '1px solid var(--gold-pale)',
-                      fontWeight: activeProfileTeam === tk ? 800 : 600,
-                      boxShadow: activeProfileTeam === tk ? '0 4px 15px rgba(200,151,58,0.3)' : 'none',
-                      transition: 'all 0.3s ease'
-                    }}
-                  >
-                    {tk.toUpperCase()}
-                  </button>
-                ))}
+
+              {/* SELECTOR DE EQUIPOS */}
+              <div className="profile-teams-bar custom-scrollbar admin-chip-scroll">
+                {Object.entries(teamMeta).map(([tk, meta]) => {
+                  const count = profiles.filter(x => x.teamKey === tk).length;
+                  const active = activeProfileTeam === tk;
+                  return (
+                    <button
+                      key={tk}
+                      onClick={() => setActiveProfileTeam(tk)}
+                      className={`profile-team-tab ${active ? 'active' : ''}`}
+                    >
+                      <span className="profile-team-icon">{meta.icon}</span>
+                      <span>{meta.label}</span>
+                      <span className="profile-team-count">{count}</span>
+                    </button>
+                  );
+                })}
               </div>
+
+              {/* GRILLA DE MIEMBROS */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '25px' }}>
-                {profiles.filter(p => p.teamKey === activeProfileTeam).map(p => (
-                  <div key={p.id} className="pjl-card profile-member-card" style={{ display: 'flex', gap: '25px', padding: '30px', position: 'relative' }}>
-                    <button 
+                {teamProfiles.map((p, idx) => (
+                  <div key={p.id} className="pjl-card profile-member-card" style={{ animationDelay: `${idx * 80}ms` }}>
+                    <button
+                      className="profile-delete-btn"
                       onClick={() => {
                         if (confirm(`¿Seguro que deseas eliminar a ${p.name}?`)) {
                           setProfiles(profiles.filter(x => x.id !== p.id));
                           showToast('Miembro eliminado ✖');
                         }
                       }}
-                      style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', padding: '4px 8px', cursor: 'pointer', fontSize: '11px', fontWeight: 600, transition: '0.2s' }}
+                      style={{ position: 'absolute', top: '16px', right: '16px' }}
                     >
-                      Eliminar
+                      🗑 Eliminar
                     </button>
-                    <div style={{ position: 'relative', width: '120px', height: '120px', flexShrink: 0 }}>
-                      <div style={{ width: '100%', height: '100%', borderRadius: '20px', overflow: 'hidden', border: '4px solid var(--gold-pale)', background: '#fff' }}>
-                        {p.photo ? <img src={p.photo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={p.name} /> : <div style={{ fontSize: '40px', padding: '20px' }}>👤</div>}
+
+                    <div className="profile-photo-wrap" style={{ position: 'relative', width: '124px', flexShrink: 0 }}>
+                      <div className="profile-photo-ring">
+                        <div className="profile-photo-inner">
+                          {p.photo ? <img src={p.photo} alt={p.name} /> : '👤'}
+                        </div>
                       </div>
-                      <label style={{ position: 'absolute', bottom: '-5px', right: '-5px', background: 'var(--gold)', color: 'var(--navy)', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }}>
+                      <label className="profile-camera-badge" title="Cambiar foto" style={{ position: 'absolute', bottom: '-2px', right: '-2px' }}>
                         📷
                         <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, (url) => { setProfiles(profiles.map(x => x.id === p.id ? {...x, photo: url} : x)); showToast('Foto guardada ✔'); })} />
                       </label>
                     </div>
+
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ marginBottom: '15px', paddingRight: '40px' }}>
-                        <input className="pjl-input" style={{ fontWeight: 800, border: 'none', background: 'transparent', padding: 0, fontSize: '1.1rem', height: 'auto', marginBottom: '4px' }} value={p.name} onChange={e => setProfiles(profiles.map(x => x.id === p.id ? { ...x, name: e.target.value } : x))} placeholder="Nombre del Miembro" />
-                        <input className="pjl-input" style={{ fontSize: '0.8rem', color: 'var(--navy)', border: 'none', background: 'transparent', padding: 0, height: 'auto', fontWeight: 600 }} value={p.role} onChange={e => setProfiles(profiles.map(x => x.id === p.id ? { ...x, role: e.target.value } : x))} placeholder="Rol o Cargo" />
+                      <div className="profile-head-row">
+                        <input
+                          className="pjl-input profile-name-input"
+                          value={p.name}
+                          onChange={e => setProfiles(profiles.map(x => x.id === p.id ? { ...x, name: e.target.value } : x))}
+                          placeholder="Nombre del Miembro"
+                        />
+                        <input
+                          className="pjl-input profile-role-input"
+                          value={p.role}
+                          onChange={e => setProfiles(profiles.map(x => x.id === p.id ? { ...x, role: e.target.value } : x))}
+                          placeholder="Rol o Cargo"
+                        />
                       </div>
-                      <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Historial Pastoral (Bio)</label>
-                      <textarea className="pjl-input" style={{ fontSize: '0.8rem', minHeight: '70px', marginBottom: '12px', background: 'var(--cream)', border: '1px solid var(--gold-pale)', resize: 'vertical' }} value={p.bio} onChange={e => setProfiles(profiles.map(x => x.id === p.id ? { ...x, bio: e.target.value } : x))} />
-                      <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>Currículum Pastoral (PDF)</label>
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                        <label className="btn-premium btn-premium-gold" style={{ padding: '7px 16px', fontSize: '0.65rem', cursor: 'pointer' }}>
-                          📄 SUBIR CV
+                      <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', margin: '14px 0 5px', fontWeight: 700, letterSpacing: '0.4px' }}>HISTORIAL PASTORAL</label>
+                      <textarea
+                        className="pjl-input profile-bio-input"
+                        value={p.bio}
+                        onChange={e => setProfiles(profiles.map(x => x.id === p.id ? { ...x, bio: e.target.value } : x))}
+                        placeholder="Contá el recorrido pastoral del miembro..."
+                      />
+                      <div className={`profile-cv-box ${p.cvUrl ? 'loaded' : ''}`}>
+                        <span className="profile-cv-icon">{p.cvUrl ? '✅' : '📄'}</span>
+                        <span className="profile-cv-info">
+                          <strong>Currículum Pastoral</strong>
+                          <small>{p.cvUrl ? 'Archivo cargado y visible en el sitio' : 'PDF o Word · opcional'}</small>
+                        </span>
+                        <label className="btn-premium btn-premium-outline profile-cv-btn">
+                          {p.cvUrl ? 'CAMBIAR' : 'SUBIR'}
                           <input type="file" style={{ display: 'none' }} accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={(e) => handleFileUpload(e, (url) => { setProfiles(profiles.map(x => x.id === p.id ? {...x, cvUrl: url} : x)); showToast('CV guardado ✔'); })} />
                         </label>
                         {p.cvUrl && (
-                          <span style={{ fontSize: '11px', color: 'var(--green)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            ✓ CV cargado
-                            <button onClick={() => setProfiles(profiles.map(x => x.id === p.id ? {...x, cvUrl: ''} : x))} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '12px', padding: 0 }}>×</button>
-                          </span>
+                          <button className="profile-cv-remove" title="Quitar CV" onClick={() => setProfiles(profiles.map(x => x.id === p.id ? {...x, cvUrl: ''} : x))}>×</button>
                         )}
                       </div>
-                     </div>
-                   </div>
-                 ))}
-                 {profiles.filter(p => p.teamKey === activeProfileTeam).length === 0 && (
-                   <div className="pjl-empty-state" style={{ gridColumn: '1 / -1' }}>
-                     <div className="empty-icon">👤</div>
-                     <h4 className="empty-title">Sin miembros en este equipo</h4>
-                     <p className="empty-desc">Usá el botón «+ Agregar Miembro» para cargar al primer integrante. Aparecerá automáticamente en la sección Consejo del sitio.</p>
-                   </div>
-                 )}
-               </div>
-             </div>
-           )}
+                    </div>
+                  </div>
+                ))}
+                {teamProfiles.length === 0 && (
+                  <div className="pjl-empty-state" style={{ gridColumn: '1 / -1' }}>
+                    <div className="empty-icon">👤</div>
+                    <h4 className="empty-title">Sin miembros en este equipo</h4>
+                    <p className="empty-desc">Cargá al primer integrante con su foto, cargo y currículum. Aparecerá automáticamente en la sección Consejo del sitio.</p>
+                    <button className="btn-premium btn-premium-gold" onClick={() => {
+                      const newProfile: MemberProfile = {
+                        id: Date.now(),
+                        name: 'Nuevo Miembro',
+                        role: 'Cargo',
+                        bio: 'Biografía',
+                        quote: '',
+                        teamKey: activeProfileTeam,
+                        photo: ''
+                      };
+                      setProfiles([...profiles, newProfile]);
+                      showToast('Miembro agregado ✔');
+                    }}>+ Agregar primer miembro</button>
+                  </div>
+                )}
+              </div>
+            </div>
+            );
+          })()}
+
 
           {/* USUARIOS */}
           {mod === 'usuarios' && (
