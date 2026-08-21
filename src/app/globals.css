@@ -5818,6 +5818,13 @@ textarea:focus-visible,
 }
 
 /* ---------- NAVBAR PÚBLICO — ENTRADA ESCALONADA CON DIFUMINADO ---------- */
+/* Estado inicial: todo oculto hasta que React añade .nav-entered.
+   Así la secuencia es determinista y nunca hay flash del menú. */
+.top-nav:not(.nav-entered) .brand-logo-wrap,
+.top-nav:not(.nav-entered) .brand-text,
+.top-nav:not(.nav-entered) .nav-links .nav-item {
+  opacity: 0;
+}
 /* Curva suave en ambos extremos + desenfoque que se disipa:
    la aparición se percibe como un velo que se levanta, no un salto */
 @keyframes navFadeDown {
@@ -5825,16 +5832,16 @@ textarea:focus-visible,
   55% { opacity: 0.75; filter: blur(2px); }
   to { opacity: 1; transform: translateY(0); filter: blur(0); }
 }
-.nav-links .nav-item { animation: navFadeDown 0.9s cubic-bezier(0.45, 0, 0.25, 1) both; }
-.nav-links .nav-item:nth-child(1) { animation-delay: 0.06s; }
-.nav-links .nav-item:nth-child(2) { animation-delay: 0.12s; }
-.nav-links .nav-item:nth-child(3) { animation-delay: 0.18s; }
-.nav-links .nav-item:nth-child(4) { animation-delay: 0.24s; }
-.nav-links .nav-item:nth-child(5) { animation-delay: 0.3s; }
-.nav-links .nav-item:nth-child(6) { animation-delay: 0.36s; }
-.nav-links .nav-item:nth-child(7) { animation-delay: 0.42s; }
-.nav-links .nav-item:nth-child(8) { animation-delay: 0.48s; }
-.nav-links .nav-item:nth-child(9) { animation-delay: 0.54s; }
+.top-nav.nav-entered .nav-links .nav-item { animation: navFadeDown 0.9s cubic-bezier(0.45, 0, 0.25, 1) both; }
+.top-nav.nav-entered .nav-links .nav-item:nth-child(1) { animation-delay: 0.06s; }
+.top-nav.nav-entered .nav-links .nav-item:nth-child(2) { animation-delay: 0.12s; }
+.top-nav.nav-entered .nav-links .nav-item:nth-child(3) { animation-delay: 0.18s; }
+.top-nav.nav-entered .nav-links .nav-item:nth-child(4) { animation-delay: 0.24s; }
+.top-nav.nav-entered .nav-links .nav-item:nth-child(5) { animation-delay: 0.3s; }
+.top-nav.nav-entered .nav-links .nav-item:nth-child(6) { animation-delay: 0.36s; }
+.top-nav.nav-entered .nav-links .nav-item:nth-child(7) { animation-delay: 0.42s; }
+.top-nav.nav-entered .nav-links .nav-item:nth-child(8) { animation-delay: 0.48s; }
+.top-nav.nav-entered .nav-links .nav-item:nth-child(9) { animation-delay: 0.54s; }
 
 /* Entrada de la marca: el escudo emerge desenfocado y aterriza con rebote,
    el texto se desliza disipándose nítidamente */
@@ -5847,8 +5854,8 @@ textarea:focus-visible,
   from { opacity: 0; transform: translateX(-14px); filter: blur(4px); }
   to { opacity: 1; transform: translateX(0); filter: blur(0); }
 }
-.top-nav .brand-logo-wrap { animation: brandLogoDrop 0.95s cubic-bezier(0.34, 1.4, 0.64, 1) both 0.05s; }
-.top-nav .brand-text { animation: brandTextSlide 0.8s cubic-bezier(0.45, 0, 0.25, 1) both 0.28s; }
+.top-nav.nav-entered .brand-logo-wrap { animation: brandLogoDrop 0.95s cubic-bezier(0.34, 1.4, 0.64, 1) both 0.05s; }
+.top-nav.nav-entered .brand-text { animation: brandTextSlide 0.8s cubic-bezier(0.45, 0, 0.25, 1) both 0.28s; }
 
 @keyframes dropLinkIn {
   from { opacity: 0; transform: translateX(-12px); }
@@ -5866,6 +5873,12 @@ textarea:focus-visible,
 .dropdown-pjl .dropdown-link:nth-child(8) { animation-delay: 0.31s; }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Sin animaciones el estado oculto inicial debe anularse */
+  .top-nav:not(.nav-entered) .brand-logo-wrap,
+  .top-nav:not(.nav-entered) .brand-text,
+  .top-nav:not(.nav-entered) .nav-links .nav-item {
+    opacity: 1 !important;
+  }
   .nav-links .nav-item,
   .nav-item:hover .dropdown-pjl .dropdown-link,
   .nav-item:focus-within .dropdown-pjl .dropdown-link,

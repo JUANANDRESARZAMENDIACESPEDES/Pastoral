@@ -248,6 +248,14 @@ function HomeContent() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // Dispara la animación de entrada del navbar de forma determinista:
+  // los elementos nacen ocultos y la clase se añade tras el montaje
+  const [navEntered, setNavEntered] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setNavEntered(true), 80);
+    return () => clearTimeout(t);
+  }, []);
+
   // Sección activa del navbar (agrupa subpáginas con su botón padre)
   const activeSection = (
     {
@@ -644,7 +652,7 @@ function HomeContent() {
       </div>
 
       {/* 2. NAVBAR REFINADA */}
-      <nav className={`top-nav ${navScrolled ? 'nav-scrolled' : ''}`}>
+      <nav className={`top-nav ${navScrolled ? 'nav-scrolled' : ''} ${navEntered ? 'nav-entered' : ''}`}>
         <div className="container nav-content">
           <div
             className="logo-area brand-lockup"
