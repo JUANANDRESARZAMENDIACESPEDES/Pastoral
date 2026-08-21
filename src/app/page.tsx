@@ -217,13 +217,18 @@ function HomeContent() {
   };
 
   // Viewport real (evita mismatch de hidratación y reacciona a redimensionados)
+  // Nota: se usa 'resize' porque MediaQueryList.addEventListener no existe
+  // en Safari/iOS antiguos y su error rompe la hidratación completa.
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 768px)');
-    const update = () => setIsMobileViewport(mq.matches);
+    const update = () => setIsMobileViewport(window.innerWidth <= 768);
     update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
+    window.addEventListener('resize', update);
+    window.addEventListener('orientationchange', update);
+    return () => {
+      window.removeEventListener('resize', update);
+      window.removeEventListener('orientationchange', update);
+    };
   }, []);
 
   // Reset selected zone when leaving zones page
@@ -349,7 +354,7 @@ function HomeContent() {
 
   // --- INTERSECTION OBSERVER FOR EXQUISITE SCROLL ANIMATIONS ---
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || typeof IntersectionObserver === 'undefined') return;
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
