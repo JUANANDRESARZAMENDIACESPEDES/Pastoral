@@ -1501,14 +1501,16 @@ function AdminContent() {
       <aside className={`admin-sidebar ${sidebarOpen ? 'sidebar-mobile-open' : ''}`}>
         <div className="sidebar-header" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
           <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
-            {branding.mainLogo ? (
-              <img src={branding.mainLogo} alt="PJL Logo" className="logo-img-circular" style={{ width: '40px', height: '40px', border: '2px solid var(--gold)' }} />
-            ) : (
-              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--navy)', fontWeight: 'bold' }}>P</div>
-            )}
-            <div className="serif" style={{ fontSize: '1.6rem', marginLeft: '10px' }}>PJL <em>Admin</em></div>
+            <span className="side-logo-wrap">
+              {branding.mainLogo ? (
+                <img src={branding.mainLogo} alt="PJL Logo" className="logo-img-circular" style={{ width: '40px', height: '40px', border: '2px solid var(--gold)' }} />
+              ) : (
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--navy)', fontWeight: 'bold' }}>P</div>
+              )}
+            </span>
+            <div className="serif side-logo-title" style={{ fontSize: '1.6rem', marginLeft: '12px' }}>PJL <em>Admin</em></div>
           </Link>
-          <p className="premium-label" style={{ fontSize: '0.65rem', color: 'var(--gold)', paddingLeft: '50px' }}>Panel Institucional</p>
+          <p className="premium-label side-logo-sub" style={{ fontSize: '0.65rem', color: 'var(--gold)', paddingLeft: '54px' }}>Panel Institucional</p>
         </div>
 
         <nav className="sidebar-nav">
@@ -1529,6 +1531,7 @@ function AdminContent() {
                 <span className="nav-icon">{icon}</span>
                 <span className="nav-label">{n.label}</span>
                 {!allowed && <span style={{ marginLeft: 'auto', fontSize: '12px', opacity: 0.9 }}>🔒</span>}
+                {mod === n.id && allowed && <span className="nav-active-dot" aria-hidden="true"></span>}
               </button>
             );
           })}
