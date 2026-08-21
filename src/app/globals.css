@@ -2438,13 +2438,9 @@ input, textarea { cursor: text; }
 }
 
 .admin-nav-item span:last-child { display: inline-block; }
-@media (max-width: 768px) {
-  .admin-nav-item span:last-child { display: none !important; }
-}
 
-.admin-main { 
-  margin-left: 280px; 
-  padding: 40px;
+.admin-main {
+  margin-left: 280px;
   transition: margin 0.3s ease;
 }
 
@@ -3575,5 +3571,296 @@ input:checked + .pjl-slider:before {
     max-width: 100%;
     white-space: normal;
     overflow-wrap: anywhere;
+  }
+}
+
+/* ============================================================
+   UI POLISH LAYER (2026)
+   Botones refinados, estados de foco, panel admin y
+   ajustes finos de responsividad. Cargado al final a propósito
+   para ganar la cascada sin tocar las reglas originales.
+   ============================================================ */
+
+/* ---------- BOTONES BASE ---------- */
+.btn-pjl {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 34px;
+  background: linear-gradient(135deg, var(--gold) 0%, #b3822e 100%);
+  color: var(--navy);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.4px;
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 6px 20px rgba(200, 151, 58, 0.28);
+}
+.btn-pjl:hover {
+  background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 100%);
+  box-shadow: 0 10px 28px rgba(200, 151, 58, 0.4);
+}
+
+.btn-premium {
+  border-radius: 10px;
+  font-size: 12px;
+  padding: 12px 24px;
+  gap: 8px;
+}
+.btn-premium-gold {
+  background: linear-gradient(135deg, var(--gold) 0%, #b3822e 100%);
+  color: var(--navy);
+  box-shadow: 0 4px 14px rgba(200, 151, 58, 0.3);
+}
+.btn-premium-gold:hover {
+  background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 100%);
+  box-shadow: 0 8px 22px rgba(200, 151, 58, 0.42);
+}
+.btn-premium-outline {
+  background: transparent;
+  border: 1.5px solid rgba(200, 151, 58, 0.55);
+  color: #a67c2e;
+}
+.btn-premium-outline:hover {
+  background: rgba(200, 151, 58, 0.1);
+  border-color: var(--gold);
+  transform: translateY(-1px);
+}
+.admin-sidebar .btn-premium-outline {
+  color: var(--gold);
+}
+button:disabled,
+.btn-premium:disabled,
+.btn-pjl:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Estados de foco visibles (accesibilidad teclado) */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid rgba(200, 151, 58, 0.65);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Puntos del slider del hero: exentos del min-height global de botones */
+.hero-dot-btn {
+  min-height: 0 !important;
+  height: 8px !important;
+  width: 8px !important;
+  border-radius: 999px !important;
+  transition: width 0.3s ease, background 0.3s ease !important;
+}
+.hero-dot-btn.is-active {
+  width: 28px !important;
+}
+
+/* ---------- HERO RESPONSIVO ---------- */
+.hero-pjl h2 {
+  font-size: clamp(2.05rem, 5vw, 68px) !important;
+  line-height: 1.08 !important;
+}
+@media (max-width: 768px) {
+  .hero-pjl h2 {
+    font-size: clamp(1.9rem, 8.5vw, 2.6rem) !important;
+  }
+  .hero-cta-group {
+    gap: 12px !important;
+  }
+  .hero-cta-group .btn-pjl {
+    width: 100%;
+    max-width: 340px;
+    padding: 14px 22px !important;
+  }
+}
+
+/* ---------- GRIDS PÚBLICOS EN TABLET/MÓVIL ---------- */
+@media (max-width: 1024px) {
+  .footer-grid,
+  .footer-pjl [style*="grid-template-columns"] {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 40px !important;
+  }
+  .insti-page-grid,
+  .contact-form-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 30px !important;
+  }
+}
+@media (max-width: 720px) {
+  .footer-grid,
+  .footer-pjl [style*="grid-template-columns"],
+  .insti-page-grid,
+  .contact-form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 32px !important;
+  }
+}
+
+/* ---------- CALENDARIO PÚBLICO ---------- */
+.calendar-wrapper {
+  border-radius: 16px;
+}
+@media (max-width: 768px) and (orientation: portrait) {
+  .calendar-wrapper {
+    height: 68vh !important;
+    min-height: 420px !important;
+  }
+}
+@media (max-width: 640px) {
+  .mvv-card {
+    padding: 30px 20px !important;
+  }
+}
+
+/* ---------- MAPA (ZonaMap) ---------- */
+.zona-map-inner {
+  will-change: height;
+}
+@media (max-width: 640px) {
+  .zona-map-inner {
+    height: 360px !important;
+  }
+}
+
+/* ---------- PANEL ADMIN: REFINAMIENTO ---------- */
+.admin-shell {
+  height: 100vh;
+  height: 100dvh;
+}
+.admin-sidebar {
+  background: linear-gradient(180deg, var(--navy) 0%, #16223d 100%);
+  border-right: 1px solid rgba(200, 151, 58, 0.25);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.18);
+}
+.sidebar-header {
+  padding-bottom: 18px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.admin-nav-item {
+  border-radius: 10px;
+  font-size: 13.5px;
+  letter-spacing: 0.2px;
+}
+.admin-nav-item:hover {
+  transform: translateX(4px);
+  background: rgba(255, 255, 255, 0.06);
+}
+.admin-nav-item.active {
+  background: linear-gradient(90deg, rgba(200, 151, 58, 0.16) 0%, rgba(200, 151, 58, 0.04) 100%);
+  box-shadow: inset 0 0 0 1px rgba(200, 151, 58, 0.25);
+}
+.admin-topbar {
+  background: #fff;
+  box-shadow: 0 2px 14px rgba(26, 39, 68, 0.06);
+  position: relative;
+  z-index: 5;
+}
+.pjl-card {
+  border-radius: 16px;
+}
+.pjl-table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.pjl-toast {
+  max-width: min(92vw, 420px);
+  text-align: center;
+  font-weight: 600;
+}
+@media (max-width: 768px) {
+  .pjl-toast {
+    top: auto !important;
+    bottom: 24px !important;
+    right: 50% !important;
+    transform: translateX(50%) !important;
+    left: auto !important;
+    white-space: normal;
+  }
+  .glass-modal-overlay {
+    padding: 12px;
+    align-items: flex-end;
+  }
+  .modal-responsive-card {
+    max-height: 92dvh !important;
+    overflow-y: auto !important;
+    padding: 26px 20px !important;
+    border-radius: 18px 18px 0 0 !important;
+  }
+  .user-info-text {
+    display: none !important;
+  }
+  .sidebar-hamburger {
+    display: block;
+    font-size: 26px;
+  }
+}
+
+/* Login admin */
+.login-glass-container {
+  border-radius: 24px;
+}
+.login-back-button:hover {
+  background: rgba(200, 151, 58, 0.22);
+}
+@media (max-width: 480px) {
+  .login-glass-container {
+    padding: 34px 20px;
+  }
+}
+
+/* Tarjeta de estado de Google Calendar */
+.gcal-status-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 16px 20px;
+  border-radius: 14px;
+  border: 1px solid var(--gold-pale);
+  background: var(--cream);
+}
+.gcal-status-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: gcalPulse 2s ease infinite;
+}
+.gcal-status-dot.connected { background: #10B981; box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.18); }
+.gcal-status-dot.disconnected { background: #EF4444; box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15); }
+@keyframes gcalPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+/* Scrollbars discretos */
+*::-webkit-scrollbar { width: 9px; height: 9px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: rgba(200, 151, 58, 0.35);
+  border-radius: 99px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover { background-color: rgba(200, 151, 58, 0.6); }
+
+/* Movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

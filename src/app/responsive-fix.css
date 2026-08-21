@@ -45,6 +45,10 @@ button {
   min-height: 44px;
 }
 
+button.hero-dot-btn {
+  min-height: 0;
+}
+
 input,
 select,
 textarea {
@@ -138,9 +142,24 @@ th {
 }
 
 @media (max-width: 1024px) {
+  /* Los grids inline de dos columnas fijas colapsan en tablet
+     (React serializa los estilos en kebab-case y sin comillas) */
+  [style*="grid-template-columns:1fr 350px"],
+  [style*="grid-template-columns: 1fr 350px"],
+  [style*="grid-template-columns:1.6fr 1fr"],
+  [style*="grid-template-columns: 1.6fr 1fr"],
+  [style*="grid-template-columns:1.15fr 0.85fr"],
+  [style*="grid-template-columns: 1.15fr 0.85fr"],
+  [style*="grid-template-columns:1fr 2fr"],
+  [style*="grid-template-columns: 1fr 2fr"] {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+
   .container,
   .section-head,
   .hero-pjl .container,
+  .admin-content,
   .admin-content-area {
     padding-left: clamp(16px, 3vw, 24px);
     padding-right: clamp(16px, 3vw, 24px);

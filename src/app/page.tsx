@@ -216,6 +216,16 @@ function HomeContent() {
     setMobileSubmenuOpen(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
+  // Viewport real (evita mismatch de hidratación y reacciona a redimensionados)
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    const update = () => setIsMobileViewport(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+
   // Reset selected zone when leaving zones page
   useEffect(() => {
     if (currentPage !== 'zonas') {
@@ -492,7 +502,7 @@ function HomeContent() {
   };
   const activeHeroSlide = liveHeroImages[liveHeroIndex];
   const activeHeroPosition = activeHeroSlide
-    ? mapHeroPosition(typeof window !== 'undefined' && window.innerWidth <= 768 ? activeHeroSlide.mobilePosition : activeHeroSlide.desktopPosition)
+    ? mapHeroPosition(isMobileViewport ? activeHeroSlide.mobilePosition : activeHeroSlide.desktopPosition)
     : 'center center';
 
   return (
@@ -604,7 +614,7 @@ function HomeContent() {
               <button type="button" onClick={() => navigate('zonas')} className="nav-btn" data-tooltip="Explorar nuestras comunidades">🗺️ Zonas ▾</button>
               <div className="dropdown-pjl">
                 {zonasInfo.map(z => (
-                  <button key={z.id} type="button" onClick={() => { navigate('zonas'); setActiveZoneTab('capillas'); setSelectedZone(z.id); }} className="dropdown-link">Zona {z.id} – {z.name}</button>
+                  <button key={z.id} type="button" onClick={() => { navigate('zonas'); setActiveZoneTab('capillas'); setSelectedZone(z.id); }} className="dropdown-link">{z.name ? `Zona ${z.id} – ${z.name}` : `Zona ${z.id}`}</button>
                 ))}
               </div>
             </li>
@@ -766,7 +776,7 @@ function HomeContent() {
                   </div>
                 )}
                 <span className="hero-tag reveal">{siteContent.heroTag}</span>
-                 <h2 className="reveal" style={{ animationDelay: '0.2s', marginBottom: '20px', fontSize: '68px', lineHeight: 1.05, color: '#fff', fontFamily: 'var(--font-display)', fontWeight: 900 }}>
+                 <h2 className="reveal" style={{ animationDelay: '0.2s', marginBottom: '20px', lineHeight: 1.05, color: '#fff', fontFamily: 'var(--font-display)', fontWeight: 900 }}>
                    <span dangerouslySetInnerHTML={{ __html: siteContent.heroTitle || '' }} />
                  </h2>
                  <p className="reveal" style={{ animationDelay: '0.4s', marginBottom: '35px', fontSize: '1.15rem', maxWidth: '580px', lineHeight: '1.75', color: 'rgba(255,255,255,0.85)' }}>
@@ -774,10 +784,10 @@ function HomeContent() {
                  </p>
                  <div className="reveal hero-cta-group" style={{ animationDelay: '0.6s', display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
                    {siteContent.heroBtnText ? (
-                     <button className="btn-pjl hero-primary-cta" style={{ padding: '15px 40px', background: 'var(--gold)', color: 'var(--navy)', fontWeight: 700, borderRadius: '8px' }} onClick={() => navigate(siteContent.heroBtnLink?.replace('/', '') || 'contacto')}>{siteContent.heroBtnText}</button>
+                     <button className="btn-pjl hero-primary-cta" style={{ padding: '15px 40px', color: 'var(--navy)', fontWeight: 700 }} onClick={() => navigate(siteContent.heroBtnLink?.replace('/', '') || 'contacto')}>{siteContent.heroBtnText}</button>
                    ) : (
                      <>
-                       <button className="btn-pjl hero-primary-cta" style={{ padding: '15px 40px', background: 'var(--gold)', color: 'var(--navy)', fontWeight: 700, borderRadius: '8px' }} onClick={() => navigate('estatuto')}>Conocer Estatuto</button>
+                       <button className="btn-pjl hero-primary-cta" style={{ padding: '15px 40px', color: 'var(--navy)', fontWeight: 700 }} onClick={() => navigate('estatuto')}>Conocer Estatuto</button>
                        <button className="btn-pjl hero-secondary-cta" style={{ padding: '15px 40px', border: '2px solid rgba(255,255,255,0.8)', color: '#fff', borderRadius: '8px' }} onClick={() => navigate('contacto')}>Contáctanos</button>
                      </>
                    )}
@@ -793,7 +803,7 @@ function HomeContent() {
                       ‹
                     </button>
                     {liveHeroImages.map((_, i) => (
-                      <button key={i} onClick={() => setLiveHeroIndex(i)} style={{ width: i === liveHeroIndex ? '28px' : '8px', height: '8px', borderRadius: '4px', background: i === liveHeroIndex ? 'var(--gold)' : 'rgba(255,255,255,0.35)', border: 'none', cursor: 'pointer', transition: 'all 0.3s ease', padding: 0 }} />
+                      <button key={i} onClick={() => setLiveHeroIndex(i)} className={`hero-dot-btn${i === liveHeroIndex ? ' is-active' : ''}`} style={{ background: i === liveHeroIndex ? 'var(--gold)' : 'rgba(255,255,255,0.35)', border: 'none', cursor: 'pointer', padding: 0 }} aria-label={`Ir al slide ${i + 1}`} />
                     ))}
                     <button
                       type="button"
@@ -1282,7 +1292,7 @@ function HomeContent() {
                   <h3>Estructura <i>Institucional</i></h3>
                   <div className="line"></div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '60px', alignItems: 'center' }}>
+                <div className="insti-page-grid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '60px', alignItems: 'center' }}>
                   <div className="reveal">
                     <h4 className="serif" style={{ fontSize: '32px', color: 'var(--navy)', marginBottom: '25px' }}>{siteContent.instiTitulo}</h4>
                     <p style={{ fontSize: '1.1rem', lineHeight: '1.8', color: 'var(--text-muted)', textAlign: 'justify', whiteSpace: 'pre-line' }}>{siteContent.instiDesc}</p>
@@ -1834,7 +1844,18 @@ function HomeContent() {
                           <h4 style={{ margin: '8px 0' }}>{a.title}</h4>
                           <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-muted)' }}>{a.description || 'Consulta los detalles de este evento.'}</p>
                           {a.inscription && (
-                            <button className="btn-pjl" style={{ marginTop: '15px', padding: '10px 20px', border: '1px solid var(--navy)', color: 'var(--navy)', background: 'transparent', fontSize: '13px', borderRadius: '4px', fontWeight: 600 }}>Inscribirse al Evento</button>
+                            <button
+                              className="btn-pjl"
+                              style={{ marginTop: '15px', padding: '10px 20px', border: '1px solid var(--navy)', color: 'var(--navy)', background: 'transparent', fontSize: '13px', borderRadius: '8px', fontWeight: 600, boxShadow: 'none' }}
+                              onClick={() => {
+                                const waNumber = liveSocial.whatsapp.replace(/\D/g, '');
+                                const texto = encodeURIComponent(`Hola, quiero inscribirme al evento "${a.title}" de la Agenda Pastoral.`);
+                                if (waNumber) window.open(`https://wa.me/${waNumber}?text=${texto}`, '_blank', 'noopener');
+                                else navigate('contacto');
+                              }}
+                            >
+                              Inscribirse al Evento
+                            </button>
                           )}
                         </div>
                       </div>
@@ -2159,20 +2180,33 @@ function HomeContent() {
 
               <div className="mvv-card reveal" style={{ maxWidth: '800px', margin: '0 auto', padding: '60px', animationDelay: '0.4s' }}>
                 <h4 className="serif" style={{ marginBottom: '30px', textAlign: 'center', fontSize: '24px' }}>Envíanos un Correo</h4>
-                <form className="pjl-form" onSubmit={(e) => e.preventDefault()}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <form className="pjl-form" onSubmit={(e) => {
+                  e.preventDefault();
+                  const data = new FormData(e.currentTarget);
+                  const nombre = String(data.get('nombre') || '').trim();
+                  const email = String(data.get('email') || '').trim();
+                  const mensaje = String(data.get('mensaje') || '').trim();
+                  const texto = encodeURIComponent(`Hola, soy ${nombre} (${email}). ${mensaje}`);
+                  const waNumber = liveSocial.whatsapp.replace(/\D/g, '');
+                  if (waNumber) {
+                    window.open(`https://wa.me/${waNumber}?text=${texto}`, '_blank', 'noopener');
+                  } else {
+                    window.location.href = `mailto:pjl.luque@gmail.com?subject=${encodeURIComponent('Contacto web PJL')}&body=${texto}`;
+                  }
+                }}>
+                  <div className="contact-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                     <div className="form-group">
                       <label className="premium-label" style={{ fontSize: '10px', marginBottom: '8px', display: 'block' }}>TU NOMBRE</label>
-                      <input type="text" placeholder="Ej: Juan Pérez" required className="pjl-input" />
+                      <input type="text" name="nombre" placeholder="Ej: Juan Pérez" required className="pjl-input" />
                     </div>
                     <div className="form-group">
                       <label className="premium-label" style={{ fontSize: '10px', marginBottom: '8px', display: 'block' }}>TU EMAIL</label>
-                      <input type="email" placeholder="ejemplo@correo.com" required className="pjl-input" />
+                      <input type="email" name="email" placeholder="ejemplo@correo.com" required className="pjl-input" />
                     </div>
                   </div>
                   <div className="form-group" style={{ marginTop: '20px' }}>
                     <label className="premium-label" style={{ fontSize: '10px', marginBottom: '8px', display: 'block' }}>MENSAJE</label>
-                    <textarea placeholder="¿En qué podemos ayudarte?" rows={6} required className="pjl-input"></textarea>
+                    <textarea name="mensaje" placeholder="¿En qué podemos ayudarte?" rows={6} required className="pjl-input"></textarea>
                   </div>
                   <button type="submit" className="btn-premium btn-premium-gold" style={{ marginTop: '30px', width: '100%', padding: '20px', fontSize: '1rem' }}>ENVIAR MENSAJE A SECRETARÍA</button>
                 </form>
@@ -2423,7 +2457,7 @@ function HomeContent() {
       {/* 4. FOOTER INSTITUCIONAL REFINADO */}
       <footer className="footer-pjl">
         <div className="container">
-          <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1.5fr', gap: '60px' }}>
+          <div className="footer-grid">
             
             {/* Columna 1: Branding y Redes */}
             <div>

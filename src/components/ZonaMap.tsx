@@ -539,7 +539,7 @@ export default function ZonaMap({
             </div>
           </div>
         )}
-        <div ref={mapRef} style={{ height, width: '100%', borderRadius: '12px', zIndex: 1 }} className={drawingMode ? 'leaflet-drawing-cursor' : ''} />
+        <div ref={mapRef} className={`zona-map-inner${drawingMode ? ' leaflet-drawing-cursor' : ''}`} style={{ height, width: '100%', borderRadius: '12px', zIndex: 1 }} />
       </div>
     </>
   );

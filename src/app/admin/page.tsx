@@ -1444,7 +1444,7 @@ function AdminContent() {
           </div>
         </header>
 
-        <div className="admin-content" style={{ position: 'relative' }}>
+        <div className="admin-content-area" style={{ position: 'relative' }}>
           {/* LOGO WATERMARK BACKGROUND */}
           {branding.logoWatermark && branding.mainLogo && (
             <div style={{
@@ -3245,7 +3245,7 @@ function AdminContent() {
                         </td>
                         <td>
                           <button onClick={() => openEdit('capillas', c)} className="btn-premium btn-premium-outline" style={{ padding: '5px 12px', fontSize: '0.65rem', marginRight: '5px' }}>EDITAR</button>
-                          <button onClick={() => setChapels(chapels.filter(ch => ch.id !== c.id))} className="btn-premium" style={{ color: '#ef4444' }}>ELIMINAR</button>
+                          <button onClick={() => deleteItem('chapels', c.id)} className="btn-premium btn-premium-outline" style={{ color: '#ef4444', borderColor: 'rgba(239,68,68,0.5)' }}>ELIMINAR</button>
                         </td>
                       </tr>
                     ))}
@@ -3283,42 +3283,53 @@ function AdminContent() {
           {/* ACTIVIDADES */}
           {mod === 'actividades' && (
             <div className="animate-reveal pjl-card" style={{ padding: '40px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', flexWrap: 'wrap', gap: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
                 <div>
                   <h3 className="serif" style={{ margin: 0, color: 'var(--navy)' }}>Agenda Pastoral</h3>
                   <p style={{ color: 'var(--text-muted)', fontSize: '12px' }}>Administra eventos, retiros y asambleas</p>
                 </div>
-                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    {['Todos', 'Formación', 'Liturgia', 'Organización', 'Social'].map(cat => (
-                      <button 
-                        key={cat} 
-                        onClick={() => setSearchTerm(cat === 'Todos' ? '' : cat)} 
-                        className={`btn-premium ${searchTerm === cat ? 'btn-premium-gold' : 'btn-premium-outline'}`}
-                        style={{ padding: '6px 12px', fontSize: '10px' }}
-                      >
-                        {cat.toUpperCase()}
-                      </button>
-                    ))}
+                <button className="btn-premium btn-premium-gold" onClick={() => openNew('actividades')}>+ AGREGAR ACTIVIDAD</button>
+              </div>
+
+              <div className="gcal-status-card" style={{ marginBottom: '24px' }}>
+                <span className={`gcal-status-dot ${googleCalendarStatus?.connected ? 'connected' : 'disconnected'}`} />
+                <div style={{ flex: 1, minWidth: '220px' }}>
+                  <div style={{ fontWeight: 800, fontSize: '13px', color: 'var(--navy)', letterSpacing: '0.4px' }}>
+                    GOOGLE CALENDAR {googleCalendarStatus?.connected ? 'CONECTADO' : 'DESCONECTADO'}
+                    {googleCalendarStatus?.account ? <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}> · {googleCalendarStatus.account}</span> : null}
                   </div>
-                  <button className="btn-premium btn-premium-outline" style={{ borderColor: '#EF4444', color: '#EF4444' }} onClick={deleteAllActivities}>
-                    BORRAR TODO
-                  </button>
-                  <button
-                    className="btn-premium btn-premium-outline"
-                    style={{ borderColor: googleCalendarStatus?.connected ? '#10B981' : '#EF4444', color: googleCalendarStatus?.connected ? '#10B981' : '#EF4444' }}
-                    onClick={() => window.location.assign('/api/google-calendar/connect')}
-                    disabled={googleCalendarSyncing}
-                  >
-                    {googleCalendarStatus?.connected ? 'GOOGLE CONECTADO' : 'CONECTAR GOOGLE CALENDAR'}
-                  </button>
-                  <button className="btn-premium btn-premium-gold" onClick={() => openNew('actividades')}>+ AGREGAR ACTIVIDAD</button>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    {googleCalendarStatus?.connected
+                      ? 'Sincronización automática activa: cada actividad se crea y actualiza en tu calendario.'
+                      : 'Conecta tu cuenta para que cada actividad se cree automáticamente en Google Calendar.'}
+                  </div>
                 </div>
-                <div style={{ marginTop: '10px', fontSize: '12px', color: 'var(--text-muted)' }}>
-                  {googleCalendarStatus?.connected
-                    ? `Sincronización automática activa${googleCalendarStatus.account ? ` para ${googleCalendarStatus.account}` : ''}.`
-                    : 'Conecta Google Calendar para que cada actividad se cree automáticamente en la cuenta del usuario.'}
+                <button
+                  className={`btn-premium ${googleCalendarStatus?.connected ? 'btn-premium-outline' : 'btn-premium-gold'}`}
+                  style={googleCalendarStatus?.connected ? { borderColor: '#10B981', color: '#10B981' } : undefined}
+                  onClick={() => window.location.assign('/api/google-calendar/connect')}
+                  disabled={googleCalendarSyncing}
+                >
+                  {googleCalendarStatus?.connected ? 'ADMINISTRAR CONEXIÓN' : 'CONECTAR AHORA'}
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+                <div className="admin-chip-scroll" style={{ display: 'flex', gap: '8px', overflowX: 'auto' }}>
+                  {['Todos', 'Formación', 'Liturgia', 'Organización', 'Social'].map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setSearchTerm(cat === 'Todos' ? '' : cat)}
+                      className={`btn-premium ${searchTerm === cat || (cat === 'Todos' && !searchTerm) ? 'btn-premium-gold' : 'btn-premium-outline'}`}
+                      style={{ padding: '6px 12px', fontSize: '10px' }}
+                    >
+                      {cat.toUpperCase()}
+                    </button>
+                  ))}
                 </div>
+                <button className="btn-premium btn-premium-outline" style={{ borderColor: '#EF4444', color: '#EF4444' }} onClick={deleteAllActivities}>
+                  BORRAR TODO
+                </button>
               </div>
               
               {content.googleCalendarUrl && (
@@ -3858,7 +3869,15 @@ function AdminContent() {
       {modal && (
         <div className="glass-modal-overlay" onClick={closeModal}>
           <div className="pjl-card animate-reveal modal-responsive-card" style={{ maxWidth: '600px', width: '100%', padding: '50px' }} onClick={e => e.stopPropagation()}>
-            <h3 className="serif" style={{ marginBottom: '30px' }}>Editar / Crear Elemento</h3>
+            <h3 className="serif" style={{ marginBottom: '30px', color: 'var(--navy)' }}>
+              {editId ? 'Editar' : 'Crear'} {({
+                noticias: 'Noticia',
+                actividades: 'Actividad',
+                docs: 'Documento',
+                capillas: 'Capilla',
+                usuarios: 'Usuario',
+              } as Record<string, string>)[modal] || 'Elemento'}
+            </h3>
 
             {(modal === 'noticias' || modal === 'actividades') && (
               <div style={{ display: 'grid', gap: '20px' }}>
