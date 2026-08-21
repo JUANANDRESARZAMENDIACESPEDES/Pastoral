@@ -3869,6 +3869,20 @@ textarea:focus-visible,
    SISTEMA DE ESTADOS VACÍOS Y ENCABEZADOS (2026 v2)
    ============================================================ */
 
+/* ---------- DRAWER MÓVIL: POSICIONAMIENTO DETERMINÍSTICO ----------
+   El archivo base define el drawer dos veces (una con 'right', otra con
+   'left'). Al aplicar juntas quedan sobredeterminadas y algunos navegadores
+   resuelven distinto. Unificamos: oculto = left:-100%, abierto = left:0,
+   y anulamos cualquier 'right' residual. */
+.mobile-nav-drawer {
+  right: auto;
+  left: -100%;
+}
+.mobile-nav-drawer.open {
+  right: auto;
+  left: 0;
+}
+
 /* ---------- ESTADO VACÍO REUTILIZABLE ---------- */
 .pjl-empty-state {
   display: flex;

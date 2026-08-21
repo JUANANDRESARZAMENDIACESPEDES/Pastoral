@@ -421,7 +421,9 @@ th {
   }
 
   .mobile-nav-drawer {
-    left: 0 !important;
+    /* left debe ser 'auto': con left+right+width sobredeterminados el navegador
+       ignora 'right' y el drawer quedaba fijo en pantalla cubriendo todo. */
+    left: auto !important;
     right: -100vw !important;
     width: 100vw !important;
     max-width: 100vw !important;
@@ -429,6 +431,7 @@ th {
     border-right: 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
+    transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
   }
 
   .drawer-backdrop {
@@ -436,6 +439,7 @@ th {
   }
 
   .mobile-nav-drawer.open {
+    left: auto !important;
     right: 0 !important;
   }
 
