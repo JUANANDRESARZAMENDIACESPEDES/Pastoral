@@ -617,6 +617,15 @@ function HomeContent() {
     { id: 'mmpjl', label: 'Música' }
   ];
 
+  // Identidad visual y descripción de cada equipo del consejo
+  const councilTabMeta: Record<string, { icon: string; desc: string }> = {
+    coordinacion: { icon: '⛪', desc: 'Órgano de gobierno y planificación estratégica de la Pastoral Juvenil Luqueña.' },
+    efo: { icon: '🎓', desc: 'Formación, retiros, talleres y capacitaciones para crecer en la fe.' },
+    ecomu: { icon: '📡', desc: 'La voz digital de la comunidad: redes, boletín y comunicación institucional.' },
+    eli: { icon: '🕯️', desc: 'Evangelización y liturgia al servicio de cada comunidad juvenil.' },
+    mmpjl: { icon: '🎵', desc: 'Música y coral que acompañan cada celebración de la juventud luqueña.' }
+  };
+
   const zoneColors = {
     1: branding.zona1Color || '#C8973A',
     2: branding.zona2Color || '#C8973A',
@@ -1745,7 +1754,7 @@ function HomeContent() {
                             {p.bio ? (
                               <>
                                 {truncateBio(p.bio)}{' '}
-                                <button onClick={() => setSelectedProfile(p)} style={{ background:'none', border:'none', color:'var(--gold)', fontWeight:700, fontSize:'13px', cursor:'pointer', padding:0 }}>Leer más</button>
+<button type="button" onClick={() => setSelectedProfile(p)} className="pc-more">Leer más</button>
                               </>
                             ) : (
                               <p style={{ fontStyle: 'italic', fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>Responsable de la animación y comunión en esta zona.</p>
@@ -1896,14 +1905,22 @@ function HomeContent() {
                 <h3>Consejo <i>PJL Luque</i></h3>
                 <div className="line"></div>
               </div>
-              <div style={{ display: 'flex', gap: '10px', marginBottom: '60px', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <div className="council-tabs reveal" role="tablist" aria-label="Equipos del Consejo">
                 {councilTabs.map(t => (
-                  <button key={t.id} onClick={() => setActiveConsejoTab(t.id)}
-                          className={`btn-premium ${activeConsejoTab === t.id ? 'btn-premium-gold' : 'btn-premium-outline'}`}>
-                    {t.label}
+                  <button key={t.id} type="button" role="tab" aria-selected={activeConsejoTab === t.id}
+                          onClick={() => setActiveConsejoTab(t.id)}
+                          className={`council-tab ${activeConsejoTab === t.id ? 'is-active' : ''}`}>
+                    <span className="ct-ico" aria-hidden="true">{councilTabMeta[t.id]?.icon}</span>
+                    <span className="ct-txt">{t.label}</span>
                   </button>
                 ))}
               </div>
+              {councilTabMeta[activeConsejoTab] && (
+                <p key={activeConsejoTab} className="council-tab-desc">
+                  <span aria-hidden="true">{councilTabMeta[activeConsejoTab].icon}</span>
+                  {councilTabMeta[activeConsejoTab].desc}
+                </p>
+              )}
 
               {/* Representantes: show one coordinator per zone + team leads */}
               {activeConsejoTab === 'representantes' ? (
@@ -1925,7 +1942,7 @@ function HomeContent() {
                             <p className="profile-card-role">{z.name}</p>
                             <p className="profile-card-bio" style={{ textAlign: 'center' }}>
                               {truncateBio(coord.bio)}{' '}
-                              <button onClick={() => setSelectedProfile(coord)} style={{ background:'none', border:'none', color:'var(--gold)', fontWeight:700, fontSize:'13px', cursor:'pointer', padding:0 }}>Leer más</button>
+                              <button type="button" onClick={() => setSelectedProfile(coord)} className="pc-more">Leer más</button>
                             </p>
                             {coord.cvUrl && (
                               <button onClick={() => handleDownload(coord.cvUrl!, `CV_${coord.name}.pdf`)} className="btn-cv-pjl">
@@ -1950,7 +1967,7 @@ function HomeContent() {
                             <p className="profile-card-role">{tk.toUpperCase()}</p>
                             <p className="profile-card-bio" style={{ textAlign: 'center' }}>
                               {truncateBio(coord.bio)}{' '}
-                              <button onClick={() => setSelectedProfile(coord)} style={{ background:'none', border:'none', color:'var(--gold)', fontWeight:700, fontSize:'13px', cursor:'pointer', padding:0 }}>Leer más</button>
+                              <button type="button" onClick={() => setSelectedProfile(coord)} className="pc-more">Leer más</button>
                             </p>
                             {coord.cvUrl && (
                               <button onClick={() => handleDownload(coord.cvUrl!, `CV_${coord.name}.pdf`)} className="btn-cv-pjl">

@@ -7461,3 +7461,336 @@ html.show-splash .splash-screen { visibility: visible; }
   .pm-body,
   .pm-cv { animation-duration: 0.01s !important; animation-delay: 0s !important; }
 }
+
+/* ============================================================
+   CONSEJO PASTORAL — PESTAÑAS DE EQUIPO + TARJETAS DE PERSONAS
+   ============================================================ */
+
+/* ---------- Contenedor segmentado de pestañas ---------- */
+.council-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(200, 151, 58, 0.35);
+  border-radius: 999px;
+  box-shadow: 0 18px 40px rgba(26, 39, 68, 0.1);
+}
+.council-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 13px 24px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--navy);
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color 0.25s ease,
+    color 0.25s ease,
+    box-shadow 0.25s ease;
+  animation: councilTabIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.council-tab:nth-child(1) { animation-delay: 0.03s; }
+.council-tab:nth-child(2) { animation-delay: 0.09s; }
+.council-tab:nth-child(3) { animation-delay: 0.15s; }
+.council-tab:nth-child(4) { animation-delay: 0.21s; }
+.council-tab:nth-child(5) { animation-delay: 0.27s; }
+@keyframes councilTabIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.88); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.council-tab::after {
+  content: '';
+  position: absolute;
+  top: -60%;
+  bottom: -60%;
+  left: -30%;
+  width: 34%;
+  transform: translateX(-160%) rotate(24deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+.council-tab.is-active::after { transform: translateX(420%) rotate(24deg); }
+.council-tab:hover {
+  background: var(--gold-pale);
+  transform: translateY(-3px);
+}
+.council-tab:active { transform: translateY(-1px) scale(0.97); }
+
+.ct-ico {
+  font-size: 17px;
+  line-height: 1;
+  filter: grayscale(1);
+  opacity: 0.65;
+  transition:
+    transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+    filter 0.25s ease,
+    opacity 0.25s ease;
+}
+.council-tab:hover .ct-ico {
+  transform: scale(1.22) rotate(-10deg);
+  filter: grayscale(0);
+  opacity: 1;
+}
+.ct-txt { white-space: nowrap; }
+
+/* Pestaña activa */
+.council-tab.is-active {
+  background: linear-gradient(135deg, var(--gold), #e2b45a);
+  color: var(--navy);
+  box-shadow:
+    0 12px 28px rgba(200, 151, 58, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+.council-tab.is-active:hover { transform: translateY(-2px); }
+.council-tab.is-active .ct-ico {
+  filter: grayscale(0);
+  opacity: 1;
+  animation: ctIcoPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes ctIcoPop {
+  0% { transform: scale(0.4) rotate(-30deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+/* Descripción dinámica del equipo activo */
+.council-tab-desc {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  max-width: 680px;
+  margin: 20px auto 58px;
+  padding: 0 20px;
+  color: var(--text-muted);
+  font-size: 15px;
+  font-style: italic;
+  text-align: center;
+  line-height: 1.6;
+  animation: pmFadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.council-tab-desc span {
+  font-size: 21px;
+  font-style: normal;
+  filter: drop-shadow(0 4px 8px rgba(200, 151, 58, 0.35));
+}
+
+/* ---------- Tarjetas de integrantes (todas las vistas) ---------- */
+.profile-card {
+  position: relative;
+  isolation: isolate;
+  border-radius: 24px;
+  overflow: hidden;
+  transition:
+    transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.38s ease,
+    border-color 0.38s ease;
+}
+.profile-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  z-index: 2;
+  background: linear-gradient(90deg, var(--gold), #e2b45a, var(--gold));
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.profile-card::after {
+  content: '';
+  position: absolute;
+  top: -70%;
+  bottom: -70%;
+  left: -32%;
+  width: 36%;
+  z-index: 3;
+  transform: translateX(-180%) rotate(22deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: transform 0.75s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+.profile-card:hover {
+  transform: translateY(-12px) scale(1.01);
+  border-color: rgba(200, 151, 58, 0.65);
+  box-shadow:
+    0 34px 74px rgba(200, 151, 58, 0.24),
+    0 14px 36px rgba(18, 42, 83, 0.16);
+}
+.profile-card:hover::before { transform: scaleX(1); }
+.profile-card:hover::after { transform: translateX(400%) rotate(22deg); }
+
+/* Zona de foto: zoom + velo de profundidad */
+.profile-card-top { transition: background 0.4s ease; }
+.profile-card-top::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-bottom: 3px solid rgba(200, 151, 58, 0);
+  transition: border-color 0.45s ease;
+  pointer-events: none;
+}
+.profile-card-top::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 46%;
+  z-index: 1;
+  background: linear-gradient(180deg, transparent, rgba(13, 21, 46, 0.55));
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  pointer-events: none;
+}
+.profile-card:hover .profile-card-top::before { border-bottom-color: rgba(200, 151, 58, 0.85); }
+.profile-card:hover .profile-card-top::after { opacity: 1; }
+.profile-icon-3d {
+  transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1), filter 0.5s ease;
+}
+.profile-card:hover .profile-icon-3d {
+  transform: scale(1.07);
+  filter: saturate(1.12) contrast(1.03);
+}
+
+/* Cuerpo de la tarjeta */
+.profile-card-bottom h4 {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 7px;
+}
+.profile-card-bottom h4::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 44px;
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--gold), #e2b45a);
+  transform: translateX(-50%) scaleX(0.35);
+  opacity: 0.45;
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s ease;
+}
+.profile-card:hover .profile-card-bottom h4::after {
+  transform: translateX(-50%) scaleX(1);
+  opacity: 1;
+}
+.profile-card-role {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 17px;
+  margin-bottom: 16px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(200, 151, 58, 0.15), rgba(200, 151, 58, 0.04));
+  border: 1px solid rgba(200, 151, 58, 0.45);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+}
+.profile-card:hover .profile-card-role {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(200, 151, 58, 0.28);
+}
+
+/* Enlace "Leer más" animado */
+.pc-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 2px 0;
+  color: var(--gold);
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: gap 0.28s cubic-bezier(0.22, 1, 0.36, 1), color 0.25s ease;
+}
+.pc-more::after {
+  content: '→';
+  font-weight: 700;
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.pc-more:hover {
+  gap: 10px;
+  color: #a97b22;
+}
+.pc-more:hover::after { transform: translateX(4px); }
+
+/* Botón CV con destello */
+.profile-card .btn-cv-pjl,
+.pm-cv {
+  position: relative;
+  overflow: hidden;
+}
+.profile-card .btn-cv-pjl::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -70%;
+  width: 45%;
+  transform: skewX(-22deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+.profile-card .btn-cv-pjl:hover::before { left: 135%; }
+.profile-card .btn-cv-pjl:hover {
+  box-shadow: 0 12px 26px rgba(200, 151, 58, 0.4);
+}
+
+/* Cita dentro de la tarjeta */
+.profile-quote {
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.3s ease;
+}
+.profile-card:hover .profile-quote {
+  transform: translateY(-2px);
+  border-color: rgba(200, 151, 58, 0.55);
+}
+
+/* Insignia de zona en representantes */
+.profile-card-top > div[style] {
+  z-index: 2;
+}
+
+/* Móvil y movimiento reducido */
+@media (max-width: 768px) {
+  .council-tabs {
+    padding: 7px;
+    gap: 5px;
+    border-radius: 26px;
+    max-width: calc(100% - 24px);
+  }
+  .council-tab { padding: 11px 16px; font-size: 12px; gap: 7px; }
+  .council-tab-desc { margin-bottom: 44px; font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .council-tab,
+  .ct-ico { animation: none !important; }
+  .council-tab-desc { animation-duration: 0.01s !important; animation-delay: 0s !important; }
+  .profile-card::after,
+  .council-tab::after,
+  .profile-card .btn-cv-pjl::before { display: none; }
+}
