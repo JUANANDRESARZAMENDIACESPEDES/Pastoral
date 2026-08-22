@@ -7008,3 +7008,456 @@ html.show-splash .splash-screen { visibility: visible; }
     animation: none !important;
   }
 }
+
+/* ============================================================
+   EQUIPOS Y CONSEJO · ZONAS · MODAL DE PERFIL — UI PREMIUM
+   Mejoras de UI/UX: destellos, órbitas, cascadas y botones con
+   brillo. Todo con transform/opacity para mantener fluidez.
+   ============================================================ */
+
+/* ---------- 1) TARJETAS DE EQUIPOS Y CONSEJO ---------- */
+.equipos-card {
+  position: relative;
+  border-radius: 26px;
+  border: 1px solid rgba(200, 151, 58, 0.25);
+  border-left: 2px solid var(--gold);
+  background: linear-gradient(180deg, #ffffff 0%, #fffdf6 100%);
+  overflow: hidden;
+  isolation: isolate;
+}
+/* Barra dorada superior que crece desde el centro */
+.equipos-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  z-index: 2;
+  background: linear-gradient(90deg, transparent, var(--gold) 30%, #f7e7b8 50%, var(--gold) 70%, transparent);
+  transform: scaleX(0);
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.equipos-card:hover::before { transform: scaleX(1); }
+/* Destello diagonal que barre la tarjeta */
+.equipos-card::after {
+  content: '';
+  position: absolute;
+  inset: -30%;
+  z-index: 1;
+  background: linear-gradient(115deg, transparent 42%, rgba(255, 244, 214, 0.5) 50%, transparent 58%);
+  transform: translateX(-130%);
+  transition: transform 0.9s ease;
+  pointer-events: none;
+}
+.equipos-card:hover::after { transform: translateX(130%); }
+.equipos-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 26px 60px rgba(200, 151, 58, 0.2), 0 10px 30px rgba(26, 39, 68, 0.1);
+}
+
+/* Número de agua decorativo */
+.mvv-watermark {
+  position: absolute;
+  top: 14px; right: 20px;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(46px, 5vw, 66px);
+  line-height: 1;
+  color: rgba(200, 151, 58, 0.09);
+  letter-spacing: -2px;
+  pointer-events: none;
+  z-index: 0;
+  transition: transform 0.5s ease, color 0.5s ease;
+}
+.equipos-card:hover .mvv-watermark {
+  transform: translateY(-6px) scale(1.08) rotate(-3deg);
+  color: rgba(200, 151, 58, 0.16);
+}
+
+/* Icono con anillo orbital giratorio */
+.equipos-card .equipos-icon {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  font-size: 34px;
+  border-radius: 22px;
+}
+.equipos-orbit {
+  position: absolute;
+  inset: -9px;
+  border-radius: inherit;
+  border: 2px dashed rgba(200, 151, 58, 0.5);
+  opacity: 0.75;
+  animation: equiposOrbit 16s linear infinite;
+}
+@keyframes equiposOrbit { to { transform: rotate(360deg); } }
+.equipos-card:hover .equipos-icon {
+  animation: equiposIconPop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes equiposIconPop {
+  0% { transform: scale(1) rotate(0); }
+  45% { transform: scale(1.14) rotate(-8deg); }
+  100% { transform: scale(1.06) rotate(-4deg); }
+}
+
+/* Título con subrayado dorado que se despliega */
+.equipos-card h4 {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 8px;
+}
+.equipos-card h4::after {
+  content: '';
+  position: absolute;
+  left: 50%; bottom: 0;
+  width: 56px; height: 3px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  transform: translateX(-50%) scaleX(0.35);
+  opacity: 0.55;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.45s ease;
+}
+.equipos-card:hover h4::after { transform: translateX(-50%) scaleX(1); opacity: 1; }
+
+/* Flecha convertida en píldora premium */
+.equipos-card .card-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 24px;
+  margin-top: auto;
+  border-radius: 999px;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--navy);
+  background: linear-gradient(135deg, rgba(200, 151, 58, 0.13), rgba(200, 151, 58, 0.04));
+  border: 1px solid rgba(200, 151, 58, 0.4);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.equipos-card:hover .card-arrow {
+  background: var(--gold);
+  color: #fff;
+  border-color: var(--gold);
+  box-shadow: 0 10px 24px rgba(200, 151, 58, 0.4);
+  gap: 13px;
+}
+
+/* ---------- 2) TARJETAS DE ZONAS ---------- */
+.zone-card { position: relative; }
+.zone-card-header {
+  background-size: 190% 190%;
+  transition: background-position 0.8s ease, padding 0.35s ease;
+}
+.zone-card:hover .zone-card-header {
+  background-position: 100% 100%;
+  padding-left: 32px;
+}
+/* Destello que recorre el encabezado navy */
+.zone-card-header::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.16) 50%, transparent 60%);
+  transform: translateX(-130%);
+  transition: transform 0.85s ease;
+  pointer-events: none;
+}
+.zone-card:hover .zone-card-header::after { transform: translateX(130%); }
+/* Logo de zona flotando suavemente + halo */
+.zone-card .logo-img-circular {
+  animation: zoneLogoFloat 3.8s ease-in-out infinite;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.28), 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+@keyframes zoneLogoFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+/* Elevación más generosa con resplandor dorado */
+.zone-card:hover {
+  transform: translateY(-12px);
+  box-shadow: 0 30px 70px rgba(200, 151, 58, 0.25), 0 12px 34px rgba(18, 42, 83, 0.15);
+}
+/* Chips de estadísticas reactivos */
+.zone-meta span {
+  transition: transform 0.3s ease, background 0.3s ease;
+}
+.zone-card:hover .zone-meta span {
+  transform: translateY(-2px);
+  background: rgba(255, 209, 102, 0.28);
+}
+/* Filas de comunidades: barra dorada interna al pasar el cursor */
+.zone-info-row {
+  box-shadow: inset 3px 0 0 rgba(200, 151, 58, 0);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.zone-info-row:hover {
+  transform: translateX(5px);
+  box-shadow: inset 3px 0 0 var(--gold);
+}
+
+/* Estadísticas en cuadrícula (vista general de zonas) */
+.zone-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin: 16px 0;
+}
+.zone-stat {
+  background: linear-gradient(160deg, var(--cream), #ffffff);
+  border: 1px solid var(--gold-pale);
+  padding: 10px 4px;
+  border-radius: 12px;
+  text-align: center;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+}
+.zone-stat strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--navy);
+  line-height: 1.15;
+}
+.zone-stat span {
+  display: block;
+  font-size: 8.5px;
+  font-weight: 700;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+/* Se elevan en cascada cuando la tarjeta despierta */
+.zone-card:hover .zone-stat { transform: translateY(-3px); }
+.zone-card:hover .zone-stat:nth-child(2) { transition-delay: 0.05s; }
+.zone-card:hover .zone-stat:nth-child(3) { transition-delay: 0.1s; }
+
+/* ---------- 3) BOTONES CON DESTELLO ---------- */
+.zone-card .btn-premium,
+.equipos-card .btn-premium,
+.pm-cv {
+  overflow: hidden;
+}
+.zone-card .btn-premium::before,
+.equipos-card .btn-premium::before,
+.pm-cv::before {
+  content: '';
+  position: absolute;
+  top: -30%; bottom: -30%;
+  left: -80%;
+  width: 55%;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  transform: skewX(-22deg);
+  transition: left 0.7s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+.zone-card .btn-premium:hover::before,
+.equipos-card .btn-premium:hover::before,
+.pm-cv:hover::before { left: 135%; }
+.zone-card .btn-premium-gold:hover,
+.equipos-card .btn-premium-gold:hover {
+  box-shadow: 0 12px 30px rgba(200, 151, 58, 0.5);
+}
+
+/* ---------- 4) MODAL DE PERFIL · V2 PREMIUM ---------- */
+.pm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(12px, 4vw, 28px);
+  background: rgba(13, 21, 46, 0.86);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  animation: fadeOverlay 0.3s ease both;
+}
+.pm-modal {
+  position: relative;
+  width: 100%;
+  max-width: 540px;
+  max-height: min(88vh, 780px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  background: #fff;
+  border-radius: 26px;
+  box-shadow: 0 40px 90px rgba(0, 0, 0, 0.45);
+  animation: slideUpModal 0.45s cubic-bezier(0.2, 0.9, 0.25, 1.02) both;
+}
+/* Encabezado navy con auroras a la deriva */
+.pm-head {
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  padding: 48px clamp(24px, 6vw, 44px) 32px;
+  background:
+    radial-gradient(500px 260px at 15% -20%, rgba(200, 151, 58, 0.22), transparent 65%),
+    radial-gradient(420px 240px at 90% 120%, rgba(88, 120, 200, 0.35), transparent 65%),
+    linear-gradient(150deg, var(--navy) 0%, #2e3f6b 100%);
+}
+.pm-close {
+  position: absolute;
+  top: 14px; right: 14px;
+  z-index: 3;
+  width: 38px; height: 38px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 19px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.25s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.pm-close:hover {
+  background: var(--gold);
+  color: var(--navy);
+  transform: rotate(90deg) scale(1.1);
+}
+/* Foto GRANDE con anillo dorado giratorio y halo respirando */
+.pm-photo-wrap {
+  position: relative;
+  width: fit-content;
+  margin: 0 auto 18px;
+  z-index: 1;
+  animation: pmPhotoPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
+}
+.pm-photo-ring {
+  position: absolute;
+  inset: -9px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0deg 40deg, #e9c87c 90deg, #fff3d6 110deg, #c8973a 140deg, transparent 190deg 360deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
+  animation: ringSpin 6s linear infinite;
+}
+.pm-halo {
+  position: absolute;
+  inset: -18px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(233, 200, 124, 0.3), transparent 70%);
+  animation: haloPulse 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+/* Imagen agrandada: visible en cualquier equipo */
+.pm-photo {
+  display: block;
+  width: clamp(158px, 42vw, 210px);
+  height: clamp(158px, 42vw, 210px);
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center;
+  border: 4px solid var(--gold);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.38);
+}
+@keyframes pmPhotoPop {
+  0% { transform: scale(0.55); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.pm-name {
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 4.5vw, 1.7rem);
+  margin: 0 0 8px;
+  animation: pmFadeUp 0.5s ease 0.22s both;
+}
+.pm-role {
+  color: var(--gold);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2.4px;
+  margin: 0;
+  animation: pmFadeUp 0.5s ease 0.32s both;
+}
+.pm-divider {
+  width: 54px;
+  height: 2px;
+  margin: 16px auto 0;
+  border-radius: 99px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  animation: pmFadeUp 0.5s ease 0.4s both;
+}
+@keyframes pmFadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.pm-body {
+  padding: 30px clamp(22px, 6vw, 40px) 34px;
+  animation: pmFadeUp 0.55s ease 0.42s both;
+}
+/* Descripción como panel elegante con borde dorado */
+.pm-bio {
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 18px 18px 18px 22px;
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--text-muted);
+  text-align: justify;
+  background: linear-gradient(180deg, #fffdf6, #fff);
+  border: 1px solid rgba(200, 151, 58, 0.22);
+  border-left: 3px solid var(--gold);
+  border-radius: 14px;
+}
+.pm-quote {
+  position: relative;
+  margin-top: 22px;
+  padding: 18px 20px 16px 52px;
+  background: linear-gradient(135deg, var(--gold-pale), #fff8ee);
+  border-radius: 14px;
+  border-left: 3px solid var(--gold);
+}
+.pm-quote-mark {
+  position: absolute;
+  top: 6px; left: 14px;
+  font-family: var(--font-display);
+  font-size: 46px;
+  line-height: 1;
+  color: rgba(200, 151, 58, 0.4);
+  pointer-events: none;
+}
+.pm-quote p {
+  margin: 0;
+  color: var(--navy);
+  font-style: italic;
+  line-height: 1.6;
+}
+.pm-cv {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 24px;
+  animation: pmFadeUp 0.5s ease 0.5s both;
+}
+
+/* ---------- Responsivo de las mejoras ---------- */
+@media (max-width: 640px) {
+  .mvv-watermark { top: 10px; right: 14px; }
+  .equipos-card { padding-left: 28px; padding-right: 28px; }
+  .pm-head { padding-top: 42px; }
+  .pm-body { padding-bottom: 28px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .equipos-card::after,
+  .zone-card-header::after,
+  .equipos-orbit,
+  .pm-photo-ring,
+  .pm-halo,
+  .zone-card .logo-img-circular { animation: none !important; }
+  .equipos-card:hover .equipos-icon { animation: none !important; }
+  .pm-overlay .pm-modal,
+  .pm-photo-wrap,
+  .pm-name,
+  .pm-role,
+  .pm-divider,
+  .pm-body,
+  .pm-cv { animation-duration: 0.01s !important; animation-delay: 0s !important; }
+}

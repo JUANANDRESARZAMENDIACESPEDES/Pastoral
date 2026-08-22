@@ -309,6 +309,14 @@ function HomeContent() {
     }
   }, [splashDone, selectedProfile, selectedHistoryItem, selectedNews, isMobileMenuOpen]);
 
+  // Cierra el detalle de perfil con la tecla Escape
+  useEffect(() => {
+    if (!selectedProfile) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSelectedProfile(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [selectedProfile]);
+
   // Toma el control de la pantalla de carga estática: coloca el logo real del
   // admin, reinicia la coreografía y cierra con fundido. El contenido nace
   // oculto (CSS crítico del layout) y esta secuencia lo revela en orden:
@@ -1227,25 +1235,28 @@ function HomeContent() {
                 </div>
                 <div className="mvv-grid">
                   {/* EFO */}
-                  <div className="mvv-card reveal click-card" style={{ textAlign: 'center' }} onClick={() => { setActiveConsejoTab('efo'); navigate('consejo'); }}>
-                    <div className="equipos-icon">🎓</div>
+                  <div className="mvv-card equipos-card reveal click-card" style={{ textAlign: 'center' }} onClick={() => { setActiveConsejoTab('efo'); navigate('consejo'); }}>
+                    <span className="mvv-watermark" aria-hidden="true">01</span>
+                    <div className="equipos-icon"><span className="equipos-orbit" aria-hidden="true"></span>🎓</div>
                     <h4>Equipo de Formación</h4>
                     <p style={{ marginBottom: '18px', minHeight: '90px' }}>Responsable de los procesos formativos, retiros, talleres y capacitaciones para los jóvenes de la PJL.</p>
-                    <span className="card-arrow" style={{ justifyContent: 'center', width: '100%' }}>Explorar EFO →</span>
+                    <span className="card-arrow">Explorar EFO →</span>
                   </div>
                   {/* ECO */}
-                  <div className="mvv-card reveal click-card" style={{ textAlign: 'center', animationDelay: '0.1s' }} onClick={() => { setActiveConsejoTab('ecomu'); navigate('consejo'); }}>
-                    <div className="equipos-icon">📡</div>
+                  <div className="mvv-card equipos-card reveal click-card" style={{ textAlign: 'center', animationDelay: '0.1s' }} onClick={() => { setActiveConsejoTab('ecomu'); navigate('consejo'); }}>
+                    <span className="mvv-watermark" aria-hidden="true">02</span>
+                    <div className="equipos-icon"><span className="equipos-orbit" aria-hidden="true"></span>📡</div>
                     <h4>Equipo de Comunicación</h4>
                     <p style={{ marginBottom: '18px', minHeight: '90px' }}>Gestiona las redes sociales, el boletín parroquial y toda la comunicación institucional de la PJL.</p>
-                    <span className="card-arrow" style={{ justifyContent: 'center', width: '100%' }}>Explorar ECOMU →</span>
+                    <span className="card-arrow">Explorar ECOMU →</span>
                   </div>
                   {/* CPJ */}
-                  <div className="mvv-card reveal click-card" style={{ textAlign: 'center', animationDelay: '0.2s' }} onClick={() => { setActiveConsejoTab('coordinacion'); navigate('consejo'); }}>
-                    <div className="equipos-icon">⛪</div>
+                  <div className="mvv-card equipos-card reveal click-card" style={{ textAlign: 'center', animationDelay: '0.2s' }} onClick={() => { setActiveConsejoTab('coordinacion'); navigate('consejo'); }}>
+                    <span className="mvv-watermark" aria-hidden="true">03</span>
+                    <div className="equipos-icon"><span className="equipos-orbit" aria-hidden="true"></span>⛪</div>
                     <h4>Consejo Pastoral</h4>
                     <p style={{ marginBottom: '18px', minHeight: '90px' }}>Órgano de gobierno y planificación estratégica de la Pastoral Juvenil Luqueña a nivel general.</p>
-                    <span className="card-arrow" style={{ justifyContent: 'center', width: '100%' }}>Ver Miembros →</span>
+                    <span className="card-arrow">Ver Miembros →</span>
                   </div>
                 </div>
               </div>
@@ -1525,20 +1536,11 @@ function HomeContent() {
                       <div className="zone-card-body">
                         <p style={{ fontFamily: 'var(--font-display)', fontWeight: 600, color: 'var(--gold)', marginBottom: '5px', fontSize: '18px' }}>{z.name}</p>
                         
-                        {/* Estadísticas de Zona (Igual a Foto 2) */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '5px', marginTop: '15px', marginBottom: '15px' }}>
-                          <div style={{ background: 'var(--cream)', padding: '10px 5px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--gold-pale)' }}>
-                            <p style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: 'var(--navy)' }}>{total}</p>
-                            <p style={{ margin: 0, fontSize: '8px', fontWeight: 600, color: 'var(--gold)', textTransform: 'uppercase' }}>Total</p>
-                          </div>
-                          <div style={{ background: 'var(--cream)', padding: '10px 5px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--gold-pale)' }}>
-                            <p style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: 'var(--navy)' }}>{activos}</p>
-                            <p style={{ margin: 0, fontSize: '8px', fontWeight: 600, color: 'var(--gold)', textTransform: 'uppercase' }}>Activos</p>
-                          </div>
-                          <div style={{ background: 'var(--cream)', padding: '10px 5px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--gold-pale)' }}>
-                            <p style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: 'var(--navy)' }}>{nucleacion}</p>
-                            <p style={{ margin: 0, fontSize: '8px', fontWeight: 600, color: 'var(--gold)', textTransform: 'uppercase' }}>Nuc.</p>
-                          </div>
+                        {/* Estadísticas de Zona */}
+                        <div className="zone-stats">
+                          <div className="zone-stat"><strong>{total}</strong><span>Total</span></div>
+                          <div className="zone-stat"><strong>{activos}</strong><span>Activos</span></div>
+                          <div className="zone-stat"><strong>{nucleacion}</strong><span>Nuc.</span></div>
                         </div>
 
                         <div className="zone-info" style={{ maxHeight: '100px', overflowY: 'auto', marginBottom: '15px' }}>
@@ -2482,67 +2484,41 @@ function HomeContent() {
 
       {/* PROFILE DETAIL MODAL */}
       {selectedProfile && (
-        <div
-          onClick={() => setSelectedProfile(null)}
-          style={{
-            position: 'fixed', inset: 0,
-            background: 'rgba(14, 22, 50, 0.85)',
-            backdropFilter: 'blur(12px)',
-            zIndex: 9000,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: '20px',
-            animation: 'fadeOverlay 0.3s ease both',
-          }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              background: '#fff',
-              borderRadius: '24px',
-              maxWidth: '500px',
-              width: '100%',
-              maxHeight: '85vh',
-              overflowY: 'auto',
-              overflowX: 'hidden',
-              boxShadow: '0 40px 80px rgba(0,0,0,0.4)',
-              animation: 'slideUpModal 0.35s cubic-bezier(0.2,0.8,0.2,1) both',
-              position: 'relative',
-              overscrollBehavior: 'contain',
-            }}
-            className="modal-scroll"
-          >
-            {/* Top gradient bar */}
-            <div style={{ background: 'linear-gradient(135deg, var(--navy) 0%, #2E3F6B 100%)', padding: '40px 40px 30px', textAlign: 'center', position: 'relative' }}>
-              <button
-                onClick={() => setSelectedProfile(null)}
-                style={{ position: 'absolute', top: '16px', right: '16px', background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: '50%', width: '36px', height: '36px', color: '#fff', fontSize: '18px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.2s' }}
-              >×</button>
+        <div className="pm-overlay" onClick={() => setSelectedProfile(null)}>
+          <div className="pm-modal modal-scroll" onClick={e => e.stopPropagation()}>
+            <div className="pm-head">
+              <button type="button" className="pm-close" onClick={() => setSelectedProfile(null)} aria-label="Cerrar detalle">×</button>
+              <div className="pm-photo-wrap">
+                <span className="pm-photo-ring" aria-hidden="true"></span>
+                <span className="pm-halo" aria-hidden="true"></span>
                 <img
+                  className="pm-photo"
                   src={selectedProfile.photo || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'}
                   alt={`Detalle de Perfil: ${selectedProfile.name}`}
-                  style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', border: '4px solid var(--gold)', boxShadow: '0 8px 30px rgba(0,0,0,0.3)', marginBottom: '16px' }}
                 />
-              <h3 style={{ color: '#fff', fontFamily: 'var(--font-display)', fontSize: '1.4rem', margin: '0 0 6px' }}>{selectedProfile.name}</h3>
-              <p style={{ color: 'var(--gold)', fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '2px', margin: 0 }}>{selectedProfile.role}</p>
+              </div>
+              <h3 className="pm-name">{selectedProfile.name}</h3>
+              <p className="pm-role">{selectedProfile.role}</p>
+              <div className="pm-divider" aria-hidden="true"></div>
             </div>
-            
-            <div style={{ padding: '30px 40px' }}>
-              <div style={{ maxHeight: '250px', overflowY: 'auto', paddingRight: '10px', fontSize: '15px', lineHeight: 1.7, color: 'var(--text-muted)', textAlign: 'justify' }}>
+
+            <div className="pm-body">
+              <div className="pm-bio">
                 {selectedProfile.bio || 'Sin descripción adicional.'}
               </div>
 
               {selectedProfile.quote && selectedProfile.quote !== '' && (
-                <div style={{ marginTop: '25px', padding: '15px', background: 'var(--cream)', borderRadius: '12px', fontStyle: 'italic', position: 'relative' }}>
-                  <span style={{ position: 'absolute', top: '5px', left: '10px', fontSize: '30px', color: 'rgba(212,175,55,0.2)' }}>“</span>
-                  <p style={{ margin: 0, padding: '0 10px', color: 'var(--navy)' }}>{selectedProfile.quote.replace(/"/g, '')}</p>
+                <div className="pm-quote">
+                  <span className="pm-quote-mark" aria-hidden="true">“</span>
+                  <p>{selectedProfile.quote.replace(/"/g, '')}</p>
                 </div>
               )}
 
               {selectedProfile.cvUrl && (
                 <button
+                  type="button"
                   onClick={() => handleDownload(selectedProfile.cvUrl!, `CV_${selectedProfile.name}.pdf`)}
-                  className="btn-cv-pjl"
-                  style={{ width: '100%', marginTop: '25px', justifyContent: 'center' }}
+                  className="btn-cv-pjl pm-cv"
                 >
                   <span>📄</span> Descargar Currículum Pastoral
                 </button>
