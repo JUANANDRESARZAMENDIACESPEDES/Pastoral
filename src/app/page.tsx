@@ -230,6 +230,14 @@ function HomeContent() {
   const [activeConsejoTab, setActiveConsejoTab] = useState('coordinacion');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [globalCommFilter, setGlobalCommFilter] = useState<number | 'all'>('all');
+  const [expandedCommIds, setExpandedCommIds] = useState<Set<string>>(new Set());
+  const toggleExpandedComm = (id: string) => {
+    setExpandedCommIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
+      return next;
+    });
+  };
   const [docSearch, setDocSearch] = useState('');
   const [docCategory, setDocCategory] = useState('all');
 
@@ -1596,51 +1604,71 @@ function HomeContent() {
                   <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Encuentra a todos los grupos juveniles activos en nuestro territorio pastoral.</p>
                 </div>
 
-                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '40px', flexWrap: 'wrap' }}>
-                  <button onClick={() => setGlobalCommFilter('all')} className={`btn-premium ${globalCommFilter === 'all' ? 'btn-premium-gold' : 'btn-premium-outline'}`} style={{ padding: '8px 20px', fontSize: '13px' }}>Todas</button>
-                  {[1,2,3,4].map(zId => (
-                    <button key={zId} onClick={() => setGlobalCommFilter(zId)} className={`btn-premium ${globalCommFilter === zId ? 'btn-premium-gold' : 'btn-premium-outline'}`} style={{ padding: '8px 20px', fontSize: '13px' }}>Zona {zId}</button>
+                <div className="dir-filters" role="group" aria-label="Filtrar comunidades por zona">
+                  <button type="button" onClick={() => setGlobalCommFilter('all')} className={`dir-filter ${globalCommFilter === 'all' ? 'is-active' : ''}`}>Todas</button>
+                  {[1, 2, 3, 4].map(zId => (
+                    <button key={zId} type="button" onClick={() => setGlobalCommFilter(zId)} className={`dir-filter ${globalCommFilter === zId ? 'is-active' : ''}`}>
+                      <span className="df-dot" style={{ background: zoneColors[zId as 1 | 2 | 3 | 4] }} aria-hidden="true"></span>
+                      Zona {zId}
+                    </button>
                   ))}
                 </div>
 
-                <div key={globalCommFilter} className="zone-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', animation: 'fadeOverlay 0.5s ease both' }}>
+                <div key={globalCommFilter} className="dir-list">
                   {liveChapels
                     .filter(c => c.comunidadNombre && (globalCommFilter === 'all' || c.zonaId == globalCommFilter))
                     .sort((a, b) => a.zonaId - b.zonaId || a.comunidadNombre.localeCompare(b.comunidadNombre))
-                    .map((c, i) => (
-                    <div key={c.id} style={{ 
-                      padding: '20px', 
-                      background: 'var(--cream)', 
-                      borderRadius: '16px', 
-                      border: '1px solid var(--gold-pale)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '10px',
-                      cursor: 'pointer',
-                      transition: '0.3s',
-                      animation: `slideUpModal 0.4s ease both ${i * 0.05}s`
-                    }} onClick={() => { setSelectedZone(c.zonaId); setActiveZoneTab('capillas'); }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                         <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '1px' }}>Zona {c.zonaId}</span>
-                         <span style={{ fontSize: '10px', color: c.estadoComunidad === 'Activo' ? '#2ecc71' : 'var(--gold)', fontWeight: 700 }}>● {c.estadoComunidad}</span>
-                      </div>
-                      <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                        {c.logoUrl ? (
-                          <div style={{ width: '50px', height: '50px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '2px solid var(--gold-pale)' }}>
-                            <SafeImg src={c.logoUrl} alt={`Escudo de la Comunidad ${c.comunidadNombre}`} fallback="⛪" fallbackStyle={{ fontSize: '22px' }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    .map((c, i) => {
+                      const open = expandedCommIds.has(c.id);
+                      const accent = zoneColors[c.zonaId as 1 | 2 | 3 | 4];
+                      return (
+                        <div key={c.id}
+                             className={`dir-card ${open ? 'is-open' : ''}`}
+                             style={{ animationDelay: `${Math.min(i * 0.06, 0.6)}s`, '--zaccent': accent } as React.CSSProperties}>
+                          <button type="button" className="dir-head" aria-expanded={open} onClick={() => toggleExpandedComm(c.id)}>
+                            <span className="dir-logo" aria-hidden="true">
+                              <SafeImg src={c.logoUrl} alt="" fallback="⛪" fallbackStyle={{ fontSize: '22px' }} />
+                            </span>
+                            <span className="dir-id">
+                              <span className="dir-zone">Zona {c.zonaId}</span>
+                              <strong className="dir-name">{c.comunidadNombre}</strong>
+                              <span className="dir-church">⛪ {c.name}</span>
+                            </span>
+                            <span className={`dir-status ${c.estadoComunidad === 'Activo' ? 'is-ok' : 'is-nuc'}`}>
+                              <i aria-hidden="true"></i>{c.estadoComunidad}
+                            </span>
+                            <span className="dir-chevron" aria-hidden="true">▾</span>
+                          </button>
+                          <div className="dir-body">
+                            <div className="dir-body-in">
+                              {c.address && (
+                                <div className="dir-row">
+                                  <span className="dr-ico" aria-hidden="true">📍</span>
+                                  <div><p className="dr-label">DIRECCIÓN</p><p className="dr-val">{c.address}</p></div>
+                                </div>
+                              )}
+                              <div className="dir-row">
+                                <span className="dr-ico" aria-hidden="true">⛪</span>
+                                <div><p className="dr-label">CAPILLA / SEDE</p><p className="dr-val">{c.name}</p></div>
+                              </div>
+                              <div className="dir-row">
+                                <span className="dr-ico" aria-hidden="true">⚡</span>
+                                <div><p className="dr-label">ESTADO DE LA COMUNIDAD</p><p className="dr-val">{c.estadoComunidad}</p></div>
+                              </div>
+                              <div className="dir-actions">
+                                {c.locationUrl && (
+                                  <a href={c.locationUrl} target="_blank" rel="noreferrer" className="dir-btn dir-btn-gold">🗺️ Ver en Google Maps</a>
+                                )}
+                                <button type="button" className="dir-btn dir-btn-line"
+                                        onClick={(e) => { e.stopPropagation(); setSelectedZone(c.zonaId); setActiveZoneTab('capillas'); }}>
+                                  Explorar la Zona {c.zonaId} <span aria-hidden="true">→</span>
+                                </button>
+                              </div>
+                            </div>
                           </div>
-                        ) : (
-                          <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'var(--white)', border: '2px solid var(--gold-pale)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '20px' }}>
-                            ⛪
-                          </div>
-                        )}
-                        <div>
-                          <h4 style={{ margin: 0, color: 'var(--navy)', fontSize: '18px' }}>{c.comunidadNombre}</h4>
-                          <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)' }}>{c.name}</p>
                         </div>
-                      </div>
-                    </div>
-                  ))}
+                      );
+                    })}
                 </div>
                 {liveChapels.filter(c => c.comunidadNombre && (globalCommFilter === 'all' || c.zonaId == globalCommFilter)).length === 0 && (
                   <div className="pjl-empty-state">
