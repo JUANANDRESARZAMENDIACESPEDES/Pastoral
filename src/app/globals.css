@@ -7794,3 +7794,341 @@ html.show-splash .splash-screen { visibility: visible; }
   .council-tab::after,
   .profile-card .btn-cv-pjl::before { display: none; }
 }
+
+/* ============================================================
+   ZONAS — HERO HERÁLDICO + PESTAÑAS CINTA + TARJETAS DE ZONA
+   ============================================================ */
+
+/* ---------- Botón volver ---------- */
+.zh-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 40px;
+  padding: 11px 26px;
+  border-radius: 999px;
+  border: 1px solid rgba(200, 151, 58, 0.45);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(6px);
+  color: var(--gold);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color 0.3s ease,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+}
+.zh-back span { transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
+.zh-back:hover {
+  background: rgba(200, 151, 58, 0.18);
+  border-color: rgba(200, 151, 58, 0.75);
+  transform: translateX(-5px);
+  box-shadow: 0 12px 30px rgba(200, 151, 58, 0.28);
+}
+.zh-back:hover span { transform: translateX(-4px); }
+
+/* ---------- Numeral gigante de fondo ---------- */
+.zh-numeral {
+  position: absolute;
+  top: 50%;
+  right: max(-1vw, -30px);
+  transform: translateY(-54%);
+  font-family: var(--font-display);
+  font-size: clamp(170px, 28vw, 330px);
+  font-weight: 800;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 2px rgba(200, 151, 58, 0.3);
+  pointer-events: none;
+  user-select: none;
+  animation: zhNumFloat 9s ease-in-out infinite;
+}
+@keyframes zhNumFloat {
+  0%, 100% { transform: translateY(-54%); opacity: 0.85; }
+  50% { transform: translateY(-48%); opacity: 1; }
+}
+
+/* ---------- Auroras del hero ---------- */
+.zh-auroras span {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(72px);
+  opacity: 0.55;
+  pointer-events: none;
+}
+.zh-auroras span:nth-child(1) {
+  width: 480px;
+  height: 480px;
+  left: -130px;
+  top: -150px;
+  background: radial-gradient(circle, rgba(200, 151, 58, 0.34), transparent 70%);
+  animation: zhDriftA 16s ease-in-out infinite alternate;
+}
+.zh-auroras span:nth-child(2) {
+  width: 430px;
+  height: 430px;
+  right: -110px;
+  bottom: -130px;
+  background: radial-gradient(circle, rgba(46, 94, 74, 0.42), transparent 70%);
+  animation: zhDriftB 19s ease-in-out infinite alternate;
+}
+@keyframes zhDriftA { to { transform: translate(95px, 65px) scale(1.15); } }
+@keyframes zhDriftB { to { transform: translate(-85px, -55px) scale(1.12); } }
+
+/* ---------- Escudo / crestón del logo ---------- */
+.zone-crest {
+  position: relative;
+  width: min(250px, 62vw);
+  aspect-ratio: 1;
+  margin: 0 auto 36px;
+  display: grid;
+  place-items: center;
+  animation: zhFloat 6s ease-in-out infinite;
+}
+@keyframes zhFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-13px); }
+}
+.zc-halo {
+  position: absolute;
+  inset: -32%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(200, 151, 58, 0.3), transparent 65%);
+  animation: haloPulse 3.4s ease-in-out infinite;
+  pointer-events: none;
+}
+.zc-ring {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.zc-ring-a {
+  inset: -24px;
+  border: 2px dashed rgba(200, 151, 58, 0.6);
+  animation: ringSpin 14s linear infinite;
+}
+.zc-ring-b {
+  inset: -44px;
+  border: 1px dotted rgba(232, 196, 124, 0.4);
+  animation: ringSpin 23s linear infinite reverse;
+}
+.zc-frame {
+  position: relative;
+  width: 68%;
+  aspect-ratio: 10 / 11;
+  filter: drop-shadow(0 26px 46px rgba(0, 0, 0, 0.5));
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.zone-crest:hover .zc-frame { transform: scale(1.06) rotate(2deg); }
+.zc-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(50% 0%, 96% 25%, 96% 75%, 50% 100%, 4% 75%, 4% 25%);
+  background: linear-gradient(165deg, #efd7a0 0%, var(--gold) 42%, #8a6420 100%);
+}
+.zc-img {
+  position: absolute;
+  inset: 7px;
+  width: calc(100% - 14px);
+  height: calc(100% - 14px);
+  object-fit: cover;
+  clip-path: polygon(50% 0%, 96% 25%, 96% 75%, 50% 100%, 4% 75%, 4% 25%);
+}
+
+/* Título con numeral dorado en gradiente */
+.zone-hero h2 .zh-gold {
+  font-style: normal;
+  background: linear-gradient(120deg, #f0d9a6 0%, var(--gold) 45%, #fff3d6 70%, var(--gold) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  padding-right: 0.06em;
+  text-shadow: none;
+}
+
+/* ---------- Pestañas cinta de la zona ---------- */
+.zone-tabs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+  gap: 14px;
+  max-width: 720px;
+  margin: 0 auto 66px;
+}
+.zone-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  padding: 13px 22px 15px;
+  border: 1px solid rgba(18, 42, 83, 0.14);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--navy);
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(18, 42, 83, 0.08);
+  transition:
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.3s ease,
+    border-color 0.3s ease,
+    background-color 0.3s ease;
+  animation: zoneTabIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes zoneTabIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.zone-tab::before {
+  content: '';
+  position: absolute;
+  top: -6.5px;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  background: #fffbf2;
+  border-left: 1px solid rgba(200, 151, 58, 0.65);
+  border-top: 1px solid rgba(200, 151, 58, 0.65);
+  transform: translateX(-50%) rotate(45deg);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.zt-txt { white-space: nowrap; }
+.zt-ico {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  font-size: 17px;
+  background: linear-gradient(150deg, rgba(200, 151, 58, 0.16), rgba(200, 151, 58, 0.05));
+  transition:
+    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+.zone-tab:hover { transform: translateY(-4px); border-color: rgba(200, 151, 58, 0.55); }
+.zone-tab:hover .zt-ico { transform: rotate(-10deg) scale(1.12); }
+.zone-tab.is-active {
+  background: linear-gradient(180deg, #fffdf7, #fdf3dd);
+  border-color: rgba(200, 151, 58, 0.7);
+  box-shadow: 0 18px 38px rgba(200, 151, 58, 0.24);
+}
+.zone-tab.is-active::before { opacity: 1; }
+.zone-tab.is-active .zt-ico {
+  background: linear-gradient(140deg, var(--gold), #e2b45a);
+  box-shadow: 0 8px 18px rgba(200, 151, 58, 0.42);
+  animation: ztIcoFlip 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes ztIcoFlip {
+  0% { transform: rotateY(92deg) scale(0.6); }
+  100% { transform: rotateY(0deg) scale(1); }
+}
+.zt-bar {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: -1px;
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--gold), #e2b45a, var(--gold));
+  background-size: 200% 100%;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.zone-tab.is-active .zt-bar {
+  transform: scaleX(1);
+  animation: ztBarFlow 2.6s linear infinite;
+}
+@keyframes ztBarFlow { to { background-position: 200% 0; } }
+
+/* ---------- Tarjetas de capillas y comunidades ---------- */
+.chapel-premium-card {
+  transition:
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.4s ease,
+    border-color 0.4s ease !important;
+}
+.chapel-premium-card:hover {
+  transform: translateY(-10px) !important;
+  box-shadow:
+    0 30px 64px rgba(200, 151, 58, 0.2),
+    0 12px 30px rgba(18, 42, 83, 0.14) !important;
+}
+.chapel-photo img {
+  transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1), filter 0.5s ease;
+}
+.chapel-premium-card:hover .chapel-photo img {
+  transform: scale(1.07);
+  filter: saturate(1.1);
+}
+.chapel-status-tag.is-active {
+  animation: tagGlow 2.8s ease-in-out infinite;
+}
+@keyframes tagGlow {
+  0%, 100% { box-shadow: 0 4px 14px rgba(46, 204, 113, 0.35); }
+  50% { box-shadow: 0 4px 22px rgba(46, 204, 113, 0.65); }
+}
+.comm-go {
+  margin: 20px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  font-style: italic;
+  color: var(--gold);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: gap 0.28s cubic-bezier(0.22, 1, 0.36, 1), color 0.25s ease;
+}
+.comm-go span { transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1); }
+.chapel-premium-card:hover .comm-go { gap: 12px; color: #a97b22; }
+.chapel-premium-card:hover .comm-go span { transform: translateX(5px); }
+
+/* ---------- Responsividad ---------- */
+@media (max-width: 900px) {
+  .zh-numeral { opacity: 0.55; }
+}
+@media (max-width: 640px) {
+  .zh-back { margin-bottom: 30px; padding: 10px 20px; font-size: 12px; }
+  .zh-numeral {
+    right: 50%;
+    transform: translate(50%, -58%);
+    font-size: 190px;
+    opacity: 0.22;
+    -webkit-text-stroke-width: 1.5px;
+  }
+  @keyframes zhNumFloat {
+    0%, 100% { transform: translate(50%, -58%); opacity: 0.2; }
+    50% { transform: translate(50%, -53%); opacity: 0.26; }
+  }
+  .zone-crest { margin-bottom: 28px; }
+  .zc-ring-a { inset: -16px; }
+  .zc-ring-b { inset: -30px; }
+  .zone-tabs { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 50px; }
+  .zone-tab { padding: 11px 12px 13px; font-size: 11.5px; gap: 8px; }
+  .zt-ico { width: 29px; height: 29px; font-size: 15px; border-radius: 9px; }
+  .zt-bar { left: 14px; right: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .zone-crest,
+  .zh-numeral,
+  .zc-halo,
+  .zc-ring-a,
+  .zc-ring-b,
+  .chapel-status-tag.is-active,
+  .zone-tab.is-active .zt-bar { animation: none !important; }
+  .zh-auroras span { animation: none !important; }
+  .zone-tab { animation-duration: 0.01s !important; animation-delay: 0s !important; }
+}

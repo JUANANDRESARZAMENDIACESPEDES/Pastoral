@@ -1660,18 +1660,26 @@ function HomeContent() {
           <>
             <section className="zone-hero">
                <div className="container">
-                  <button onClick={() => setSelectedZone(null)} style={{ color: 'var(--gold)', fontWeight: 700, marginBottom: '35px', background: 'rgba(255,255,255,0.05)', padding: '10px 24px', borderRadius: '30px', border: '1px solid rgba(200,151,58,0.3)', cursor: 'pointer', transition: '0.3s', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                    ← Volver a Zonas
+                  <button type="button" onClick={() => setSelectedZone(null)} className="zh-back">
+                    <span aria-hidden="true">←</span> Volver a Zonas
                   </button>
-                  
+
+                  <span className="zh-numeral" aria-hidden="true">{selectedZone}</span>
+                  <div className="zh-auroras" aria-hidden="true"><span></span><span></span></div>
+
                   {branding[`zona${selectedZone}Logo`] && (
-                    <div style={{ marginBottom: '30px', display: 'flex', justifyContent: 'center' }}>
-                      <SafeImg src={branding[`zona${selectedZone}Logo`] as string} className="logo-img-circular" style={{ height: '140px', width: '140px', border: '3px solid var(--gold)' }} alt={`Logo zona ${selectedZone}`} fallback="🛡️" fallbackStyle={{ fontSize: '56px' }} />
+                    <div className="zone-crest reveal">
+                      <span className="zc-halo" aria-hidden="true"></span>
+                      <span className="zc-ring zc-ring-a" aria-hidden="true"></span>
+                      <span className="zc-ring zc-ring-b" aria-hidden="true"></span>
+                      <div className="zc-frame">
+                        <SafeImg src={branding[`zona${selectedZone}Logo`] as string} className="zc-img" alt={`Logotipo de la Zona ${selectedZone}`} fallback="🛡️" fallbackStyle={{ fontSize: '56px' }} />
+                      </div>
                     </div>
                   )}
 
                   <span className="premium-label">DIÓCESIS DE SAN LORENZO</span>
-                  <h2 className="serif">Zona Pastoral {selectedZone}</h2>
+                  <h2 className="serif">Zona <em className="zh-gold">{selectedZone}</em></h2>
                   <div className="line" style={{ margin: '20px auto 30px', background: 'var(--gold)', width: '120px', height: '4px' }}></div>
                   <p style={{ fontSize: '1.8rem', color: 'rgba(255,255,255,0.9)', letterSpacing: '1px', fontFamily: 'var(--font-display)', fontWeight: 300 }}>
                     {zonasInfo.find(z => z.id === selectedZone)?.name}
@@ -1681,11 +1689,22 @@ function HomeContent() {
 
             <section className="section-pjl">
               <div className="container">
-                <div style={{ display: 'flex', gap: '15px', marginBottom: '60px', justifyContent: 'center' }}>
-                  <button onClick={() => setActiveZoneTab('capillas')} className={`btn-premium ${activeZoneTab === 'capillas' ? 'btn-premium-gold' : 'btn-premium-outline'}`}>⛪ Capillas</button>
-                  <button onClick={() => setActiveZoneTab('coordination')} className={`btn-premium ${activeZoneTab === 'coordination' ? 'btn-premium-gold' : 'btn-premium-outline'}`}>👥 Coordinadores</button>
-                  <button onClick={() => setActiveZoneTab('comunidades')} className={`btn-premium ${activeZoneTab === 'comunidades' ? 'btn-premium-gold' : 'btn-premium-outline'}`}>✨ Comunidades</button>
-                  <button onClick={() => setActiveZoneTab('mapa')} className={`btn-premium ${activeZoneTab === 'mapa' ? 'btn-premium-gold' : 'btn-premium-outline'}`}>🗺️ Mapa</button>
+                <div className="zone-tabs reveal" role="tablist" aria-label="Secciones de la zona">
+                  {([
+                    { id: 'capillas', label: 'Capillas', ico: '⛪' },
+                    { id: 'coordination', label: 'Coordinadores', ico: '👥' },
+                    { id: 'comunidades', label: 'Comunidades', ico: '✨' },
+                    { id: 'mapa', label: 'Mapa', ico: '🗺️' }
+                  ] as const).map((t, i) => (
+                    <button key={t.id} type="button" role="tab" aria-selected={activeZoneTab === t.id}
+                            onClick={() => setActiveZoneTab(t.id)}
+                            className={`zone-tab ${activeZoneTab === t.id ? 'is-active' : ''}`}
+                            style={{ animationDelay: `${i * 0.08}s` }}>
+                      <span className="zt-ico" aria-hidden="true">{t.ico}</span>
+                      <span className="zt-txt">{t.label}</span>
+                      <span className="zt-bar" aria-hidden="true"></span>
+                    </button>
+                  ))}
                 </div>
 
                 {activeZoneTab === 'capillas' && (
@@ -1825,8 +1844,8 @@ function HomeContent() {
                             </div>
                           </div>
                           
-                          <p style={{ marginTop: '20px', fontSize: '12px', color: 'var(--gold)', fontWeight: 700, fontStyle: 'italic' }}>
-                             Ir a la capilla →
+                          <p className="comm-go">
+                             Ir a la capilla <span aria-hidden="true">→</span>
                           </p>
                         </div>
                       </div>
