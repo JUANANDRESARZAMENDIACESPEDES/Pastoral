@@ -345,18 +345,27 @@ function HomeContent() {
       void el.offsetWidth;
       el.style.animation = '';
     });
-    // Salida cinematográfica + revelado escalonado del menú.
+    // Salida cinematográfica en DOS fases:
+    // Fase 1 (3200ms) — arranca splashOut (~0.95s de fundido + desenfoque +
+    // zoom). El velo SIGUE cerrado: la página todavía no se ve.
     const t1 = window.setTimeout(() => {
       splash.classList.add('is-leaving');
-      liftCurtain();                                       // el velo se abre con el fundido
-      window.setTimeout(() => setNavEntered(true), 260);   // y entonces entra el menú
     }, 3200);
+    // Fase 2 (3850ms) — a mitad del fundido se abre el velo: la página entra
+    // con su propio fundido suave (pjlPageIn) cruzándose con el resto de la
+    // salida del splash; el menú hace su cascada justo después.
+    const t1b = window.setTimeout(() => {
+      root.classList.add('pjl-reveal');
+      root.classList.remove('show-splash');
+      window.setTimeout(() => setNavEntered(true), 260);
+    }, 3850);
+    // Cierre — retirar pantalla y clases de estado.
     const t2 = window.setTimeout(() => {
       splash.remove();
-      liftCurtain();
+      root.classList.remove('pjl-reveal');
       setNavEntered(true);
       setSplashDone(true);
-    }, 3900);
+    }, 4150);
     // Intencionadamente NO se cancelan en el cleanup: si el usuario navega a
     // otra página durante la intro, estos temporizadores deben igualmente
     // retirar el velo y la pantalla; cancelarlos dejaría la clase

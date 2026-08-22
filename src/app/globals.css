@@ -6416,16 +6416,23 @@ textarea:focus-visible,
   /* Oculta por defecto: el script inline del layout la muestra solo
      fuera de /admin, así jamás destella en el panel. */
   visibility: hidden;
-  transition: opacity 0.7s ease, visibility 0.7s, filter 0.7s ease, transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
 }
 html.show-splash .splash-screen { visibility: visible; }
-/* Salida cinematográfica: fundido + desenfoque + zoom suave */
+/* Salida cinematográfica en DOS fases (ver efecto del splash en page.tsx):
+   Fase 1 — keyframes REALES (no transiciones: las transiciones sobre una
+   propiedad retenida por otra animación y sobre visibility se cortan a mitad
+   y producían el cierre "de golpe"): fundido + desenfoque + zoom durante
+   ~0.95s mientras el velo mantiene oculta la página.
+   El shorthand sustituye a splashIn (misma propiedad, mayor especificidad)
+   y 'forwards' retiene el último fotograma hasta retirar el nodo. */
 .splash-screen.is-leaving {
-  opacity: 0 !important;
-  visibility: hidden !important;
   pointer-events: none;
-  filter: blur(16px);
-  transform: scale(1.07);
+  animation: splashOut 0.95s cubic-bezier(0.45, 0, 0.2, 1) forwards;
+}
+@keyframes splashOut {
+  0%   { opacity: 1; filter: blur(0);    transform: scale(1); }
+  55%  { opacity: 0.72; }
+  100% { opacity: 0; filter: blur(18px); transform: scale(1.08); }
 }
 @keyframes splashIn {
   from { opacity: 0; }

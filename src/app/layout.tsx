@@ -43,19 +43,23 @@ export default function RootLayout({
     <html lang="es" className={`${displayFont.variable} ${bodyFont.variable} ${accentFont.variable}`} suppressHydrationWarning>
       <head>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
-        {/* Critical CSS anti-destello:
+        {/* Critical CSS anti-destello, en DOS fases:
             1) La navbar nace oculta y SOLO su animación la revela.
-            2) Mientras el splash esté activo, TODO el contenido queda oculto:
-               primero se ve la intro y únicamente cuando el velo empieza a
-               levantarse aparece la página con su menú. La regla con :has()
-               auto-expira al eliminarse el nodo del splash (red de seguridad
-               si la clase quedara huérfana tras una navegación).
-            3) Con movimiento reducido no hay intro ni velo. */}
+            2) Mientras el splash corre SIN clase pjl-reveal, TODO el
+               contenido queda oculto: primero se ve la intro completa.
+            3) page.tsx añade pjl-reveal a mitad de la salida del splash:
+               el contenido aparece con su PROPIO fundido suave cruzándose
+               con el resto del fundido del splash.
+               La regla con :has() auto-expira al eliminarse el nodo del
+               splash (red de seguridad si la clase quedara huérfana).
+            4) Con movimiento reducido no hay intro ni velo. */}
         <style
           dangerouslySetInnerHTML={{
             __html: [
               '.top-nav .brand-logo-wrap,.top-nav .brand-text,.top-nav .nav-links .nav-item{opacity:0}',
-              'html.show-splash body>*:not(#splash-pjl):not(script):not(style):not(noscript){visibility:hidden!important}',
+              'html.show-splash:not(.pjl-reveal) body>*:not(#splash-pjl):not(script):not(style):not(noscript){visibility:hidden!important}',
+              'html.pjl-reveal body>*:not(#splash-pjl):not(script):not(style):not(noscript){visibility:visible!important;animation:pjlPageIn .55s ease-out both}',
+              '@keyframes pjlPageIn{from{opacity:0}to{opacity:1}}',
               'html.show-splash body:not(:has(> #splash-pjl))>*{visibility:visible!important}',
               '@media (prefers-reduced-motion:reduce){#splash-pjl{display:none!important}html.show-splash body>*:not(#splash-pjl){visibility:visible!important}}',
               '@media (prefers-reduced-motion:reduce){.top-nav .brand-logo-wrap,.top-nav .brand-text,.top-nav .nav-links .nav-item{opacity:1 !important}}',
