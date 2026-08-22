@@ -248,13 +248,10 @@ function HomeContent() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Dispara la animación de entrada del navbar de forma determinista:
-  // los elementos nacen ocultos y la clase se añade tras el montaje
+  // Entrada escalonada del navbar: los elementos nacen ocultos y SOLO se
+  // revelan cuando la pantalla de carga levanta el velo (ver efecto del
+  // splash más abajo). Nunca antes de la intro.
   const [navEntered, setNavEntered] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setNavEntered(true), 80);
-    return () => clearTimeout(t);
-  }, []);
 
   // Sección activa del navbar (agrupa subpáginas con su botón padre)
   const activeSection = (
@@ -313,10 +310,25 @@ function HomeContent() {
   }, [splashDone, selectedProfile, selectedHistoryItem, selectedNews, isMobileMenuOpen]);
 
   // Toma el control de la pantalla de carga estática: coloca el logo real del
-  // admin, reinicia la coreografía y la cierra con fundido al terminar.
+  // admin, reinicia la coreografía y cierra con fundido. El contenido nace
+  // oculto (CSS crítico del layout) y esta secuencia lo revela en orden:
+  // primero la intro completa, después el menú principal.
   useEffect(() => {
     const splash = document.getElementById('splash-pjl');
-    if (!splash) { setSplashDone(true); return; }
+    const root = document.documentElement;
+    const reduced = typeof window.matchMedia === 'function'
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Levanta el velo: el contenido vuelve a ser visible bajo el fundido.
+    const liftCurtain = () => root.classList.remove('show-splash');
+    // Sin pantalla (vuelta a la home por navegación interna) o sin animaciones:
+    // revelar todo de inmediato.
+    if (!splash || reduced) {
+      liftCurtain();
+      splash?.remove();
+      setNavEntered(true);
+      setSplashDone(true);
+      return;
+    }
     const mainLogo = store.branding.get()?.mainLogo;
     if (mainLogo) {
       const fallbackNode = splash.querySelector('.splash-logo-fallback');
@@ -333,9 +345,23 @@ function HomeContent() {
       void el.offsetWidth;
       el.style.animation = '';
     });
-    const t1 = window.setTimeout(() => splash.classList.add('is-leaving'), 3200);
-    const t2 = window.setTimeout(() => { splash.remove(); setSplashDone(true); }, 3900);
-    return () => { window.clearTimeout(t1); window.clearTimeout(t2); };
+    // Salida cinematográfica + revelado escalonado del menú.
+    const t1 = window.setTimeout(() => {
+      splash.classList.add('is-leaving');
+      liftCurtain();                                       // el velo se abre con el fundido
+      window.setTimeout(() => setNavEntered(true), 260);   // y entonces entra el menú
+    }, 3200);
+    const t2 = window.setTimeout(() => {
+      splash.remove();
+      liftCurtain();
+      setNavEntered(true);
+      setSplashDone(true);
+    }, 3900);
+    // Intencionadamente NO se cancelan en el cleanup: si el usuario navega a
+    // otra página durante la intro, estos temporizadores deben igualmente
+    // retirar el velo y la pantalla; cancelarlos dejaría la clase
+    // show-splash huérfana y el contenido oculto para siempre.
+    return () => {};
   }, []);
 
   // --- SYNC LOGIC ---

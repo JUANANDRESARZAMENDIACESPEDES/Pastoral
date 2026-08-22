@@ -43,22 +43,31 @@ export default function RootLayout({
     <html lang="es" className={`${displayFont.variable} ${bodyFont.variable} ${accentFont.variable}`} suppressHydrationWarning>
       <head>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
-        {/* Critical CSS: la navbar nace oculta y SOLO la animación la revela
-            (fill-mode), así nunca se expone el menú estático aunque el CSS
-            principal tarde en cargar */}
+        {/* Critical CSS anti-destello:
+            1) La navbar nace oculta y SOLO su animación la revela.
+            2) Mientras el splash esté activo, TODO el contenido queda oculto:
+               primero se ve la intro y únicamente cuando el velo empieza a
+               levantarse aparece la página con su menú. La regla con :has()
+               auto-expira al eliminarse el nodo del splash (red de seguridad
+               si la clase quedara huérfana tras una navegación).
+            3) Con movimiento reducido no hay intro ni velo. */}
         <style
           dangerouslySetInnerHTML={{
             __html: [
               '.top-nav .brand-logo-wrap,.top-nav .brand-text,.top-nav .nav-links .nav-item{opacity:0}',
+              'html.show-splash body>*:not(#splash-pjl):not(script):not(style):not(noscript){visibility:hidden!important}',
+              'html.show-splash body:not(:has(> #splash-pjl))>*{visibility:visible!important}',
+              '@media (prefers-reduced-motion:reduce){#splash-pjl{display:none!important}html.show-splash body>*:not(#splash-pjl){visibility:visible!important}}',
               '@media (prefers-reduced-motion:reduce){.top-nav .brand-logo-wrap,.top-nav .brand-text,.top-nav .nav-links .nav-item{opacity:1 !important}}',
             ].join(''),
           }}
         />
       </head>
       <body suppressHydrationWarning>
-        {/* Marca <html> ANTES de pintar el splash: solo fuera de /admin.
-            Al ir antes del div, no hay ningún destello en el panel. */}
-        <script dangerouslySetInnerHTML={{ __html: "if(location.pathname.indexOf('/admin')!==0){document.documentElement.className+=' show-splash';}" }} />
+        {/* Marca <html> ANTES de pintar el splash: solo en la home ('/').
+            El velo de contenido se gestiona junto con la intro; otras rutas
+            no deben depender de ella. */}
+        <script dangerouslySetInnerHTML={{ __html: "if(location.pathname==='/'){document.documentElement.className+=' show-splash';}" }} />
         {/* Pantalla de carga estática: vive FUERA del árbol que React intercambia,
             por eso se ve desde el primer pintado y sobrevive a la hidratación. */}
         <div id="splash-pjl" className="splash-screen" role="status" aria-label="Cargando Pastoral Juvenil Luqueña">
