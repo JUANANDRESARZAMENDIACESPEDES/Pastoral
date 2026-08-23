@@ -8553,7 +8553,9 @@ html.show-splash .splash-screen { visibility: visible; }
 .sk-a .sk-p { stroke: url(#pjlGoldA); }
 .sk-b .sk-p { stroke: url(#pjlGoldB); }
 .splash-screen.art-on .sk-p {
-  animation: skDraw var(--d, 2s) cubic-bezier(0.45, 0.05, 0.35, 1) var(--dl, 0s) forwards;
+  /* linear: el punto dorado (SMIL, lineal) viaja EXACTAMENTE sobre la
+     punta del lapiz durante todo el trazado */
+  animation: skDraw var(--d, 2s) linear var(--dl, 0s) forwards;
 }
 @keyframes skDraw { to { stroke-dashoffset: 0; } }
 

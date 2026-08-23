@@ -104,8 +104,10 @@ const mapHeroPosition = (position?: string) => {
 
 /* ============================================================
    TRAZADOR DE SILUETAS — convierte el contorno de un logo real
-   en una ruta SVG dibujable. Canvas -> binarizado -> blob mas
-   grande -> recorrido Moore del borde -> simplificacion RDP.
+   en una ruta SVG dibujable. Canvas -> binarizado -> TODAS las
+   piezas significativas (no solo la mayor: los logos suelen ser
+   figuras de varias partes sueltas) -> recorrido Moore del borde
+   con criterio de parada de Jacob -> simplificacion RDP.
    ============================================================ */
 const SKETCH_VB_W = 100;
 const SKETCH_VB_H = 125;
@@ -140,7 +142,7 @@ function traceSilhouette(src: string): Promise<string> {
     img.crossOrigin = 'anonymous';
     img.onload = () => {
       try {
-        const S = 190;
+        const S = 230;
         const iw = img.naturalWidth || S;
         const ih = img.naturalHeight || S;
         const w = iw >= ih ? S : Math.max(24, Math.round(S * iw / ih));
@@ -152,15 +154,29 @@ function traceSilhouette(src: string): Promise<string> {
         cx.drawImage(img, 0, 0, w, h);
         const px = cx.getImageData(0, 0, w, h).data;
 
+        // Auto-inversion: si casi todo el lienzo es "tinta", la figura es
+        // clara sobre fondo oscuro -> se invierte la regla de umbral.
+        let inkish = 0, seen = 0;
+        for (let s = 0; s < w * h; s++) {
+          const i = s * 4;
+          if (px[i + 3] <= 48) continue;
+          seen++;
+          if ((px[i] + px[i + 1] + px[i + 2]) / 3 < 232) inkish++;
+        }
+        if (seen === 0) throw new Error('vacio');
+        const invert = inkish / seen > 0.55;
         const inkAt = (x: number, y: number): boolean => {
           if (x < 0 || y < 0 || x >= w || y >= h) return false;
           const i = (y * w + x) * 4;
-          return px[i + 3] > 48 && (px[i] + px[i + 1] + px[i + 2]) / 3 < 232;
+          if (px[i + 3] <= 48) return false;
+          const lum = (px[i] + px[i + 1] + px[i + 2]) / 3;
+          return invert ? lum >= 200 : lum < 232;
         };
 
-        // 1) etiquetado por inundacion: quedarse con el blob mas grande
+        // 1) etiquetado por inundacion de TODAS las componentes
         const label = new Int32Array(w * h).fill(-1);
-        let bestId = -1, bestSize = 0, nextId = 0;
+        const sizes: Array<{ id: number; size: number }> = [];
+        let nextId = 0;
         const stack: number[] = [];
         for (let s = 0; s < w * h; s++) {
           if (label[s] !== -1) continue;
@@ -181,58 +197,74 @@ function traceSilhouette(src: string): Promise<string> {
               if (label[n] === -1 && inkAt(nx2, ny2)) { label[n] = id; stack.push(n); }
             }
           }
-          if (size > bestSize) { bestSize = size; bestId = id; }
+          sizes.push({ id, size });
         }
-        if (bestId === -1 || bestSize < 60) throw new Error('blob');
+        sizes.sort((p, q) => q.size - p.size);
+        const top = sizes[0]?.size ?? 0;
+        const keep = sizes.filter(s2 => s2.size >= Math.max(70, top * 0.04)).slice(0, 14);
+        if (!keep.length) throw new Error('blob');
 
-        // 2 punto inicial: mas arriba-izquierda del blob
-        let start = -1;
-        for (let s = 0; s < w * h && start === -1; s++) if (label[s] === bestId) start = s;
-        const isBlob = (x: number, y: number) => {
-          if (x < 0 || y < 0 || x >= w || y >= h) return false;
-          return label[y * w + x] === bestId;
-        };
-        // 3) recorrido Moore del borde (sentido horario, criterio de Jacob)
+        // recorrido Moore del borde (criterio de Jacob: parar al volver al
+        // inicio entrando por el mismo retroceso) — traza el borde COMPLETO.
         const DIRS: Array<[number, number]> = [
           [-1, 0], [-1, -1], [0, -1], [1, -1],
           [1, 0], [1, 1], [0, 1], [-1, 1]
         ];
-        let px0 = start % w, py0 = (start / w) | 0;
-        const contour: Array<[number, number]> = [];
-        // retroceso inicial: desde la izquierda
-        let bx = px0 - 1, by = py0;
-        const limit = 8 * w * h;
-        let steps = 0;
-        do {
-          contour.push([px0, py0]);
-          // escanea los 8 vecinos desde el retroceso, sentido horario
-          let found = false;
-          for (let k = 1; k <= 8 && !found; k++) {
-            const ang = (DIRS.findIndex(d2 => d2[0] === bx - px0 && d2[1] === by - py0) + k + 8) % 8;
-            const nx2 = px0 + DIRS[ang][0], ny2 = py0 + DIRS[ang][1];
-            if (isBlob(nx2, ny2)) {
-              bx = px0 + DIRS[(ang + 7) % 8][0];
-              by = py0 + DIRS[(ang + 7) % 8][1];
-              px0 = nx2; py0 = ny2;
-              found = true;
-            } else {
-              bx = nx2; by = ny2;
-            }
-          }
-          if (!found) break; // blob de un solo pixel
-          steps++;
-        } while ((px0 !== contour[0][0] || py0 !== contour[0][1]) && steps < limit);
-        if (contour.length < 12) throw new Error('corto');
+        const dirIndex = (dx: number, dy: number) =>
+          DIRS.findIndex(d2 => d2[0] === dx && d2[1] === dy);
 
-        // 4) simplificar y llevar al espacio del viewBox (100x125)
         const s2 = Math.min(SKETCH_VB_W / w, SKETCH_VB_H / h);
         const offX = (SKETCH_VB_W - w * s2) / 2;
         const offY = (SKETCH_VB_H - h * s2) / 2;
-        const norm = contour.map(([x, y]): [number, number] =>
-          [+(x * s2 + offX).toFixed(1), +(y * s2 + offY).toFixed(1)]);
-        const simp = rdpSimplify(norm.concat([norm[0]]), 1.15);
-        const dPath = simp.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x} ${y}`).join(' ') + ' Z';
-        resolve(dPath);
+        let dOut = '';
+        let ptsTotal = 0;
+
+        for (const piece of keep) {
+          const bid = piece.id;
+          const isBlob = (x: number, y: number) => {
+            if (x < 0 || y < 0 || x >= w || y >= h) return false;
+            return label[y * w + x] === bid;
+          };
+          let start = -1;
+          for (let s = 0; s < w * h; s++) if (label[s] === bid) { start = s; break; }
+          if (start === -1) continue;
+          const sx = start % w, sy = (start / w) | 0;
+          let cx0 = sx, cy0 = sy;
+          let bx = sx - 1, by = sy;
+          const b0x = bx, b0y = by;
+          const contour: Array<[number, number]> = [];
+          let guard = 12 * w * h;
+          while (guard-- > 0) {
+            contour.push([cx0, cy0]);
+            let found = false;
+            for (let k = 1; k <= 8; k++) {
+              const base = dirIndex(bx - cx0, by - cy0);
+              if (base < 0) break;
+              const ang = (base + k) % 8;
+              const nx2 = cx0 + DIRS[ang][0], ny2 = cy0 + DIRS[ang][1];
+              if (isBlob(nx2, ny2)) {
+                bx = cx0 + DIRS[(ang + 7) % 8][0];
+                by = cy0 + DIRS[(ang + 7) % 8][1];
+                cx0 = nx2; cy0 = ny2;
+                found = true;
+                break;
+              }
+              bx = nx2; by = ny2;
+            }
+            if (!found) break; // pieza de un solo pixel
+            if (cx0 === sx && cy0 === sy && bx === b0x && by === b0y && contour.length > 7) break;
+          }
+          if (contour.length < 10) continue;
+
+          const norm = contour.map(([x, y]): [number, number] =>
+            [+(x * s2 + offX).toFixed(1), +(y * s2 + offY).toFixed(1)]);
+          const simp = rdpSimplify(norm.concat([norm[0]]), 0.9);
+          if (simp.length < 3) continue;
+          dOut += simp.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x} ${y}`).join(' ') + ' Z ';
+          ptsTotal += simp.length;
+        }
+        if (ptsTotal < 16) throw new Error('corto');
+        resolve(dOut.trim());
       } catch (e) {
         reject(e);
       }
