@@ -102,6 +102,34 @@ export default function RootLayout({
               <span className="splash-flame" aria-hidden="true">🔥</span>
               <em>«Avivando la llama de Cristo en tu corazón»</em>
             </p>
+            {/* Escenario line-art: siluetas dibujadas de los logos de las Zonas 1 y 2.
+                Las imágenes se inyectan desde page.tsx (vienen del admin); los marcos
+                permanecen ocultos hasta que exista imagen (clase has-img). */}
+            <div className="splash-art" aria-hidden="true">
+              <svg width="0" height="0" focusable="false" style={{ position: 'absolute' }}>
+                <filter id="pjlEdge" x="-4%" y="-4%" width="108%" height="108%">
+                  <feConvolveMatrix order="3" preserveAlpha="true" kernelMatrix="-1 -1 -1 -1 8 -1 -1 -1 -1" />
+                </filter>
+              </svg>
+              <div className="sp-crest sp-crest--a" id="sp-crest-1">
+                <div className="sp-frame">
+                  <span className="sp-ring"></span>
+                  <img className="sp-line" alt="" />
+                  <img className="sp-fill" alt="" />
+                </div>
+                <span className="sp-glow"></span>
+                <span className="sp-label">Zona 1</span>
+              </div>
+              <div className="sp-crest sp-crest--b" id="sp-crest-2">
+                <div className="sp-frame">
+                  <span className="sp-ring"></span>
+                  <img className="sp-line" alt="" />
+                  <img className="sp-fill" alt="" />
+                </div>
+                <span className="sp-glow"></span>
+                <span className="sp-label">Zona 2</span>
+              </div>
+            </div>
             <div className="splash-loader">
               <div className="splash-bar"><span className="splash-bar-fill"></span><span className="splash-bar-shine"></span></div>
               <p className="splash-loading-text">Cargando<span className="splash-dots"><i>.</i><i>.</i><i>.</i></span></p>

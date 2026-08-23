@@ -356,32 +356,55 @@ function HomeContent() {
         fallbackNode.replaceWith(img);
       }
     }
+    // Inyecta los logos de las Zonas 1 y 2 en el escenario line-art del splash.
+    // Cada marco permanece oculto hasta que recibe imagen (clase has-img).
+    const brandingSplash = store.branding.get();
+    ([['zona1Logo', 'sp-crest-1'], ['zona2Logo', 'sp-crest-2']] as const).forEach(([key, id]) => {
+      const src = brandingSplash?.[key];
+      const crest = document.getElementById(id);
+      if (!crest || !src) return;
+      const line = crest.querySelector<HTMLImageElement>('.sp-line');
+      const fill = crest.querySelector<HTMLImageElement>('.sp-fill');
+      if (line) line.src = src;
+      if (fill) fill.src = src;
+      crest.classList.add('has-img');
+    });
     splash.querySelectorAll<HTMLElement>('.splash-letter, .splash-logo-wrap, .splash-tagline, .splash-bar, .splash-bar-fill, .splash-loading-text').forEach(el => {
       el.style.animation = 'none';
       void el.offsetWidth;
       el.style.animation = '';
     });
-    // Salida cinematográfica en DOS fases:
-    // Fase 1 (3200ms) — arranca splashOut (~0.95s de fundido + desenfoque +
+    // Coreografía extendida con escenario line-art de zonas:
+    // Fase A (1400ms) — aparece el escenario: anillos entran y las siluetas
+    // de los logos Zona 1 / Zona 2 se "dibujan" trazo a trazo (mask sweep).
+    const tArt = window.setTimeout(() => {
+      splash.classList.add('art-on');
+    }, 1400);
+    // Fase B (3750ms) — las siluetas se disuelven y los logos reales toman
+    // color con un estallido suave; el brillo dorado se enciende debajo.
+    const tColor = window.setTimeout(() => {
+      splash.classList.add('art-color');
+    }, 3750);
+    // Fase 1 (5000ms) — arranca splashOut (~0.95s de fundido + desenfoque +
     // zoom). El velo SIGUE cerrado: la página todavía no se ve.
     const t1 = window.setTimeout(() => {
       splash.classList.add('is-leaving');
-    }, 3200);
-    // Fase 2 (3850ms) — a mitad del fundido se abre el velo: la página entra
+    }, 5000);
+    // Fase 2 (5650ms) — a mitad del fundido se abre el velo: la página entra
     // con su propio fundido suave (pjlPageIn) cruzándose con el resto de la
     // salida del splash; el menú hace su cascada justo después.
     const t1b = window.setTimeout(() => {
       root.classList.add('pjl-reveal');
       root.classList.remove('show-splash');
       window.setTimeout(() => setNavEntered(true), 260);
-    }, 3850);
+    }, 5650);
     // Cierre — retirar pantalla y clases de estado.
     const t2 = window.setTimeout(() => {
       splash.remove();
       root.classList.remove('pjl-reveal');
       setNavEntered(true);
       setSplashDone(true);
-    }, 4150);
+    }, 5950);
     // Intencionadamente NO se cancelan en el cleanup: si el usuario navega a
     // otra página durante la intro, estos temporizadores deben igualmente
     // retirar el velo y la pantalla; cancelarlos dejaría la clase

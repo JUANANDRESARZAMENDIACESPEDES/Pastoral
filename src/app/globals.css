@@ -517,7 +517,7 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
    Cada sección tiene su propio efecto de fondo y su ícono animado
    ============================================================ */
 
-/* 🏠 INICIO — resplandor cálido que nace del suelo + ícono que rebota */
+/* ✦ INICIO — resplandor cálido que nace del suelo + ícono que rebota */
 [data-nav="home"]::before {
   background: radial-gradient(130% 145% at 50% 118%, rgba(228, 183, 102, 0.95) 0%, rgba(228, 183, 102, 0) 62%);
   opacity: 0;
@@ -541,7 +541,7 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
   animation: icoBounceHome 0.75s cubic-bezier(0.28, 0.84, 0.42, 1);
 }
 
-/* 📖 NOSOTROS — cortina dorada que barre desde la izquierda + libro que gira sobre sí mismo */
+/* x NOSOTROS — cortina dorada que barre desde la izquierda + libro que gira sobre sí mismo */
 [data-nav="institucional"]::before {
   background: linear-gradient(135deg, var(--gold) 0%, #e2b45f 55%, #caa14e 100%);
   transform: scaleX(0);
@@ -563,7 +563,7 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
   animation: icoFlipBook 0.7s cubic-bezier(0.45, 0.05, 0.35, 1);
 }
 
-/* 👥 CONSEJO — tinta navy que brota desde la esquina inferior + equipo con rebote de resorte */
+/* x CONSEJO — tinta navy que brota desde la esquina inferior + equipo con rebote de resorte */
 [data-nav="consejo"]::before {
   background: linear-gradient(135deg, var(--navy) 0%, #33487c 100%);
   clip-path: circle(0% at 0% 100%);
@@ -589,7 +589,7 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
   animation: icoPopSpring 0.65s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* 🗺️ ZONAS — tinta navy desde la esquina superior opuesta + radar expansivo + mapa que se sacude */
+/* x️ ZONAS — tinta navy desde la esquina superior opuesta + radar expansivo + mapa que se sacude */
 [data-nav="zonas"]::before {
   background: linear-gradient(225deg, var(--navy) 0%, #33487c 100%);
   clip-path: circle(0% at 100% 0%);
@@ -626,7 +626,7 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
   animation: icoWiggleMap 0.8s ease-in-out;
 }
 
-/* 📅 AGENDA — destello de luz que cruza el botón + calendario que pasa la hoja */
+/* x& AGENDA — destello de luz que cruza el botón + calendario que pasa la hoja */
 [data-nav="agenda"]::before {
   background: linear-gradient(115deg, transparent 20%, rgba(255, 255, 255, 0.85) 44%, rgba(228, 183, 102, 0.5) 56%, transparent 80%);
   transform: translateX(-135%) skewX(-18deg);
@@ -656,7 +656,7 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
   animation: icoCalendarFlip 0.7s cubic-bezier(0.45, 0.05, 0.35, 1);
 }
 
-/* 📰 NOTICIAS — sello de tinta que se estampa desde el centro + periódico que tiembla */
+/* x NOTICIAS — sello de tinta que se estampa desde el centro + periódico que tiembla */
 [data-nav="noticias"]::before {
   background: radial-gradient(circle at 50% 50%, #22335c 0%, #2e4170 70%);
   clip-path: circle(0% at 50% 50%);
@@ -682,7 +682,7 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
   animation: icoShakePress 0.65s ease-in-out;
 }
 
-/* 📁 DOCUMENTOS — bandeja dorada que se despliega desde abajo + carpeta que se abre */
+/* x DOCUMENTOS — bandeja dorada que se despliega desde abajo + carpeta que se abre */
 [data-nav="documentos"]::before {
   background: linear-gradient(180deg, var(--gold) 0%, #b98a2f 100%);
   transform: translateY(101%);
@@ -703,7 +703,7 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
   animation: icoFolderOpen 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* ✉️ CONTACTO — aura cálida + anillo que emana como carta enviada + sobre que se balancea */
+/* S0️ CONTACTO — aura cálida + anillo que emana como carta enviada + sobre que se balancea */
 [data-nav="contacto"]::before {
   background: radial-gradient(circle at 50% 55%, rgba(200, 151, 58, 0.18) 0%, transparent 70%);
   opacity: 0;
@@ -738,7 +738,7 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
   animation: icoSwingMail 0.8s ease-in-out;
 }
 
-/* 🇻🇦 VATICANO — luz celestial que asciende + bandera que flota continuamente */
+/* ✦ VATICANO — luz celestial que asciende + bandera que flota continuamente */
 [data-nav="vaticano"]::before {
   background: radial-gradient(120% 130% at 50% 120%, rgba(247, 230, 189, 0.9) 0%, rgba(247, 230, 189, 0) 65%);
   opacity: 0;
@@ -828,7 +828,7 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
   transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .dropdown-link::before {
-  content: '✦';
+  content: '†';
   position: absolute;
   left: 15px;
   width: 20px;
@@ -1866,7 +1866,7 @@ input, textarea { cursor: text; }
 }
 
 /* ============================================================
-   PROFILE QUOTE – PERSONAL MESSAGE BOX
+   PROFILE QUOTE Ó PERSONAL MESSAGE BOX
    ============================================================ */
 .profile-quote {
   background: linear-gradient(135deg, var(--gold-pale) 0%, #fff8ee 100%);
@@ -1891,7 +1891,7 @@ input, textarea { cursor: text; }
 }
 
 /* ============================================================
-   ZONE CARDS – MORE VIVEZA & VIBRANCY
+   ZONE CARDS Ó MORE VIVEZA & VIBRANCY
    ============================================================ */
 .zone-card {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -1917,7 +1917,7 @@ input, textarea { cursor: text; }
 }
 
 /* ============================================================
-   MVV CARDS – MORE VIVEZA
+   MVV CARDS Ó MORE VIVEZA
    ============================================================ */
 .mvv-card {
   transition: transform 0.25s ease, box-shadow 0.25s ease;
@@ -1928,7 +1928,7 @@ input, textarea { cursor: text; }
 }
 
 /* ============================================================
-   PROFILE CARDS – MORE VIVEZA
+   PROFILE CARDS Ó MORE VIVEZA
    ============================================================ */
 .profile-card {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -1942,7 +1942,7 @@ input, textarea { cursor: text; }
 }
 
 /* ============================================================
-   SECTION HEADS – EXTRA ACCENT BAR
+   SECTION HEADS Ó EXTRA ACCENT BAR
    ============================================================ */
 .section-head {
   margin-bottom: 80px;
@@ -1987,7 +1987,7 @@ input, textarea { cursor: text; }
   position: relative;
 }
 .section-head .line::after {
-  content: '†';
+  content: '⬠';
   position: absolute;
   top: 50%;
   left: 50%;
@@ -2115,7 +2115,7 @@ input, textarea { cursor: text; }
 }
 
 /* ============================================================
-   SOCIAL CIRCLES – HOVER PULSE
+   SOCIAL CIRCLES Ó HOVER PULSE
    ============================================================ */
 .social-circle {
   transition: transform 0.2s ease, background 0.2s, box-shadow 0.2s;
@@ -6373,7 +6373,7 @@ textarea:focus-visible,
 /* ---------- FIX NAVBAR: anti-solape del lema en pantallas grandes ----------
    El bloque base da ancho completo al contenedor del navbar entre 1481-1880px,
    pero a partir de 1881px volvía a limitarse a 1300px mientras el lema
-   "Fe · Comunidad · Misión" ya es visible (≥1680px) → se pisaba con los botones. */
+   "Fe · Comunidad · Misión" ya es visible (≤1680px) → se pisaba con los botones. */
 @media (min-width: 1881px) {
   .top-nav .container {
     max-width: none;
@@ -6396,9 +6396,9 @@ textarea:focus-visible,
 }
 
 /* ---------- SPLASH SCREEN DE CARGA ----------
-   Secuencia: logo (pop elástico + anillo dorado giratorio) →
-   nombre (letras en cascada) → lema (enfoque suave con llama) →
-   barra de progreso + "Cargando..." → salida con fundido. */
+   Secuencia: logo (pop elástico + anillo dorado giratorio)  
+   nombre (letras en cascada)   lema (enfoque suave con llama)  
+   barra de progreso + "Cargando..."   salida con fundido. */
 .splash-screen {
   position: fixed;
   inset: 0;
@@ -8511,4 +8511,169 @@ html.show-splash .splash-screen { visibility: visible; }
   .dir-card.is-open .dir-actions { animation-duration: 0.01s !important; animation-delay: 0s !important; }
   .dir-status.is-ok i,
   .dir-status.is-nuc i { animation: none !important; }
+}
+
+/* ============================================================
+   SPLASH · ESCENARIO LINE-ART — LOGOS ZONA 1 Y ZONA 2
+   Fase art-on: siluetas dibujadas (filtro borde + barrido mask)
+   Fase art-color: disoluciÒ³n del trazo y toma de color real
+   ============================================================ */
+.splash-art {
+  display: none;
+  margin-top: 30px;
+  justify-content: center;
+  align-items: flex-start;
+  gap: clamp(30px, 8vw, 84px);
+}
+.splash-screen.art-on .splash-art { display: flex; }
+.splash-loader { transition: opacity 0.45s ease, transform 0.45s ease; }
+.splash-screen.art-on .splash-loader {
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+}
+
+/* Marco de cada zona */
+.sp-crest {
+  display: none;
+  position: relative;
+  width: clamp(104px, 16vw, 150px);
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.sp-crest.has-img { display: flex; }
+.sp-frame { position: relative; width: 100%; aspect-ratio: 1; }
+.sp-ring {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px solid rgba(200, 151, 58, 0.4);
+  border-left-color: transparent;
+  border-right-color: transparent;
+  opacity: 0;
+  transform: scale(0.72) rotate(-45deg);
+}
+.splash-screen.art-on .sp-ring {
+  animation: spRingIn 0.75s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.splash-screen.art-on .sp-crest--b .sp-ring { animation-delay: 0.42s; }
+@keyframes spRingIn {
+  from { opacity: 0; transform: scale(0.72) rotate(-45deg); }
+  to { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+/* Capas de imagen: trazo (line) y real (fill) */
+.sp-line,
+.sp-fill {
+  position: absolute;
+  inset: 9%;
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+}
+.sp-line {
+  filter: url(#pjlEdge) grayscale(1) brightness(1.55) contrast(1.2);
+  opacity: 0;
+  -webkit-mask-image: linear-gradient(108deg, #000 47%, transparent 57%);
+          mask-image: linear-gradient(108deg, #000 47%, transparent 57%);
+  -webkit-mask-size: 250% 100%;
+          mask-size: 250% 100%;
+  -webkit-mask-repeat: no-repeat;
+          mask-repeat: no-repeat;
+  -webkit-mask-position: 100% 0;
+          mask-position: 100% 0;
+}
+.splash-screen.art-on .sp-line {
+  animation: spDraw 1.85s cubic-bezier(0.66, 0.04, 0.32, 1) 0.18s forwards;
+}
+.splash-screen.art-on .sp-crest--b .sp-line { animation-delay: 0.66s; }
+@keyframes spDraw {
+  0% { -webkit-mask-position: 100% 0; mask-position: 100% 0; opacity: 0.95; }
+  92% { opacity: 0.95; }
+  100% { -webkit-mask-position: 0% 0; mask-position: 0% 0; opacity: 0.9; }
+}
+
+/* Imagen real: nace desenfocada y toma color */
+.sp-fill {
+  opacity: 0;
+  transform: scale(1.09);
+  filter: blur(10px) saturate(0.55);
+}
+.splash-screen.art-color .sp-fill {
+  animation: spFillIn 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.splash-screen.art-color .sp-crest--b .sp-fill { animation-delay: 0.18s; }
+@keyframes spFillIn {
+  0% { opacity: 0; transform: scale(1.09); filter: blur(10px) saturate(0.55); }
+  55% { opacity: 1; }
+  100% { opacity: 1; transform: scale(1); filter: blur(0) saturate(1) drop-shadow(0 14px 26px rgba(0, 0, 0, 0.45)); }
+}
+
+/* Disolución del trazo cuando llega el color */
+.splash-screen.art-color .sp-line {
+  animation: spLineOut 0.6s ease forwards;
+}
+.splash-screen.art-color .sp-crest--b .sp-line { animation-delay: 0.18s; }
+@keyframes spLineOut {
+  to { opacity: 0; filter: url(#pjlEdge) grayscale(1) brightness(1.55) contrast(1.2) blur(3px); }
+}
+
+/* Resplandor dorado bajo el marco al tomar color */
+.sp-glow {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: -10px;
+  height: 24px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(200, 151, 58, 0.55), transparent 70%);
+  filter: blur(7px);
+  opacity: 0;
+  transform: scale(0.4);
+  pointer-events: none;
+}
+.splash-screen.art-color .sp-glow {
+  animation: spGlowIn 0.95s cubic-bezier(0.22, 1, 0.36, 1) 0.15s forwards;
+}
+.splash-screen.art-color .sp-crest--b .sp-glow { animation-delay: 0.33s; }
+@keyframes spGlowIn {
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Rótulo de zona */
+.sp-label {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  text-indent: 0.34em;
+  color: rgba(240, 217, 166, 0.72);
+  opacity: 0;
+  transform: translateY(7px);
+  transition: color 0.5s ease, text-shadow 0.5s ease;
+}
+.splash-screen.art-on .sp-label {
+  animation: spLabelIn 0.55s ease both;
+}
+.splash-screen.art-on .sp-crest--a .sp-label { animation-delay: 0.55s; }
+.splash-screen.art-on .sp-crest--b .sp-label { animation-delay: 0.97s; }
+@keyframes spLabelIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+.splash-screen.art-color .sp-label {
+  color: #f0d9a6;
+  text-shadow: 0 0 16px rgba(200, 151, 58, 0.65);
+}
+
+/* Pantallas bajas y móviles */
+@media (max-height: 720px) {
+  .splash-art { margin-top: 18px; }
+  .sp-crest { width: clamp(88px, 13vw, 118px); }
+}
+@media (max-width: 480px) {
+  .splash-art { margin-top: 22px; gap: clamp(24px, 9vw, 44px); }
+  .sp-crest { width: clamp(92px, 24vw, 116px); }
+  .sp-label { font-size: 10px; letter-spacing: 0.28em; text-indent: 0.28em; }
 }
