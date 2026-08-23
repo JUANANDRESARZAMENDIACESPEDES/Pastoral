@@ -82,6 +82,23 @@ export default function RootLayout({
             {Array.from({ length: 14 }).map((_, i) => (
               <span key={i} className="splash-ember" style={{ left: `${(i * 7.3 + 4) % 96}%`, animationDelay: `${(i * 0.37) % 3.2}s`, animationDuration: `${3.4 + (i % 5) * 0.55}s` }} />
             ))}
+            {/* Trazos line-art integrados AL FONDO: las líneas se dibujan solas
+                hasta formar la silueta de los logos de las Zonas 1 y 2, detrás
+                del contenido. page.tsx inyecta las imágenes; cada trazo queda
+                oculto hasta recibir imagen (clase has-img). */}
+            <svg width="0" height="0" focusable="false" style={{ position: 'absolute' }}>
+              <filter id="pjlEdge" x="-4%" y="-4%" width="108%" height="108%">
+                <feConvolveMatrix order="3" preserveAlpha="true" kernelMatrix="-1 -1 -1 -1 8 -1 -1 -1 -1" />
+              </filter>
+            </svg>
+            <div className="splash-trace sp-trace-a" id="sp-crest-1">
+              <img className="sp-line" alt="" />
+              <img className="sp-fill" alt="" />
+            </div>
+            <div className="splash-trace sp-trace-b" id="sp-crest-2">
+              <img className="sp-line" alt="" />
+              <img className="sp-fill" alt="" />
+            </div>
           </div>
           <div className="splash-content">
             <div className="splash-logo-wrap">
@@ -102,34 +119,6 @@ export default function RootLayout({
               <span className="splash-flame" aria-hidden="true">🔥</span>
               <em>«Avivando la llama de Cristo en tu corazón»</em>
             </p>
-            {/* Escenario line-art: siluetas dibujadas de los logos de las Zonas 1 y 2.
-                Las imágenes se inyectan desde page.tsx (vienen del admin); los marcos
-                permanecen ocultos hasta que exista imagen (clase has-img). */}
-            <div className="splash-art" aria-hidden="true">
-              <svg width="0" height="0" focusable="false" style={{ position: 'absolute' }}>
-                <filter id="pjlEdge" x="-4%" y="-4%" width="108%" height="108%">
-                  <feConvolveMatrix order="3" preserveAlpha="true" kernelMatrix="-1 -1 -1 -1 8 -1 -1 -1 -1" />
-                </filter>
-              </svg>
-              <div className="sp-crest sp-crest--a" id="sp-crest-1">
-                <div className="sp-frame">
-                  <span className="sp-ring"></span>
-                  <img className="sp-line" alt="" />
-                  <img className="sp-fill" alt="" />
-                </div>
-                <span className="sp-glow"></span>
-                <span className="sp-label">Zona 1</span>
-              </div>
-              <div className="sp-crest sp-crest--b" id="sp-crest-2">
-                <div className="sp-frame">
-                  <span className="sp-ring"></span>
-                  <img className="sp-line" alt="" />
-                  <img className="sp-fill" alt="" />
-                </div>
-                <span className="sp-glow"></span>
-                <span className="sp-label">Zona 2</span>
-              </div>
-            </div>
             <div className="splash-loader">
               <div className="splash-bar"><span className="splash-bar-fill"></span><span className="splash-bar-shine"></span></div>
               <p className="splash-loading-text">Cargando<span className="splash-dots"><i>.</i><i>.</i><i>.</i></span></p>

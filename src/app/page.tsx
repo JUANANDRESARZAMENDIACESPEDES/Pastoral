@@ -374,37 +374,38 @@ function HomeContent() {
       void el.offsetWidth;
       el.style.animation = '';
     });
-    // Coreografía extendida con escenario line-art de zonas:
-    // Fase A (1400ms) — aparece el escenario: anillos entran y las siluetas
-    // de los logos Zona 1 / Zona 2 se "dibujan" trazo a trazo (mask sweep).
+    // Coreografía con trazos line-art en el FONDO del splash:
+    // Fase A (1200ms) — mientras el monograma y el lema siguen en escena,
+    // en el fondo comienzan a dibujarse las líneas de las siluetas de las
+    // Zonas 1 y 2 (barrido de máscara sobre el filtro de bordes).
     const tArt = window.setTimeout(() => {
       splash.classList.add('art-on');
-    }, 1400);
-    // Fase B (3750ms) — las siluetas se disuelven y los logos reales toman
-    // color con un estallido suave; el brillo dorado se enciende debajo.
+    }, 1200);
+    // Fase B (3900ms) — las líneas terminaron de formar la silueta: se
+    // funden suavemente con el logo real, que toma color detrás del texto.
     const tColor = window.setTimeout(() => {
       splash.classList.add('art-color');
-    }, 3750);
-    // Fase 1 (5000ms) — arranca splashOut (~0.95s de fundido + desenfoque +
+    }, 3900);
+    // Fase 1 (4700ms) — arranca splashOut (~0.95s de fundido + desenfoque +
     // zoom). El velo SIGUE cerrado: la página todavía no se ve.
     const t1 = window.setTimeout(() => {
       splash.classList.add('is-leaving');
-    }, 5000);
-    // Fase 2 (5650ms) — a mitad del fundido se abre el velo: la página entra
+    }, 4700);
+    // Fase 2 (5350ms) — a mitad del fundido se abre el velo: la página entra
     // con su propio fundido suave (pjlPageIn) cruzándose con el resto de la
     // salida del splash; el menú hace su cascada justo después.
     const t1b = window.setTimeout(() => {
       root.classList.add('pjl-reveal');
       root.classList.remove('show-splash');
       window.setTimeout(() => setNavEntered(true), 260);
-    }, 5650);
+    }, 5350);
     // Cierre — retirar pantalla y clases de estado.
     const t2 = window.setTimeout(() => {
       splash.remove();
       root.classList.remove('pjl-reveal');
       setNavEntered(true);
       setSplashDone(true);
-    }, 5950);
+    }, 5650);
     // Intencionadamente NO se cancelan en el cleanup: si el usuario navega a
     // otra página durante la intro, estos temporizadores deben igualmente
     // retirar el velo y la pantalla; cancelarlos dejaría la clase
