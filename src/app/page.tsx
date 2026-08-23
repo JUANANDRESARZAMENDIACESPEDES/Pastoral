@@ -102,6 +102,165 @@ const mapHeroPosition = (position?: string) => {
   }
 };
 
+/* ============================================================
+   TRAZADOR DE SILUETAS — convierte el contorno de un logo real
+   en una ruta SVG dibujable. Canvas -> binarizado -> blob mas
+   grande -> recorrido Moore del borde -> simplificacion RDP.
+   ============================================================ */
+const SKETCH_VB_W = 100;
+const SKETCH_VB_H = 125;
+
+function rdpSimplify(pts: Array<[number, number]>, eps: number): Array<[number, number]> {
+  if (pts.length < 3) return pts;
+  const d2seg = (p: [number, number], a: [number, number], b: [number, number]) => {
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    const len2 = dx * dx + dy * dy;
+    let t = len2 === 0 ? 0 : ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / len2;
+    t = Math.max(0, Math.min(1, t));
+    const ex = a[0] + t * dx - p[0], ey = a[1] + t * dy - p[1];
+    return ex * ex + ey * ey;
+  };
+  let maxD = 0, idx = 0;
+  const a = pts[0], b = pts[pts.length - 1];
+  for (let i = 1; i < pts.length - 1; i++) {
+    const d = d2seg(pts[i], a, b);
+    if (d > maxD) { maxD = d; idx = i; }
+  }
+  if (maxD > eps * eps) {
+    const left = rdpSimplify(pts.slice(0, idx + 1), eps);
+    const right = rdpSimplify(pts.slice(idx), eps);
+    return left.slice(0, -1).concat(right);
+  }
+  return [a, b];
+}
+
+function traceSilhouette(src: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const S = 190;
+        const iw = img.naturalWidth || S;
+        const ih = img.naturalHeight || S;
+        const w = iw >= ih ? S : Math.max(24, Math.round(S * iw / ih));
+        const h = iw >= ih ? Math.max(24, Math.round(S * ih / iw)) : S;
+        const cv = document.createElement('canvas');
+        cv.width = w; cv.height = h;
+        const cx = cv.getContext('2d', { willReadFrequently: true });
+        if (!cx) throw new Error('ctx');
+        cx.drawImage(img, 0, 0, w, h);
+        const px = cx.getImageData(0, 0, w, h).data;
+
+        const inkAt = (x: number, y: number): boolean => {
+          if (x < 0 || y < 0 || x >= w || y >= h) return false;
+          const i = (y * w + x) * 4;
+          return px[i + 3] > 48 && (px[i] + px[i + 1] + px[i + 2]) / 3 < 232;
+        };
+
+        // 1) etiquetado por inundacion: quedarse con el blob mas grande
+        const label = new Int32Array(w * h).fill(-1);
+        let bestId = -1, bestSize = 0, nextId = 0;
+        const stack: number[] = [];
+        for (let s = 0; s < w * h; s++) {
+          if (label[s] !== -1) continue;
+          const sx = s % w, sy = (s / w) | 0;
+          if (!inkAt(sx, sy)) continue;
+          const id = nextId++;
+          let size = 0;
+          stack.push(s);
+          label[s] = id;
+          while (stack.length) {
+            const c = stack.pop() as number;
+            size++;
+            const x0 = c % w, y0 = (c / w) | 0;
+            for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+              const nx2 = x0 + dx, ny2 = y0 + dy;
+              if (nx2 < 0 || ny2 < 0 || nx2 >= w || ny2 >= h) continue;
+              const n = ny2 * w + nx2;
+              if (label[n] === -1 && inkAt(nx2, ny2)) { label[n] = id; stack.push(n); }
+            }
+          }
+          if (size > bestSize) { bestSize = size; bestId = id; }
+        }
+        if (bestId === -1 || bestSize < 60) throw new Error('blob');
+
+        // 2 punto inicial: mas arriba-izquierda del blob
+        let start = -1;
+        for (let s = 0; s < w * h && start === -1; s++) if (label[s] === bestId) start = s;
+        const isBlob = (x: number, y: number) => {
+          if (x < 0 || y < 0 || x >= w || y >= h) return false;
+          return label[y * w + x] === bestId;
+        };
+        // 3) recorrido Moore del borde (sentido horario, criterio de Jacob)
+        const DIRS: Array<[number, number]> = [
+          [-1, 0], [-1, -1], [0, -1], [1, -1],
+          [1, 0], [1, 1], [0, 1], [-1, 1]
+        ];
+        let px0 = start % w, py0 = (start / w) | 0;
+        const contour: Array<[number, number]> = [];
+        // retroceso inicial: desde la izquierda
+        let bx = px0 - 1, by = py0;
+        const limit = 8 * w * h;
+        let steps = 0;
+        do {
+          contour.push([px0, py0]);
+          // escanea los 8 vecinos desde el retroceso, sentido horario
+          let found = false;
+          for (let k = 1; k <= 8 && !found; k++) {
+            const ang = (DIRS.findIndex(d2 => d2[0] === bx - px0 && d2[1] === by - py0) + k + 8) % 8;
+            const nx2 = px0 + DIRS[ang][0], ny2 = py0 + DIRS[ang][1];
+            if (isBlob(nx2, ny2)) {
+              bx = px0 + DIRS[(ang + 7) % 8][0];
+              by = py0 + DIRS[(ang + 7) % 8][1];
+              px0 = nx2; py0 = ny2;
+              found = true;
+            } else {
+              bx = nx2; by = ny2;
+            }
+          }
+          if (!found) break; // blob de un solo pixel
+          steps++;
+        } while ((px0 !== contour[0][0] || py0 !== contour[0][1]) && steps < limit);
+        if (contour.length < 12) throw new Error('corto');
+
+        // 4) simplificar y llevar al espacio del viewBox (100x125)
+        const s2 = Math.min(SKETCH_VB_W / w, SKETCH_VB_H / h);
+        const offX = (SKETCH_VB_W - w * s2) / 2;
+        const offY = (SKETCH_VB_H - h * s2) / 2;
+        const norm = contour.map(([x, y]): [number, number] =>
+          [+(x * s2 + offX).toFixed(1), +(y * s2 + offY).toFixed(1)]);
+        const simp = rdpSimplify(norm.concat([norm[0]]), 1.15);
+        const dPath = simp.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x} ${y}`).join(' ') + ' Z';
+        resolve(dPath);
+      } catch (e) {
+        reject(e);
+      }
+    };
+    img.onerror = () => reject(new Error('load'));
+    img.src = src;
+  });
+}
+
+// Siluetas de respaldo dibujadas a mano (se usan solo si un logo no existe,
+// no carga o el traceo falla). Espacio 100x125, mismo estilo de trazo.
+const FALLBACK_SKETCH_A =
+  'M50 5 V19 M44 11.7 H56 ' +
+  'M17.3 42.5 L50 20 L82.7 42.5 ' +
+  'M13.6 44.2 H86.4 ' +
+  'M21.8 45.8 V100 M78.2 45.8 V100 M12.7 100 H87.3 ' +
+  'M42.7 100 V77.5 A7.3 7.3 0 0 1 57.3 77.5 V100 ' +
+  'M57.3 55.8 A7.3 7.3 0 1 1 57.29 55.8';
+const FALLBACK_SKETCH_B =
+  'M33.6 27.5 C39.1 12.5 62.7 9.2 71.8 20.8 ' +
+  'M67.3 15 C52.7 10 37.3 14.2 31.8 26.7 C26.8 38.3 30.5 45.8 26.8 58.3 ' +
+  'C23.2 70.8 25 82.5 29.5 93.3 C33.2 101.7 35.9 109.2 35 118.3 ' +
+  'M44.1 31.7 C40.5 37.5 41.4 43.3 45 47.5 C47.7 50.4 47.7 52.9 45 54.6 ' +
+  'M45 66.7 C53.2 62.1 63.2 63.8 69.5 69.6 C73.2 72.9 74.1 77.9 71.4 82.1 ' +
+  'M80.9 75.4 A5.9 5.9 0 1 1 80.89 75.4 ' +
+  'M62.3 82.9 C65.9 87.9 72.3 89.6 77.7 87.1 ' +
+  'M29.5 93.3 C44.5 88.3 60.9 90 71.4 99.2 C75 103.3 76.8 110 75.9 118.3';
+
 const detectDeviceType = () => {
   if (typeof window === 'undefined') return 'desktop' as const;
   const ua = window.navigator.userAgent.toLowerCase();
@@ -361,39 +520,92 @@ function HomeContent() {
       void el.offsetWidth;
       el.style.animation = '';
     });
-    // Coreografía con siluetas dibujadas por código en el FONDO:
-    // Fase A (1200ms) — mientras el monograma y el lema siguen en escena,
-    // un punto dorado recorre cada trazo del fondo y va dejando la línea
-    // dibujada: a la izquierda la estructura de la iglesia, a la derecha
-    // la silueta de la señora con el bebé. El truco pathLength=1 mantiene
-    // línea y punto perfectamente sincronizados.
-    const tArt = window.setTimeout(() => {
+    // --- Siluetas line-art calculadas desde los logos reales ---
+    const injectSketch = (svgId: string, d: string, durS: number, delayS: number): void => {
+      const svg = document.getElementById(svgId);
+      if (!svg) return;
+      const NS = 'http://www.w3.org/2000/svg';
+      const path = document.createElementNS(NS, 'path');
+      path.setAttribute('class', 'sk-p');
+      path.setAttribute('d', d);
+      path.setAttribute('pathLength', '1');
+      path.style.setProperty('--d', `${durS}s`);
+      path.style.setProperty('--dl', `${delayS}s`);
+      const dot = document.createElementNS(NS, 'circle');
+      dot.setAttribute('class', 'sk-dot');
+      dot.setAttribute('r', '1.7');
+      dot.setAttribute('opacity', '0');
+      const motion = document.createElementNS(NS, 'animateMotion');
+      motion.setAttribute('dur', `${durS}s`);
+      motion.setAttribute('begin', 'indefinite');
+      motion.setAttribute('fill', 'freeze');
+      motion.setAttribute('path', d);
+      motion.dataset.smil = '';
+      motion.dataset.delay = String(delayS);
+      const fade = document.createElementNS(NS, 'animate');
+      fade.setAttribute('dur', `${durS}s`);
+      fade.setAttribute('begin', 'indefinite');
+      fade.setAttribute('fill', 'freeze');
+      fade.setAttribute('attributeName', 'opacity');
+      fade.setAttribute('values', '0;1;1;0');
+      fade.setAttribute('keyTimes', '0;0.04;0.86;1');
+      fade.dataset.smil = '';
+      fade.dataset.delay = String(delayS);
+      dot.appendChild(motion);
+      dot.appendChild(fade);
+      svg.appendChild(path);
+      svg.appendChild(dot);
+    };
+    const brandingSplash = store.branding.get();
+    // A (estructura de zona 1): arranca primero y dura menos.
+    // B (senorita con bebe de zona 2): termina justo con el fundido de salida,
+    // asi la linea completa su dibujo al mismo tiempo que cierra la intro.
+    const jobA = (async () => {
+      let d: string | null = null;
+      if (brandingSplash?.zona1Logo) {
+        d = await traceSilhouette(brandingSplash.zona1Logo).catch(() => null);
+      }
+      injectSketch('splash-sketch-a', d ?? FALLBACK_SKETCH_A, 3.3, 0.15);
+    })();
+    const jobB = (async () => {
+      let d: string | null = null;
+      if (brandingSplash?.zona2Logo) {
+        d = await traceSilhouette(brandingSplash.zona2Logo).catch(() => null);
+      }
+      injectSketch('splash-sketch-b', d ?? FALLBACK_SKETCH_B, 3.9, 0.9);
+    })();
+    let firedArt = false;
+    const fireArt = () => {
+      if (firedArt || !document.getElementById('splash-pjl')) return;
+      firedArt = true;
       splash.classList.add('art-on');
       splash.querySelectorAll<SVGAnimationElement>('[data-smil]').forEach(el => {
         const delay = parseFloat(el.getAttribute('data-delay') || '0');
         window.setTimeout(() => { try { el.beginElement(); } catch { /* noop */ } }, delay * 1000);
       });
-    }, 1200);
-    // Fase 1 (4900ms) — arranca splashOut (~0.95s de fundido + desenfoque +
+    };
+    Promise.all([jobA, jobB]).then(() => { window.setTimeout(fireArt, 1200); });
+    window.setTimeout(fireArt, 2200); // red de seguridad si el traceo demora
+    // Fase 1 (5100ms) — arranca splashOut (~0.95s de fundido + desenfoque +
     // zoom). El velo SIGUE cerrado: la página todavía no se ve.
     const t1 = window.setTimeout(() => {
       splash.classList.add('is-leaving');
-    }, 4900);
-    // Fase 2 (5550ms) — a mitad del fundido se abre el velo: la página entra
+    }, 5100);
+    // Fase 2 (5750ms) — a mitad del fundido se abre el velo: la página entra
     // con su propio fundido suave (pjlPageIn) cruzándose con el resto de la
     // salida del splash; el menú hace su cascada justo después.
     const t1b = window.setTimeout(() => {
       root.classList.add('pjl-reveal');
       root.classList.remove('show-splash');
       window.setTimeout(() => setNavEntered(true), 260);
-    }, 5550);
+    }, 5750);
     // Cierre — retirar pantalla y clases de estado.
     const t2 = window.setTimeout(() => {
       splash.remove();
       root.classList.remove('pjl-reveal');
       setNavEntered(true);
       setSplashDone(true);
-    }, 5850);
+    }, 6050);
     // Intencionadamente NO se cancelan en el cleanup: si el usuario navega a
     // otra página durante la intro, estos temporizadores deben igualmente
     // retirar el velo y la pantalla; cancelarlos dejaría la clase

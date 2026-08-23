@@ -8514,15 +8514,17 @@ html.show-splash .splash-screen { visibility: visible; }
 }
 
 /* ============================================================
-   SPLASH · SILUETAS LINE-ART DIBUJADAS POR CODIGO
-   Izquierda: estructura/iglesia. Derecha: senorita con bebe.
-   Un punto dorado recorre cada trazo mientras la linea se revela
-   (pathLength=1 + dashoffset), detras del contenido central.
+   SPLASH · SILUETAS LINE-ART TRAZADAS DESDE LOS LOGOS REALES
+   page.tsx calcula el contorno del logo de cada Zona en un
+   canvas (blob mayor + recorrido Moore + RDP) e inyecta la ruta
+   aqui; un punto dorado recorre el trazo mientras la linea se
+   revela (pathLength=1 + dashoffset), detras del centro.
+   Si falla, se dibujan las siluetas de respaldo de page.tsx.
    ============================================================ */
 .splash-sketch {
   position: absolute;
   width: min(44vw, 430px);
-  aspect-ratio: 220 / 300;
+  aspect-ratio: 100 / 125;
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.9s ease;
@@ -8539,14 +8541,14 @@ html.show-splash .splash-screen { visibility: visible; }
 
 .sk-p {
   fill: none;
-  stroke-width: 2.6;
+  stroke-width: 0.95;
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
   filter:
-    drop-shadow(0 0 4px rgba(240, 217, 166, 0.5))
-    drop-shadow(0 0 15px rgba(200, 151, 58, 0.35));
+    drop-shadow(0 0 3px rgba(240, 217, 166, 0.5))
+    drop-shadow(0 0 11px rgba(200, 151, 58, 0.35));
 }
 .sk-a .sk-p { stroke: url(#pjlGoldA); }
 .sk-b .sk-p { stroke: url(#pjlGoldB); }
