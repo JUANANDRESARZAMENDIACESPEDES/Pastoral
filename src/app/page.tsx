@@ -356,56 +356,44 @@ function HomeContent() {
         fallbackNode.replaceWith(img);
       }
     }
-    // Inyecta los logos de las Zonas 1 y 2 en el escenario line-art del splash.
-    // Cada marco permanece oculto hasta que recibe imagen (clase has-img).
-    const brandingSplash = store.branding.get();
-    ([['zona1Logo', 'sp-crest-1'], ['zona2Logo', 'sp-crest-2']] as const).forEach(([key, id]) => {
-      const src = brandingSplash?.[key];
-      const crest = document.getElementById(id);
-      if (!crest || !src) return;
-      const line = crest.querySelector<HTMLImageElement>('.sp-line');
-      const fill = crest.querySelector<HTMLImageElement>('.sp-fill');
-      if (line) line.src = src;
-      if (fill) fill.src = src;
-      crest.classList.add('has-img');
-    });
     splash.querySelectorAll<HTMLElement>('.splash-letter, .splash-logo-wrap, .splash-tagline, .splash-bar, .splash-bar-fill, .splash-loading-text').forEach(el => {
       el.style.animation = 'none';
       void el.offsetWidth;
       el.style.animation = '';
     });
-    // Coreografía con trazos line-art en el FONDO del splash:
+    // Coreografía con siluetas dibujadas por código en el FONDO:
     // Fase A (1200ms) — mientras el monograma y el lema siguen en escena,
-    // en el fondo comienzan a dibujarse las líneas de las siluetas de las
-    // Zonas 1 y 2 (barrido de máscara sobre el filtro de bordes).
+    // un punto dorado recorre cada trazo del fondo y va dejando la línea
+    // dibujada: a la izquierda la estructura de la iglesia, a la derecha
+    // la silueta de la señora con el bebé. El truco pathLength=1 mantiene
+    // línea y punto perfectamente sincronizados.
     const tArt = window.setTimeout(() => {
       splash.classList.add('art-on');
+      splash.querySelectorAll<SVGAnimationElement>('[data-smil]').forEach(el => {
+        const delay = parseFloat(el.getAttribute('data-delay') || '0');
+        window.setTimeout(() => { try { el.beginElement(); } catch { /* noop */ } }, delay * 1000);
+      });
     }, 1200);
-    // Fase B (3900ms) — las líneas terminaron de formar la silueta: se
-    // funden suavemente con el logo real, que toma color detrás del texto.
-    const tColor = window.setTimeout(() => {
-      splash.classList.add('art-color');
-    }, 3900);
-    // Fase 1 (4700ms) — arranca splashOut (~0.95s de fundido + desenfoque +
+    // Fase 1 (4900ms) — arranca splashOut (~0.95s de fundido + desenfoque +
     // zoom). El velo SIGUE cerrado: la página todavía no se ve.
     const t1 = window.setTimeout(() => {
       splash.classList.add('is-leaving');
-    }, 4700);
-    // Fase 2 (5350ms) — a mitad del fundido se abre el velo: la página entra
+    }, 4900);
+    // Fase 2 (5550ms) — a mitad del fundido se abre el velo: la página entra
     // con su propio fundido suave (pjlPageIn) cruzándose con el resto de la
     // salida del splash; el menú hace su cascada justo después.
     const t1b = window.setTimeout(() => {
       root.classList.add('pjl-reveal');
       root.classList.remove('show-splash');
       window.setTimeout(() => setNavEntered(true), 260);
-    }, 5350);
+    }, 5550);
     // Cierre — retirar pantalla y clases de estado.
     const t2 = window.setTimeout(() => {
       splash.remove();
       root.classList.remove('pjl-reveal');
       setNavEntered(true);
       setSplashDone(true);
-    }, 5650);
+    }, 5850);
     // Intencionadamente NO se cancelan en el cleanup: si el usuario navega a
     // otra página durante la intro, estos temporizadores deben igualmente
     // retirar el velo y la pantalla; cancelarlos dejaría la clase

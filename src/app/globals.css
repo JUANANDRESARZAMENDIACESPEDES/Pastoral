@@ -8514,102 +8514,59 @@ html.show-splash .splash-screen { visibility: visible; }
 }
 
 /* ============================================================
-   SPLASH · TRAZOS LINE-ART EN EL FONDO (ZONAS 1 Y 2)
-   Las lineas se dibujan solas sobre la escena de orbes y brasas,
-   formando la silueta de cada logo detras del contenido central.
-   El monograma, el lema y el "Cargando" permanecen intactos.
+   SPLASH · SILUETAS LINE-ART DIBUJADAS POR CODIGO
+   Izquierda: estructura/iglesia. Derecha: senorita con bebe.
+   Un punto dorado recorre cada trazo mientras la linea se revela
+   (pathLength=1 + dashoffset), detras del contenido central.
    ============================================================ */
-.splash-trace {
-  display: none;
+.splash-sketch {
   position: absolute;
-  width: min(36vw, 330px);
-  aspect-ratio: 1;
+  width: min(44vw, 430px);
+  aspect-ratio: 220 / 300;
   pointer-events: none;
-  opacity: 0.92;
+  opacity: 0;
+  transition: opacity 0.9s ease;
 }
-.splash-trace.has-img { display: block; }
-.sp-trace-a {
-  left: clamp(-30px, 5vw, 9%);
-  top: 50%;
-  margin-top: calc(min(36vw, 330px) / -2);
-  transform: rotate(-7deg);
-}
-.sp-trace-b {
-  right: clamp(-30px, 5vw, 9%);
-  top: 47%;
-  margin-top: calc(min(36vw, 330px) / -2);
-  transform: rotate(6deg);
-}
-
-/* Capa de trazo: filtro de bordes + barrido de mascara que "dibuja" */
-.sp-line,
-.sp-fill {
+.splash-screen.art-on .splash-sketch { opacity: 1; }
+.splash-sketch::before {
+  content: '';
   position: absolute;
-  inset: 5%;
-  width: 90%;
-  height: 90%;
-  object-fit: contain;
+  inset: -12%;
+  background: radial-gradient(ellipse at center, rgba(200, 151, 58, 0.16), transparent 65%);
 }
-.sp-line {
-  filter: url(#pjlEdge) grayscale(1) brightness(1.65) contrast(1.25)
-          drop-shadow(0 0 5px rgba(240, 217, 166, 0.55))
-          drop-shadow(0 0 20px rgba(200, 151, 58, 0.32));
-  opacity: 0;
-  -webkit-mask-image: linear-gradient(105deg, #000 47%, transparent 57%);
-          mask-image: linear-gradient(105deg, #000 47%, transparent 57%);
-  -webkit-mask-size: 250% 100%;
-          mask-size: 250% 100%;
-  -webkit-mask-repeat: no-repeat;
-          mask-repeat: no-repeat;
-  -webkit-mask-position: 100% 0;
-          mask-position: 100% 0;
+.sk-a { left: 3%; top: 50%; transform: translateY(-50%) rotate(-4deg); }
+.sk-b { right: 3%; top: 48%; transform: translateY(-48%) rotate(4deg); }
+
+.sk-p {
+  fill: none;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  filter:
+    drop-shadow(0 0 4px rgba(240, 217, 166, 0.5))
+    drop-shadow(0 0 15px rgba(200, 151, 58, 0.35));
 }
-.splash-screen.art-on .sp-line {
-  animation: spDraw 2.6s cubic-bezier(0.62, 0.05, 0.32, 1) 0.2s forwards;
+.sk-a .sk-p { stroke: url(#pjlGoldA); }
+.sk-b .sk-p { stroke: url(#pjlGoldB); }
+.splash-screen.art-on .sk-p {
+  animation: skDraw var(--d, 2s) cubic-bezier(0.45, 0.05, 0.35, 1) var(--dl, 0s) forwards;
 }
-.splash-screen.art-on .sp-trace-b .sp-line { animation-delay: 1.05s; }
-@keyframes spDraw {
-  0% { -webkit-mask-position: 100% 0; mask-position: 100% 0; opacity: 0.95; }
-  93% { opacity: 0.95; }
-  100% { -webkit-mask-position: 0% 0; mask-position: 0% 0; opacity: 0.9; }
+@keyframes skDraw { to { stroke-dashoffset: 0; } }
+
+/* Punto dorado viajero que guia el dibujo */
+.sk-dot {
+  fill: #f7e7bd;
+  filter:
+    drop-shadow(0 0 5px rgba(245, 223, 174, 0.95))
+    drop-shadow(0 0 16px rgba(200, 151, 58, 0.75));
 }
 
-/* Cuando la silueta esta completa: cruce suave hacia el logo real */
-.sp-fill {
-  opacity: 0;
-  transform: scale(1.06);
-  filter: blur(14px) saturate(0.7);
-}
-.splash-screen.art-color .sp-fill {
-  animation: spFillIn 1.05s ease forwards;
-}
-.splash-screen.art-color .sp-trace-b .sp-fill { animation-delay: 0.25s; }
-@keyframes spFillIn {
-  to { opacity: 0.97; transform: scale(1); filter: blur(0) saturate(1); }
-}
-.splash-screen.art-color .sp-line {
-  animation: spTraceFade 1.2s ease forwards;
-}
-.splash-screen.art-color .sp-trace-b .sp-line { animation-delay: 0.25s; }
-@keyframes spTraceFade {
-  from { opacity: 0.9; }
-  to { opacity: 0; }
-}
-
-/* Movil: trazos mas chicos, translucidos y hacia las esquinas */
-@media (max-width: 640px) {
-  .splash-trace { width: 52vw; opacity: 0.5; }
-  .sp-trace-a {
-    left: -14vw;
-    top: 26%;
-    margin-top: 0;
-    transform: rotate(-8deg);
-  }
-  .sp-trace-b {
-    right: -16vw;
-    top: auto;
-    bottom: 4%;
-    margin-top: 0;
-    transform: rotate(7deg);
-  }
+/* Movil: mas grandes en proporcion, hacia esquinas, translucidos */
+@media (max-width: 760px) {
+  .splash-screen.art-on .splash-sketch { opacity: 0.6; }
+  .splash-sketch { width: 60vw; }
+  .sk-a { left: -14vw; top: 22%; transform: rotate(-6deg); }
+  .sk-b { right: -15vw; top: auto; bottom: 4%; transform: rotate(5deg); }
 }
