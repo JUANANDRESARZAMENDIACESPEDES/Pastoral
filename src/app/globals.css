@@ -8553,18 +8553,38 @@ html.show-splash .splash-screen { visibility: visible; }
 .sk-a .sk-p { stroke: url(#pjlGoldA); }
 .sk-b .sk-p { stroke: url(#pjlGoldB); }
 .splash-screen.art-on .sk-p {
-  /* linear: el punto dorado (SMIL, lineal) viaja EXACTAMENTE sobre la
-     punta del lapiz durante todo el trazado */
+  /* linear: el punto dorado viaja EXACTAMENTE sobre la punta del lapiz */
   animation: skDraw var(--d, 2s) linear var(--dl, 0s) forwards;
 }
 @keyframes skDraw { to { stroke-dashoffset: 0; } }
 
-/* Punto dorado viajero que guia el dibujo */
+/* Punto dorado viajero que guia el dibujo.
+   Solo CSS: recorre la misma geometria con offset-path y arranca solo
+   cuando aparece art-on. Si el navegador no soporta offset-path, no se
+   muestra (queda oculto por defecto). */
 .sk-dot {
+  display: none;
   fill: #f7e7bd;
+  opacity: 0;
   filter:
-    drop-shadow(0 0 5px rgba(245, 223, 174, 0.95))
-    drop-shadow(0 0 16px rgba(200, 151, 58, 0.75));
+    drop-shadow(0 0 4px rgba(245, 223, 174, 0.95))
+    drop-shadow(0 0 13px rgba(200, 151, 58, 0.75));
+}
+@supports (offset-path: path('M0 0 L1 1')) {
+  .sk-dot { display: block; }
+}
+.splash-screen.art-on .sk-dot {
+  offset-distance: 0%;
+  animation:
+    skTravel var(--d, 2s) linear var(--dl, 0s) forwards,
+    skDotFade var(--d, 2s) linear var(--dl, 0s) forwards;
+}
+@keyframes skTravel { to { offset-distance: 100%; } }
+@keyframes skDotFade {
+  0% { opacity: 0; }
+  5% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 /* Movil: mas grandes en proporcion, hacia esquinas, translucidos */
