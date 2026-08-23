@@ -553,91 +553,128 @@ function HomeContent() {
       el.style.animation = '';
     });
     // --- Siluetas line-art calculadas desde los logos reales ---
-    const injectSketch = (svgId: string, d: string, durS: number, delayS: number): void => {
+    // Cada silueta se divide en PIEZAS independientes (sub-rutas M...Z). Se
+    // mide la longitud real de cada una con getTotalLength() y se reparte la
+    // ventana de tiempo de forma proporcional: el punto dorado dibuja las
+    // piezas EN SECUENCIA, una por vez, siempre exactamente sobre la punta
+    // del lapiz (CSS linear + SMIL lineal comparten el mismo reparto).
+    const NS_SVG = 'http://www.w3.org/2000/svg';
+    const injectSketch = (svgId: string, dAttr: string, winStartS: number, winDurS: number): void => {
       const svg = document.getElementById(svgId);
-      if (!svg) return;
-      const NS = 'http://www.w3.org/2000/svg';
-      const path = document.createElementNS(NS, 'path');
-      path.setAttribute('class', 'sk-p');
-      path.setAttribute('d', d);
-      path.setAttribute('pathLength', '1');
-      path.style.setProperty('--d', `${durS}s`);
-      path.style.setProperty('--dl', `${delayS}s`);
-      const dot = document.createElementNS(NS, 'circle');
-      dot.setAttribute('class', 'sk-dot');
-      dot.setAttribute('r', '1.7');
-      dot.setAttribute('opacity', '0');
-      const motion = document.createElementNS(NS, 'animateMotion');
-      motion.setAttribute('dur', `${durS}s`);
-      motion.setAttribute('begin', 'indefinite');
-      motion.setAttribute('fill', 'freeze');
-      motion.setAttribute('path', d);
-      motion.dataset.smil = '';
-      motion.dataset.delay = String(delayS);
-      const fade = document.createElementNS(NS, 'animate');
-      fade.setAttribute('dur', `${durS}s`);
-      fade.setAttribute('begin', 'indefinite');
-      fade.setAttribute('fill', 'freeze');
-      fade.setAttribute('attributeName', 'opacity');
-      fade.setAttribute('values', '0;1;1;0');
-      fade.setAttribute('keyTimes', '0;0.04;0.86;1');
-      fade.dataset.smil = '';
-      fade.dataset.delay = String(delayS);
-      dot.appendChild(motion);
-      dot.appendChild(fade);
-      svg.appendChild(path);
-      svg.appendChild(dot);
-    };
-    const brandingSplash = store.branding.get();
-    // A (estructura de zona 1): arranca primero y dura menos.
-    // B (senorita con bebe de zona 2): termina justo con el fundido de salida,
-    // asi la linea completa su dibujo al mismo tiempo que cierra la intro.
-    const jobA = (async () => {
-      let d: string | null = null;
-      if (brandingSplash?.zona1Logo) {
-        d = await traceSilhouette(brandingSplash.zona1Logo).catch(() => null);
+      if (!svg || !dAttr) return;
+      const pieces = dAttr.split(/(?=M)/).map(s => s.trim()).filter(Boolean);
+      if (!pieces.length) return;
+      const paths: Array<SVGPathElement> = [];
+      for (const pd of pieces) {
+        const p = document.createElementNS(NS_SVG, 'path') as SVGPathElement;
+        p.setAttribute('class', 'sk-p');
+        p.setAttribute('d', pd);
+        p.setAttribute('pathLength', '1');
+        svg.appendChild(p);
+        paths.push(p);
       }
-      injectSketch('splash-sketch-a', d ?? FALLBACK_SKETCH_A, 3.3, 0.15);
-    })();
-    const jobB = (async () => {
-      let d: string | null = null;
-      if (brandingSplash?.zona2Logo) {
-        d = await traceSilhouette(brandingSplash.zona2Logo).catch(() => null);
-      }
-      injectSketch('splash-sketch-b', d ?? FALLBACK_SKETCH_B, 3.9, 0.9);
-    })();
-    let firedArt = false;
-    const fireArt = () => {
-      if (firedArt || !document.getElementById('splash-pjl')) return;
-      firedArt = true;
-      splash.classList.add('art-on');
-      splash.querySelectorAll<SVGAnimationElement>('[data-smil]').forEach(el => {
-        const delay = parseFloat(el.getAttribute('data-delay') || '0');
-        window.setTimeout(() => { try { el.beginElement(); } catch { /* noop */ } }, delay * 1000);
+      // longitudes reales (en unidades del viewBox) para el reparto temporal
+      const lens = paths.map(p => {
+        try { return Math.max(0.001, p.getTotalLength()); } catch { return 1; }
+      });
+      const total = lens.reduce((acc, l) => acc + l, 0) || 1;
+      let cum = 0;
+      paths.forEach((p, i) => {
+        const startS = winStartS + winDurS * (cum / total);
+        const durS = Math.max(0.25, winDurS * (lens[i] / total));
+        cum += lens[i];
+        p.style.setProperty('--d', `${durS.toFixed(2)}s`);
+        p.style.setProperty('--dl', `${startS.toFixed(2)}s`);
+        const dot = document.createElementNS(NS_SVG, 'circle');
+        dot.setAttribute('class', 'sk-dot');
+        dot.setAttribute('r', '1.7');
+        dot.setAttribute('opacity', '0');
+        const motion = document.createElementNS(NS_SVG, 'animateMotion');
+        motion.setAttribute('dur', `${durS.toFixed(2)}s`);
+        motion.setAttribute('begin', 'indefinite');
+        motion.setAttribute('fill', 'freeze');
+        motion.setAttribute('path', pieces[i]);
+        motion.dataset.smil = '';
+        motion.dataset.delay = startS.toFixed(2);
+        const fade = document.createElementNS(NS_SVG, 'animate');
+        fade.setAttribute('dur', `${durS.toFixed(2)}s`);
+        fade.setAttribute('begin', 'indefinite');
+        fade.setAttribute('fill', 'freeze');
+        fade.setAttribute('attributeName', 'opacity');
+        fade.setAttribute('values', '0;1;1;0');
+        fade.setAttribute('keyTimes', '0;0.03;0.93;1');
+        fade.dataset.smil = '';
+        fade.dataset.delay = startS.toFixed(2);
+        dot.appendChild(motion);
+        dot.appendChild(fade);
+        svg.appendChild(dot);
       });
     };
-    Promise.all([jobA, jobB]).then(() => { window.setTimeout(fireArt, 1200); });
-    window.setTimeout(fireArt, 2200); // red de seguridad si el traceo demora
-    // Fase 1 (5100ms) — arranca splashOut (~0.95s de fundido + desenfoque +
-    // zoom). El velo SIGUE cerrado: la página todavía no se ve.
-    const t1 = window.setTimeout(() => {
-      splash.classList.add('is-leaving');
-    }, 5100);
-    // Fase 2 (5750ms) — a mitad del fundido se abre el velo: la página entra
-    // con su propio fundido suave (pjlPageIn) cruzándose con el resto de la
-    // salida del splash; el menú hace su cascada justo después.
-    const t1b = window.setTimeout(() => {
-      root.classList.add('pjl-reveal');
-      root.classList.remove('show-splash');
-      window.setTimeout(() => setNavEntered(true), 260);
-    }, 5750);
-    // Cierre — retirar pantalla y clases de estado.
-    const t2 = window.setTimeout(() => {
-      splash.remove();
-      root.classList.remove('pjl-reveal');
-      setNavEntered(true);
-      setSplashDone(true);
-    }, 6050);
+    // Anti-cuelgue: si la imagen no carga ni falla en 2600ms, seguimos sin ella.
+    const withTraceTimeout = (p: Promise<string>): Promise<string | null> =>
+      new Promise(resolve => {
+        const t = window.setTimeout(() => resolve(null), 2600);
+        p.then(v => { window.clearTimeout(t); resolve(v); })
+         .catch(() => { window.clearTimeout(t); resolve(null); });
+      });
+    const brandingSplash = store.branding.get();
+    // Ventanas de dibujo tras art-on:
+    //   A (estructura zona 1): 0.10s -> 3.10s   ·   B (persona zona 2): 0.55s -> 4.05s
+    // La salida empieza a los 4.50s tras art-on: B completa su trazo con ~450ms
+    // de margen y brilla completa durante el arranque del fundido.
+    const prepAll = Promise.all([
+      (async () => {
+        const src = brandingSplash?.zona1Logo;
+        const d = src ? await withTraceTimeout(traceSilhouette(src)) : null;
+        injectSketch('splash-sketch-a', d ?? FALLBACK_SKETCH_A, 0.1, 3.0);
+      })(),
+      (async () => {
+        const src = brandingSplash?.zona2Logo;
+        const d = src ? await withTraceTimeout(traceSilhouette(src)) : null;
+        injectSketch('splash-sketch-b', d ?? FALLBACK_SKETCH_B, 0.55, 3.5);
+      })()
+    ]);
+    // Fase ARTE — unica puerta de entrada (evita carreras): se abre cuando las
+    // siluetas ya estan inyectadas. Recien entonces se agregan las clases y se
+    // disparan TODOS los beginElement(), y LA SALIDA SE ENCADENA AL ARTE (no al
+    // montaje): asi el dibujo siempre termina antes del fundido, sin importar
+    // cuanto haya demorado el traceo.
+    let artStarted = false;
+    const startArt = () => {
+      if (artStarted) return;
+      artStarted = true;
+      prepAll.then(() => {
+        const sp = document.getElementById('splash-pjl');
+        if (!sp) return;
+        sp.classList.add('art-on');
+        sp.querySelectorAll<SVGAnimationElement>('[data-smil]').forEach(el => {
+          const delay = parseFloat(el.getAttribute('data-delay') || '0');
+          window.setTimeout(() => { try { el.beginElement(); } catch { /* noop */ } }, delay * 1000);
+        });
+        // Salida 1 (arte+4500ms) — splashOut (~0.95s de fundido + desenfoque +
+        // zoom). El velo SIGUE cerrado: la pagina todavia no se ve.
+        window.setTimeout(() => {
+          document.getElementById('splash-pjl')?.classList.add('is-leaving');
+        }, 4500);
+        // Salida 2 (arte+5150ms) — a mitad del fundido se abre el velo: la
+        // pagina entra con su propio fundido (pjlPageIn) cruzandose con la
+        // salida del splash; el menu hace su cascada justo despues.
+        window.setTimeout(() => {
+          root.classList.add('pjl-reveal');
+          root.classList.remove('show-splash');
+          window.setTimeout(() => setNavEntered(true), 260);
+        }, 5150);
+        // Cierre — retirar pantalla y clases de estado.
+        window.setTimeout(() => {
+          document.getElementById('splash-pjl')?.remove();
+          root.classList.remove('pjl-reveal');
+          setNavEntered(true);
+          setSplashDone(true);
+        }, 5450);
+      });
+    };
+    prepAll.then(() => { window.setTimeout(startArt, 750); }); // listo -> 750ms de aire y arranca
+    window.setTimeout(startArt, 3400);                          // red de seguridad global
     // Intencionadamente NO se cancelan en el cleanup: si el usuario navega a
     // otra página durante la intro, estos temporizadores deben igualmente
     // retirar el velo y la pantalla; cancelarlos dejaría la clase
