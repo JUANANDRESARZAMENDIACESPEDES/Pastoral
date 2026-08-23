@@ -154,17 +154,39 @@ function traceSilhouette(src: string): Promise<string> {
         cx.drawImage(img, 0, 0, w, h);
         const px = cx.getImageData(0, 0, w, h).data;
 
-        // Auto-inversion: si casi todo el lienzo es "tinta", la figura es
-        // clara sobre fondo oscuro -> se invierte la regla de umbral.
-        let inkish = 0, seen = 0;
-        for (let s = 0; s < w * h; s++) {
-          const i = s * 4;
-          if (px[i + 3] <= 48) continue;
-          seen++;
-          if ((px[i] + px[i + 1] + px[i + 2]) / 3 < 232) inkish++;
+        // Deteccion del fondo mirando el BORDE del lienzo (mucho mas fiable
+        // que contar pixeles oscuros): si el marco es opaco y oscuro, la
+        // figura es clara (invertir umbral); si es claro o transparente, la
+        // tinta es oscura. Evita contornos degenerados en logos con fondo.
+        const isOpaqueDark = (x: number, y: number): boolean => {
+          if (x < 0 || y < 0 || x >= w || y >= h) return false;
+          const i = (y * w + x) * 4;
+          return px[i + 3] > 48 && (px[i] + px[i + 1] + px[i + 2]) / 3 < 232;
+        };
+        let ringTotal = 0, ringDark = 0;
+        for (let x = 0; x < w; x++) {
+          for (const y of [0, h - 1]) {
+            ringTotal++;
+            if (px[(y * w + x) * 4 + 3] > 48) {
+              ringDark += isOpaqueDark(x, y) ? 1 : 0;
+            }
+          }
         }
-        if (seen === 0) throw new Error('vacio');
-        const invert = inkish / seen > 0.55;
+        for (let y = 0; y < h; y++) {
+          for (const x of [0, w - 1]) {
+            ringTotal++;
+            if (px[(y * w + x) * 4 + 3] > 48) {
+              ringDark += isOpaqueDark(x, y) ? 1 : 0;
+            }
+          }
+        }
+        let opaqueRing = 0;
+        for (let x = 0; x < w; x++) {
+          opaqueRing += px[x * 4 + 3] > 48 ? 1 : 0;
+          opaqueRing += px[((h - 1) * w + x) * 4 + 3] > 48 ? 1 : 0;
+        }
+        const solidBg = opaqueRing / (w * 2) > 0.9;
+        const invert = solidBg && ringDark > ringTotal * 0.5;
         const inkAt = (x: number, y: number): boolean => {
           if (x < 0 || y < 0 || x >= w || y >= h) return false;
           const i = (y * w + x) * 4;
@@ -218,6 +240,8 @@ function traceSilhouette(src: string): Promise<string> {
         const offY = (SKETCH_VB_H - h * s2) / 2;
         let dOut = '';
         let ptsTotal = 0;
+        // caja envolvente global para validar que la figura sea VISIBLE
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 
         for (const piece of keep) {
           const bid = piece.id;
@@ -258,12 +282,38 @@ function traceSilhouette(src: string): Promise<string> {
 
           const norm = contour.map(([x, y]): [number, number] =>
             [+(x * s2 + offX).toFixed(1), +(y * s2 + offY).toFixed(1)]);
-          const simp = rdpSimplify(norm.concat([norm[0]]), 0.9);
+          // Simplificacion ADAPTIVA: si una pieza detallada deja demasiados
+          // puntos, se repite el RDP con epsilon creciente. Un path enorme
+          // trabaria la animacion justo al arrancar.
+          const closed = norm.concat([norm[0]]);
+          let simp = rdpSimplify(closed, 0.9);
+          let eps2 = 0.9;
+          while (simp.length > 300 && eps2 < 12) {
+            eps2 *= 1.6;
+            simp = rdpSimplify(closed, eps2);
+          }
+          if (simp.length > 300) {
+            const stride = Math.ceil(simp.length / 300);
+            simp = simp.filter((_, k) => k % stride === 0 || k === simp.length - 1);
+          }
           if (simp.length < 3) continue;
+          for (const [qx, qy] of norm) {
+            if (qx < minX) minX = qx;
+            if (qy < minY) minY = qy;
+            if (qx > maxX) maxX = qx;
+            if (qy > maxY) maxY = qy;
+          }
           dOut += simp.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x} ${y}`).join(' ') + ' Z ';
           ptsTotal += simp.length;
         }
         if (ptsTotal < 16) throw new Error('corto');
+        // La figura debe ocupar una parte visible del lienzo; si no, el
+        // traceo salio mal y conviene usar la silueta de respaldo.
+        const bw = Math.max(0, maxX - minX);
+        const bh = Math.max(0, maxY - minY);
+        if (Math.max(bw / SKETCH_VB_W, bh / SKETCH_VB_H) < 0.35 || bw * bh < 900) {
+          throw new Error('invisible');
+        }
         resolve(dOut.trim());
       } catch (e) {
         reject(e);
