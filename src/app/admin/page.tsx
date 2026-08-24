@@ -680,6 +680,8 @@ function AdminContent() {
 
   // --- FILTERS ---
   const [searchTerm, setSearchTerm] = useState('');
+  const [capZoneFilter, setCapZoneFilter] = useState<number | 'all'>('all');
+  const [capEstadoFilter, setCapEstadoFilter] = useState<'all' | 'Activo' | 'Nucleación' | 'sinGPS'>('all');
 
   // --- TERRITORY EDITOR ---
   const [capturingZone, setCapturingZone] = useState<number | null>(null);
@@ -755,6 +757,40 @@ function AdminContent() {
   const TERR_PRESETS = ['#C8973A', '#1A2744', '#1A3B2B', '#441A1A', '#2563EB', '#0D9488'];
   const unplacedChapels = chapels.filter(c => typeof c.lat !== 'number' || typeof c.lng !== 'number');
   const placingChapel = placingChapelId ? chapels.find(c => c.id === placingChapelId) || null : null;
+  const zonaColor = (z: number) => (branding[`zona${z}Color`] as string) || '#C8973A';
+
+  const filteredChapels = chapels.filter(c => {
+    const q = searchTerm.toLowerCase();
+    const matchQ = !q || c.name.toLowerCase().includes(q) || c.zonaId.toString().includes(q);
+    const matchZ = capZoneFilter === 'all' || c.zonaId === capZoneFilter;
+    const matchE = capEstadoFilter === 'all'
+      ? true
+      : capEstadoFilter === 'sinGPS'
+        ? typeof c.lat !== 'number' || typeof c.lng !== 'number'
+        : c.estadoComunidad === capEstadoFilter;
+    return matchQ && matchZ && matchE;
+  });
+
+  // Sincronización cruzada: desde Capillas → modo ubicación en Territorio
+  const goToTerritoryPlace = (id: string) => {
+    closeModal();
+    navigateMod('capillas', 'territorio');
+    startPlacingChapel(id);
+  };
+
+  const centerMapOn = (c: Chapel) => {
+    if (typeof c.lat !== 'number' || typeof c.lng !== 'number') return;
+    setBranding({ ...branding, mapCenterLat: c.lat, mapCenterLng: c.lng });
+    showToast(`🎯 Mapa centrado en ${c.name}`);
+    addLog('centrar mapa', 'territorio', c.name);
+  };
+
+  const toggleEstadoComunidad = (c: Chapel) => {
+    const nuevo = c.estadoComunidad === 'Activo' ? 'Nucleación' : 'Activo';
+    setChapels(chapels.map(x => (x.id === c.id ? { ...x, estadoComunidad: nuevo } : x)));
+    showToast(`⇄ ${c.name}: ${nuevo}`);
+    addLog('cambiar estado comunidad', 'capillas', `${c.name} → ${nuevo}`);
+  };
 
   const startPlacingChapel = (id: string) => {
     setCapturingZone(null);
@@ -3225,11 +3261,68 @@ function AdminContent() {
                          <button
                            onClick={() => setPlacingChapelId(null)}
                            style={{ width: '100%', padding: '10px', background: 'rgba(26,39,68,0.9)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', borderRadius: '10px', fontWeight: 700, fontSize: '12px', cursor: 'pointer', backdropFilter: 'blur(8px)', letterSpacing: '0.5px', transition: '0.2s' }}
-                         >✕ CANCELAR UBICACIÓN</button>
+                          >✕ CANCELAR UBICACIÓN</button>
                        </div>
                      </>
                    )}
-                 </div>
+                  </div>
+
+                  {/* LEYENDA INTERACTIVA */}
+                  <div className="terr-legend">
+                    {territoryStats.map(s => (
+                      <button
+                        key={s.zona}
+                        className={`tl-pill ${capturingZone === s.zona ? 'tl-on' : ''}`}
+                        style={{ '--zc': s.color } as CSSProperties}
+                        title={`Seleccionar Zona ${s.zona} para dibujar`}
+                        onClick={() => { setPlacingChapelId(null); setCapturingZone(s.zona); setTempPolygon((branding[`zona${s.zona}Polygon`] as [number, number][]) || []); }}
+                      >
+                        <i className="tl-dot" />
+                        <span className="tl-name">Zona {s.zona}</span>
+                        <span className="tl-count">{s.total} ⛪ · {s.ubicadas}/{s.total} 📍</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* ACCIONES RÁPIDAS */}
+                  <div className="terr-quick">
+                    <div className="tq-card tq-gold">
+                      <span className="tq-ico">🖌️</span>
+                      <div className="tq-txt">
+                        <strong>Dibujar límites</strong>
+                        <small>Traza el polígono de una zona en el mapa</small>
+                      </div>
+                      <button
+                        className="tq-btn"
+                        onClick={() => {
+                          const z = ([1, 2, 3, 4] as const).find(n => !((branding[`zona${n}Polygon`] as [number, number][] | undefined)?.length)) || 1;
+                          setPlacingChapelId(null);
+                          setCapturingZone(z);
+                          setTempPolygon((branding[`zona${z}Polygon`] as [number, number][]) || []);
+                        }}
+                      >COMENZAR</button>
+                    </div>
+                    <div className="tq-card tq-blue">
+                      <span className="tq-ico">📍</span>
+                      <div className="tq-txt">
+                        <strong>Ubicar capilla</strong>
+                        <small>{unplacedChapels.length ? `${unplacedChapels.length} esperando coordenadas` : 'Todo sincronizado con GPS ✔'}</small>
+                      </div>
+                      <button
+                        className="tq-btn"
+                        disabled={!unplacedChapels.length}
+                        onClick={() => unplacedChapels[0] && startPlacingChapel(unplacedChapels[0].id)}
+                      >{unplacedChapels.length ? 'UBICAR' : 'LISTO ✔'}</button>
+                    </div>
+                    <div className="tq-card tq-green">
+                      <span className="tq-ico">⬇️</span>
+                      <div className="tq-txt">
+                        <strong>Exportar GeoJSON</strong>
+                        <small>Zonas + capillas para QGIS o Google Earth</small>
+                      </div>
+                      <button className="tq-btn" onClick={exportTerritorioGeoJSON}>DESCARGAR</button>
+                    </div>
+                  </div>
 
                  <div className="territory-zone-list" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                   {[1, 2, 3, 4].map((num, idx) => {
@@ -3720,88 +3813,140 @@ function AdminContent() {
               </div>
               {capillasView === 'capillas' && (
               <>
-              <div className="admin-toolbar" style={{ marginBottom: '24px' }}>
-                <span className="toolbar-label">Buscar</span>
-                <input
-                  type="text"
-                  className="pjl-input"
-                  placeholder="Nombre de capilla o número de zona..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{ minWidth: '250px', flex: 1, maxWidth: '360px', background: '#fff' }}
-                />
-                {(searchTerm) && (
-                  <button className="btn-premium btn-premium-outline" style={{ padding: '8px 14px', fontSize: '11px' }} onClick={() => setSearchTerm('')}>Limpiar</button>
-                )}
-                <span style={{ marginLeft: 'auto', fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>
-                  {chapels.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.zonaId.toString().includes(searchTerm)).length} de {chapels.length} capillas
-                </span>
-              </div>
-              <div style={{ overflowX: 'auto' }}>
-                <table className="pjl-table">
-                  <thead><tr><th>CAPILLA</th><th>ZONA</th><th>COMUNIDAD</th><th>COORDENADAS</th><th>ESTADO</th><th>ACCIONES</th></tr></thead>
-                  <tbody>
-                    {chapels.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.zonaId.toString().includes(searchTerm)).map(c => (
-                      <tr key={c.id}>
-                        <td style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'var(--cream)', border: '1px solid var(--gold-pale)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>
-                            <SafeImg src={c.logoUrl} alt={`Logo de la Capilla ${c.name}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          </div>
-                          <span style={{ fontWeight: 700 }}>{c.name}</span>
-                        </td>
-                        <td>Zona {c.zonaId}</td>
-                        <td>{c.comunidadNombre}</td>
-                        <td>
-                          <span style={{ fontSize: '10px', color: '#666' }}>
-                            {c.lat ? `${c.lat.toFixed(4)}, ${c.lng?.toFixed(4)}` : 'Sin ubicar'}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`chapel-badge ${c.estadoComunidad === 'Activo' ? 'badge-active' : 'badge-nucleation'}`}>
-                            {c.estadoComunidad}
-                          </span>
-                        </td>
-                        <td>
-                          <button onClick={() => openEdit('capillas', c)} className="btn-premium btn-premium-outline" style={{ padding: '5px 12px', fontSize: '0.65rem', marginRight: '5px' }}>EDITAR</button>
-                          <button onClick={() => deleteItem('chapels', c.id)} className="btn-premium btn-premium-outline" style={{ color: '#ef4444', borderColor: 'rgba(239,68,68,0.5)' }}>ELIMINAR</button>
-                        </td>
-                      </tr>
-                    ))}
-                    {chapels.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.zonaId.toString().includes(searchTerm)).length === 0 && (
-                      <tr>
-                        <td colSpan={6} style={{ padding: 0 }}>
-                          <div className="pjl-empty-state" style={{ border: 'none', background: 'transparent' }}>
-                            <div className="empty-icon">🔍</div>
-                            <h4 className="empty-title">Sin resultados</h4>
-                            <p className="empty-desc">No hay capillas que coincidan con «{searchTerm}». Probá con otro nombre o número de zona.</p>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                    {chapels.length === 0 && (
-                      <tr>
-                        <td colSpan={6} style={{ padding: 0 }}>
-                          <div className="pjl-empty-state" style={{ border: 'none', background: 'transparent' }}>
-                            <div className="empty-icon">⛪</div>
-                            <h4 className="empty-title">Todavía no hay capillas registradas</h4>
-                            <p className="empty-desc">Registrá la primera capilla para empezar a armar el mapa territorial de la pastoral.</p>
-                            <button className="btn-premium btn-premium-gold" onClick={() => openNew('capillas')}>+ Registrar primera capilla</button>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+              {/* RESUMEN RÁPIDO SINCRONIZADO */}
+              <div className="cap-stats">
+                <div className="cst-chip cst-a"><span className="cst-num">{chapels.length}</span><span className="cst-lab">Capillas</span></div>
+                <div className="cst-chip cst-b"><span className="cst-num">{chapels.filter(c => c.estadoComunidad === 'Activo').length}</span><span className="cst-lab">Activas</span></div>
+                <div className="cst-chip cst-c"><span className="cst-num">{chapels.filter(c => c.estadoComunidad !== 'Activo').length}</span><span className="cst-lab">Nucleación</span></div>
+                <div className="cst-chip cst-d"><span className="cst-num">{unplacedChapels.length}</span><span className="cst-lab">Sin GPS</span></div>
               </div>
 
-              <div style={{ marginTop: '40px', padding: '30px', background: 'var(--cream)', borderRadius: '20px', border: '1px solid var(--gold-pale)' }}>
-                <h4 className="serif" style={{ marginBottom: '15px', color: 'var(--navy)' }}>Mapa de Capillas</h4>
-                <div style={{ width: '100%', height: '400px', borderRadius: '15px', overflow: 'hidden', border: '2px solid var(--gold-pale)' }}>
-                   <ZonaMap 
-                     chapels={chapels} 
-                     mapCenterLat={branding.mapCenterLat as number} 
-                     mapCenterLng={branding.mapCenterLng as number} 
-                     mapZoom={branding.mapZoom as number} 
+              {/* TOOLBAR CON FILTROS SINCRONIZADOS */}
+              <div className="cap-toolbar">
+                <div className="ct-search">
+                  <span className="ct-search-ico">🔍</span>
+                  <input
+                    type="text"
+                    placeholder="Buscar por nombre o zona…"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                  {searchTerm && (
+                    <button className="ct-clear" onClick={() => setSearchTerm('')} title="Limpiar búsqueda">✕</button>
+                  )}
+                </div>
+                <div className="ct-zones">
+                  <button
+                    className={`cz-chip ${capZoneFilter === 'all' ? 'on' : ''}`}
+                    onClick={() => setCapZoneFilter('all')}
+                  >Todas</button>
+                  {([1, 2, 3, 4] as const).map(z => (
+                    <button
+                      key={z}
+                      className={`cz-chip ${capZoneFilter === z ? 'on' : ''}`}
+                      style={capZoneFilter === z ? { background: zonaColor(z), borderColor: zonaColor(z), color: '#fff' } : undefined}
+                      onClick={() => setCapZoneFilter(capZoneFilter === z ? 'all' : z)}
+                    >
+                      <i className="cz-dot" style={{ background: zonaColor(z) }} />Zona {z}
+                    </button>
+                  ))}
+                </div>
+                <div className="ct-estados">
+                  {(['all', 'Activo', 'Nucleación', 'sinGPS'] as const).map(e => (
+                    <button
+                      key={e}
+                      className={`ce-chip ${capEstadoFilter === e ? 'on' : ''}`}
+                      onClick={() => setCapEstadoFilter(e)}
+                    >{e === 'all' ? 'Todos' : e === 'sinGPS' ? '⚠ Sin GPS' : e}</button>
+                  ))}
+                </div>
+                <span className="ct-count">{filteredChapels.length} de {chapels.length} capillas</span>
+              </div>
+
+              {/* GRID DE TARJETAS */}
+              <div className="cap-grid">
+                {filteredChapels.map((c, i) => {
+                  const zc = zonaColor(c.zonaId);
+                  const hasGps = typeof c.lat === 'number' && typeof c.lng === 'number';
+                  return (
+                    <div key={c.id} className="cap-card" style={{ '--zc': zc, '--d': `${Math.min(i, 12) * 45}ms` } as CSSProperties}>
+                      <div className="cc-head">
+                        <div className="cc-logo">
+                          {c.logoUrl ? <SafeImg src={c.logoUrl} alt={`Logo de la Capilla ${c.name}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span>⛪</span>}
+                        </div>
+                        <div className="cc-tit">
+                          <h4>{c.name}</h4>
+                          <span className="cc-zbadge" style={{ background: zc }}>ZONA {c.zonaId}</span>
+                        </div>
+                        <button
+                          title="Cambiar estado de la comunidad"
+                          className={`cc-estado ${c.estadoComunidad === 'Activo' ? 'b-act' : 'b-nuc'}`}
+                          onClick={() => toggleEstadoComunidad(c)}
+                        >
+                          {c.estadoComunidad}<i className="cc-swap">⇄</i>
+                        </button>
+                      </div>
+                      <div className="cc-body">
+                        <div className="cc-row"><span className="cc-k">Comunidad</span><span className="cc-v">{c.comunidadNombre || '—'}</span></div>
+                        <div className="cc-row"><span className="cc-k">Dirección</span><span className="cc-v">{c.address || '—'}</span></div>
+                        <div className="cc-row">
+                          <span className="cc-k">Ubicación</span>
+                          {hasGps
+                            ? <span className="cc-coords">📌 {c.lat!.toFixed(4)}, {c.lng!.toFixed(4)}</span>
+                            : <span className="cc-nogps">⚠ Sin ubicar</span>}
+                        </div>
+                      </div>
+                      <div className="cc-actions">
+                        <button className="ccb ccb-edit" onClick={() => openEdit('capillas', c)}>✏️ Editar<i>→</i></button>
+                        {!hasGps && (
+                          <button className="ccb ccb-place" onClick={() => goToTerritoryPlace(c.id)} title="Ubicar en el mapa de Territorio">📍 Ubicar</button>
+                        )}
+                        {hasGps && (
+                          <button className="ccb ccb-target" onClick={() => centerMapOn(c)} title="Guardar como centro del mapa en toda la web">🎯 Centrar mapa</button>
+                        )}
+                        <button className="ccb ccb-del" onClick={() => deleteItem('chapels', c.id)} title="Eliminar capilla">🗑️</button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {filteredChapels.length === 0 && chapels.length > 0 && (
+                <div className="pjl-empty-state" style={{ marginTop: '20px' }}>
+                  <div className="empty-icon">🔍</div>
+                  <h4 className="empty-title">Sin resultados</h4>
+                  <p className="empty-desc">No hay capillas que coincidan con los filtros actuales. Probá limpiar la búsqueda.</p>
+                  <button className="btn-premium btn-premium-outline" onClick={() => { setSearchTerm(''); setCapZoneFilter('all'); setCapEstadoFilter('all'); }}>
+                    Limpiar filtros
+                  </button>
+                </div>
+              )}
+
+              {chapels.length === 0 && (
+                <div className="pjl-empty-state" style={{ marginTop: '20px' }}>
+                  <div className="empty-icon">⛪</div>
+                  <h4 className="empty-title">Todavía no hay capillas registradas</h4>
+                  <p className="empty-desc">Registrá la primera capilla para empezar a armar el mapa territorial de la pastoral.</p>
+                  <button className="btn-premium btn-premium-gold" onClick={() => openNew('capillas')}>+ Registrar primera capilla</button>
+                </div>
+              )}
+
+              {/* MAPA GENERAL CON LEYENDA */}
+              <div className="cap-mapwrap">
+                <div className="cm-head">
+                  <h4 className="serif">Mapa de Capillas</h4>
+                  <div className="cm-legend">
+                    {([1, 2, 3, 4] as const).map(z => (
+                      <span key={z} className="cm-leg"><i style={{ background: zonaColor(z) }} />Zona {z} · {chapels.filter(c => c.zonaId === z).length}</span>
+                    ))}
+                  </div>
+                </div>
+                <div className="cm-shell">
+                   <ZonaMap
+                     chapels={chapels}
+                     mapCenterLat={branding.mapCenterLat as number}
+                     mapCenterLng={branding.mapCenterLng as number}
+                     mapZoom={branding.mapZoom as number}
                      zoneColors={{
                        1: branding.zona1Color as string,
                        2: branding.zona2Color as string,
@@ -4727,13 +4872,26 @@ function AdminContent() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                   <div className="form-group">
                     <label className="premium-label">LATITUD</label>
-                    <input type="number" step="any" className="pjl-input" value={form.lat || ''} onChange={e => setForm({...form, lat: parseFloat(e.target.value)})} placeholder="-25.2688" />
+                    <input type="number" step="any" className="pjl-input" value={form.lat ?? ''} onChange={e => setForm({ ...form, lat: e.target.value === '' ? undefined : parseFloat(e.target.value) })} placeholder="-25.2688" />
                   </div>
                   <div className="form-group">
                     <label className="premium-label">LONGITUD</label>
-                    <input type="number" step="any" className="pjl-input" value={form.lng || ''} onChange={e => setForm({...form, lng: parseFloat(e.target.value)})} placeholder="-57.4754" />
+                    <input type="number" step="any" className="pjl-input" value={form.lng ?? ''} onChange={e => setForm({ ...form, lng: e.target.value === '' ? undefined : parseFloat(e.target.value) })} placeholder="-57.4754" />
                   </div>
                 </div>
+                {modal === 'capillas' && !!editId && (
+                  <div className="form-group">
+                    <label className="premium-label">UBICACIÓN PRECISA EN EL MAPA</label>
+                    <button
+                      type="button"
+                      className="btn-premium btn-premium-gold modal-place-btn"
+                      onClick={() => goToTerritoryPlace(editId as string)}
+                    >📍 UBICAR EN EL MAPA INTERACTIVO</button>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px' }}>
+                      Se abrirá Gestión de Territorio en modo ubicación: hacé clic en el punto exacto y volvé.
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
