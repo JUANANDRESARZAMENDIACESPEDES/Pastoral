@@ -8558,6 +8558,16 @@ html.show-splash .splash-screen { visibility: visible; }
 }
 @keyframes skDraw { to { stroke-dashoffset: 0; } }
 
+/* Formas cerradas: al terminar de dibujarse, se rellenan con un dorado
+   translucido para que el emblema se vea SOLIDO y completo */
+.sk-fill { fill: rgba(214, 175, 96, 0); }
+.splash-screen.art-on .sk-fill {
+  animation:
+    skDraw var(--d, 2s) linear var(--dl, 0s) forwards,
+    skFillIn 1.1s ease calc(var(--dl, 0s) + var(--d, 2s) + 0.35s) forwards;
+}
+@keyframes skFillIn { to { fill: rgba(214, 175, 96, 0.16); } }
+
 /* Punto dorado viajero que guia el dibujo.
    Solo CSS: recorre la misma geometria con offset-path y arranca solo
    cuando aparece art-on. Si el navegador no soporta offset-path, no se
