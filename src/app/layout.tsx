@@ -109,67 +109,63 @@ export default function RootLayout({
                     <stop offset="100%" stopColor="#c8973a" />
                   </linearGradient>
                 </defs>
-                {/* TIARA PAPAL */}
+                {/* TIARA PAPAL (como en la bandera: corona triple arriba) */}
                 {/* cruz sobre la corona */}
                 <path className="sk-p"
-                      style={{ '--d': '0.7s', '--dl': '0.15s' } as React.CSSProperties}
-                      d="M50 5 V13.5 M46.8 8 H53.2" />
-                {/* cúpula del primer piso */}
+                      style={{ '--d': '0.6s', '--dl': '0.15s' } as React.CSSProperties}
+                      d="M50 4 V10.5 M47 6.5 H53" />
+                {/* contorno cerrado de la corona triple */}
                 <path className="sk-p"
-                      style={{ '--d': '0.9s', '--dl': '0.45s' } as React.CSSProperties}
-                      d="M41.5 25 C43.5 18.5 56.5 18.5 58.5 25" />
-                {/* separador del segundo piso */}
+                      style={{ '--d': '1.6s', '--dl': '0.45s' } as React.CSSProperties}
+                      d="M36 44 C35 40 36.5 37 38 34 C36.5 30 38 27 40 24 C39 20 41 15 45 13 C47 11.5 53 11.5 55 13 C59 15 61 20 60 24 C62 27 63.5 30 62 34 C63.5 37 65 40 64 44 Q50 49 36 44 Z" />
+                {/* separador de pisos medio */}
                 <path className="sk-p"
-                      style={{ '--d': '0.75s', '--dl': '0.75s' } as React.CSSProperties}
-                      d="M39.5 31.5 C44 27.5 56 27.5 60.5 31.5" />
-                {/* separador del tercer piso */}
+                      style={{ '--d': '0.8s', '--dl': '0.9s' } as React.CSSProperties}
+                      d="M37.5 33 C42 29.8 58 29.8 62.5 33" />
+                {/* separador de pisos alto */}
                 <path className="sk-p"
-                      style={{ '--d': '0.75s', '--dl': '1s' } as React.CSSProperties}
-                      d="M38 38 C43.5 34 56.5 34 62 38" />
-                {/* borde inferior de la corona */}
+                      style={{ '--d': '0.8s', '--dl': '1.15s' } as React.CSSProperties}
+                      d="M39 25.5 C43.5 22.5 56.5 22.5 61 25.5" />
+                {/* fajin izquierdo */}
                 <path className="sk-p"
-                      style={{ '--d': '0.8s', '--dl': '1.25s' } as React.CSSProperties}
-                      d="M36.5 44.5 Q50 50 63.5 44.5" />
-                {/* fajín izquierdo */}
+                      style={{ '--d': '0.8s', '--dl': '1.45s' } as React.CSSProperties}
+                      d="M36.8 45 L34 61 L39 59.5 L41 46.5 Q39 46 36.8 45 Z" />
+                {/* fajin derecho */}
                 <path className="sk-p"
-                      style={{ '--d': '0.9s', '--dl': '1.55s' } as React.CSSProperties}
-                      d="M42.5 47 L38.5 62.5 L44 61 L46 48" />
-                {/* fajín derecho */}
+                      style={{ '--d': '0.8s', '--dl': '1.55s' } as React.CSSProperties}
+                      d="M63.2 45 L66 61 L61 59.5 L59 46.5 Q61 46 63.2 45 Z" />
+                {/* LLAVES CRUZADAS EN ASPA DETRAS DE LA TIARA */}
+                {/* llave dorada: arco arriba-izquierda */}
                 <path className="sk-p"
-                      style={{ '--d': '0.9s', '--dl': '1.65s' } as React.CSSProperties}
-                      d="M57.5 47 L61.5 62.5 L56 61 L54 48" />
-                {/* LLAVES CRUZADAS EN ASPA */}
-                {/* arco de la llave izquierda */}
+                      style={{ '--d': '1.1s', '--dl': '1.9s' } as React.CSSProperties}
+                      d="M36 55 A9 9 0 1 1 35.99 55" />
+                {/* mango que cruza hacia abajo-derecha */}
                 <path className="sk-p"
-                      style={{ '--d': '1s', '--dl': '1.95s' } as React.CSSProperties}
-                      d="M39.5 66 A7.5 7.5 0 1 1 39.49 66" />
-                {/* mango izquierdo hacia abajo-derecha */}
+                      style={{ '--d': '1.1s', '--dl': '2.3s' } as React.CSSProperties}
+                      d="M33 61.6 L67 99" />
+                {/* dientes al final del mango */}
                 <path className="sk-p"
-                      style={{ '--d': '1s', '--dl': '2.25s' } as React.CSSProperties}
-                      d="M37 71 L63 102" />
-                {/* dientes de la llave izquierda */}
+                      style={{ '--d': '0.6s', '--dl': '3s' } as React.CSSProperties}
+                      d="M58.5 97.2 L65.9 90.4 M60.9 99.8 L68.3 93 M63.3 102.4 L70.7 95.6" />
+                {/* llave plateada: arco arriba-derecha */}
                 <path className="sk-p"
-                      style={{ '--d': '0.65s', '--dl': '2.75s' } as React.CSSProperties}
-                      d="M63 102 L71 110 M67 98.5 L74.5 106 M71 110 L74.5 106" />
-                {/* arco de la llave derecha */}
+                      style={{ '--d': '1.1s', '--dl': '2.05s' } as React.CSSProperties}
+                      d="M82 55 A9 9 0 1 1 81.99 55" />
+                {/* mango que cruza hacia abajo-izquierda */}
                 <path className="sk-p"
-                      style={{ '--d': '1s', '--dl': '2.15s' } as React.CSSProperties}
-                      d="M75.5 66 A7.5 7.5 0 1 1 75.49 66" />
-                {/* mango derecho hacia abajo-izquierda */}
+                      style={{ '--d': '1.1s', '--dl': '2.45s' } as React.CSSProperties}
+                      d="M67 61.6 L33 99" />
+                {/* dientes al final del mango */}
                 <path className="sk-p"
-                      style={{ '--d': '1s', '--dl': '2.45s' } as React.CSSProperties}
-                      d="M63 71 L37 102" />
-                {/* dientes de la llave derecha */}
-                <path className="sk-p"
-                      style={{ '--d': '0.65s', '--dl': '2.95s' } as React.CSSProperties}
-                      d="M37 102 L29 110 M33 98.5 L25.5 106 M29 110 L25.5 106" />
+                      style={{ '--d': '0.6s', '--dl': '3.15s' } as React.CSSProperties}
+                      d="M41.5 97.2 L34.1 90.4 M39.1 99.8 L31.7 93 M36.7 102.4 L29.3 95.6" />
                 {/* puntos dorados en los trazos principales */}
                 <circle className="sk-dot" r="1.6"
-                        style={{ '--d': '0.9s', '--dl': '0.45s', offsetPath: 'path("M41.5 25 C43.5 18.5 56.5 18.5 58.5 25")' } as React.CSSProperties} />
+                        style={{ '--d': '1.6s', '--dl': '0.45s', offsetPath: 'path("M36 44 C35 40 36.5 37 38 34 C36.5 30 38 27 40 24 C39 20 41 15 45 13 C47 11.5 53 11.5 55 13 C59 15 61 20 60 24 C62 27 63.5 30 62 34 C63.5 37 65 40 64 44 Q50 49 36 44 Z")' } as React.CSSProperties} />
                 <circle className="sk-dot" r="1.6"
-                        style={{ '--d': '1s', '--dl': '1.95s', offsetPath: 'path("M39.5 66 A7.5 7.5 0 1 1 39.49 66")' } as React.CSSProperties} />
+                        style={{ '--d': '1.1s', '--dl': '1.9s', offsetPath: 'path("M36 55 A9 9 0 1 1 35.99 55")' } as React.CSSProperties} />
                 <circle className="sk-dot" r="1.6"
-                        style={{ '--d': '1s', '--dl': '2.15s', offsetPath: 'path("M75.5 66 A7.5 7.5 0 1 1 75.49 66")' } as React.CSSProperties} />
+                        style={{ '--d': '1.1s', '--dl': '2.05s', offsetPath: 'path("M82 55 A9 9 0 1 1 81.99 55")' } as React.CSSProperties} />
               </svg>
           </div>
           <div className="splash-content">
