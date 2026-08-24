@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars, @next/next/no-img-element, @typescript-eslint/ban-ts-comment, react-hooks/exhaustive-deps */
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, type CSSProperties } from 'react';
 import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
@@ -238,8 +238,9 @@ function HomeContent() {
       return next;
     });
   };
-  const [docSearch, setDocSearch] = useState('');
-  const [docCategory, setDocCategory] = useState('all');
+const [docSearch, setDocSearch] = useState('');
+const [docCategory, setDocCategory] = useState('all');
+const [newsSearch, setNewsSearch] = useState('');
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mobileSubmenuOpen, setMobileSubmenuOpen] = useState<Record<string, boolean>>({});
@@ -307,6 +308,20 @@ function HomeContent() {
   const [liveHeroIndex, setLiveHeroIndex] = useState(0);
   const [liveDocs, setLiveDocs] = useState<DocItem[]>([]);
   const [splashDone, setSplashDone] = useState(false);
+
+  // --- NOTICIAS · DATOS DERIVADOS ---
+  const NEWS_RC = ['#C8973A', '#2563EB', '#0D9488', '#8A2B3B'];
+  const nowDate = new Date();
+  const newsEsteMes = liveNews.filter(n => {
+    const d = new Date(n.date);
+    return d.getMonth() === nowDate.getMonth() && d.getFullYear() === nowDate.getFullYear();
+  }).length;
+  const newsConInscripcion = liveNews.filter(n => !!n.inscription_url).length;
+  const newsRest = liveNews.slice(1).filter(n => {
+    const q = newsSearch.trim().toLowerCase();
+    if (!q) return true;
+    return n.title.toLowerCase().includes(q) || (n.subtitle || '').toLowerCase().includes(q) || n.body.toLowerCase().includes(q);
+  });
 
   // Prevent background scrolling when modals or mobile menu is open
   useEffect(() => {
@@ -2200,41 +2215,122 @@ window.setTimeout(() => {
         {currentPage === 'noticias' && (
           <section className="section-pjl section-tint tint-blue" id="noticias">
             <div className="container">
-              <div className="section-head reveal" onClick={() => navigate('noticias')}>
+              <div className="section-head reveal">
                 <span className="premium-label">COMUNIDAD</span>
                 <h3>Boletín de <i>Noticias</i></h3>
+                <p style={{ color: 'var(--text-muted)', maxWidth: '620px', margin: '10px auto 0', fontSize: '15px' }}>
+                  Novedades, crónicas y anuncios de la Pastoral Juvenil Luqueña.
+                </p>
                 <div className="line"></div>
               </div>
-              
-              {/* VATICAN WIDGET DESTACADO EN LA PÁGINA DE NOTICIAS */}
-              <div className="reveal vatican-widget-shell" style={{ marginBottom: '40px', background: 'var(--white)', padding: '20px', borderRadius: '16px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', border: '1px solid var(--gold-pale)' }}>
-                <h4 style={{ marginBottom: '15px', color: 'var(--navy)', fontSize: '1.2rem', textAlign: 'center' }}>Noticias del Vaticano</h4>
-                <div style={{ display: 'flex', justifyContent: 'center' }}>
-                   {/* @ts-ignore */}
-                   <vaticannews-widget lang="es" fontSize="18"></vaticannews-widget>
-                </div>
-              </div>
 
-              <div className="mvv-grid">
-                {liveNews.map((n, i) => (
-                  <div key={n.id} className="mvv-card reveal" style={{ animationDelay: `${i * 0.1}s`, cursor: 'pointer' }} onClick={() => setSelectedNews(n)}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                      <span style={{ color: 'var(--gold)', fontSize: '13px', fontWeight: 700 }}>{new Date(n.date).toLocaleDateString()}</span>
-                      <span style={{ fontSize: '18px' }}>📰</span>
-                    </div>
-                    <h4 style={{ margin: '0 0 15px', lineHeight: 1.3 }}>{n.title}</h4>
-                    {n.subtitle && <p style={{ color: 'var(--navy)', fontSize: '14px', fontWeight: 600, marginBottom: '12px' }}>{n.subtitle}</p>}
-                    <p style={{ color: 'var(--text-muted)', fontSize: '14px', display: '-webkit-box', WebkitLineClamp: 5, WebkitBoxOrient: 'vertical', overflow: 'hidden', whiteSpace: 'pre-wrap' }}>{n.body}</p>
-                    {(n.inscription_url || n.google_drive_url || n.external_link) && (
-                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '16px' }}>
-                        {n.inscription_url && <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--gold)', border: '1px solid var(--gold)', borderRadius: '999px', padding: '5px 10px' }}>Inscripción</span>}
-                        {n.google_drive_url && <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--navy)', border: '1px solid rgba(26,39,68,0.2)', borderRadius: '999px', padding: '5px 10px' }}>Fotos</span>}
-                        {n.external_link && <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', border: '1px solid rgba(0,0,0,0.12)', borderRadius: '999px', padding: '5px 10px' }}>Más info</span>}
-                      </div>
+              {/* HERO · NOTICIA DESTACADA + PANEL DE EXPLORACIÓN */}
+              {liveNews.length > 0 && (
+                <div className="nhero">
+                  <article
+                    className="nh-main"
+                    onClick={() => setSelectedNews(liveNews[0])}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={e => { if (e.key === 'Enter') setSelectedNews(liveNews[0]); }}
+                  >
+                    {liveNews[0].featured_image_url && (
+                      <img src={liveNews[0].featured_image_url} alt="" className="nh-img" />
                     )}
-                    <button className="btn-premium btn-premium-outline" style={{ marginTop: '20px', padding: '8px 15px', fontSize: '0.7rem' }}>LEER NOTICIA COMPLETA</button>
+                    <span className="nh-flag">✦ DESTACADA</span>
+                    <div className="nh-body">
+                      <div className="nh-chips">
+                        <span className="nh-chip">{new Date(liveNews[0].date).toLocaleDateString('es-PY', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
+                        {liveNews[0].event_date && (
+                          <span className="nh-chip nh-chip-ev">📅 {new Date(liveNews[0].event_date).toLocaleDateString('es-PY', { day: '2-digit', month: 'long' })}</span>
+                        )}
+                      </div>
+                      <h3>{liveNews[0].title}</h3>
+                      <p>{(liveNews[0].subtitle || liveNews[0].body).substring(0, 180)}{(liveNews[0].subtitle || liveNews[0].body).length > 180 ? '…' : ''}</p>
+                      <span className="nh-cta">Leer noticia completa <i>→</i></span>
+                    </div>
+                  </article>
+
+                  <aside className="nh-side">
+                    <div className="nstat nstat-gold"><b>{liveNews.length}</b><span>Publicadas</span></div>
+                    <div className="nstat nstat-blue"><b>{newsEsteMes}</b><span>Este mes</span></div>
+                    <div className="nstat nstat-green"><b>{newsConInscripcion}</b><span>Con inscripción</span></div>
+                    <div className="nsearch">
+                      <span>🔍</span>
+                      <input
+                        type="text"
+                        placeholder="Buscar noticias…"
+                        value={newsSearch}
+                        onChange={e => setNewsSearch(e.target.value)}
+                        aria-label="Buscar noticias"
+                      />
+                      {newsSearch && (
+                        <button onClick={() => setNewsSearch('')} title="Limpiar búsqueda" aria-label="Limpiar búsqueda">✕</button>
+                      )}
+                    </div>
+                  </aside>
+                </div>
+              )}
+
+              {/* GRID DE TARJETAS ÚNICAS */}
+              <div className="news-grid">
+                {newsRest.map((n, i) => {
+                  const rc = NEWS_RC[i % NEWS_RC.length];
+                  const dObj = new Date(n.date);
+                  const resources = getNewsResources(n);
+                  return (
+                    <article
+                      key={n.id}
+                      className="ncard"
+                      style={{ '--rc': rc, '--d': `${Math.min(i, 9) * 70}ms` } as CSSProperties}
+                      onClick={() => setSelectedNews(n)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={e => { if (e.key === 'Enter') setSelectedNews(n); }}
+                    >
+                      <div className="nc-top">
+                        <span className="nc-date">
+                          <b>{String(dObj.getDate()).padStart(2, '0')}</b>
+                          <small>{dObj.toLocaleDateString('es-PY', { month: 'short', year: 'numeric' })}</small>
+                        </span>
+                        <span className="nc-ico">{n.event_date ? '📅' : '📰'}</span>
+                      </div>
+                      <h4>{n.title}</h4>
+                      {n.subtitle && <p className="nc-sub">{n.subtitle}</p>}
+                      <p className="nc-body">{n.body}</p>
+                      {(n.event_date || n.event_location) && (
+                        <div className="nc-event">
+                          {n.event_date && <span>📅 {new Date(n.event_date).toLocaleDateString('es-PY', { day: '2-digit', month: 'long', year: 'numeric' })}</span>}
+                          {n.event_location && <span>📍 {n.event_location}</span>}
+                        </div>
+                      )}
+                      {resources.length > 0 && (
+                        <div className="nc-links">
+                          {resources.map(r => (
+                            <a
+                              key={r.href}
+                              href={r.href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={e => e.stopPropagation()}
+                            >
+                              {r.icon} {r.icon === '✍️' ? 'Inscripción' : r.icon === '📂' ? 'Fotos' : 'Más info'}
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                      <span className="nc-more">Leer más <i>→</i></span>
+                    </article>
+                  );
+                })}
+
+                {newsRest.length === 0 && liveNews.length > 0 && (
+                  <div className="pjl-empty-state" style={{ gridColumn: '1 / -1' }}>
+                    <div className="empty-icon">🔍</div>
+                    <h4 className="empty-title">Sin coincidencias</h4>
+                    <p className="empty-desc">Ninguna noticia coincide con «{newsSearch}». Probá con otra palabra.</p>
                   </div>
-                ))}
+                )}
                 {liveNews.length === 0 && (
                   <div className="pjl-empty-state" style={{ gridColumn: '1 / -1' }}>
                     <div className="empty-icon">📰</div>
@@ -2242,6 +2338,21 @@ window.setTimeout(() => {
                     <p className="empty-desc">Todavía no hay noticias publicadas. Mientras tanto, podés visitar la agenda o seguirnos en nuestras redes sociales.</p>
                   </div>
                 )}
+              </div>
+
+              {/* INFORMACIÓN DEL VATICANO · AL FINAL */}
+              <div className="vband">
+                <div className="vb-head">
+                  <div className="vb-tit">
+                    <h4>🕊️ Noticias del Vaticano</h4>
+                    <p>La información global de la Santa Sede, en vivo desde Vatican News.</p>
+                  </div>
+                  <span className="vb-src">vaticannews.va</span>
+                </div>
+                <div className="vb-widget">
+                  {/* @ts-ignore */}
+                  <vaticannews-widget lang="es" fontSize="18"></vaticannews-widget>
+                </div>
               </div>
             </div>
           </section>
