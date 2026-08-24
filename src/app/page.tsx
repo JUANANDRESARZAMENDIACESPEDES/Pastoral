@@ -102,247 +102,6 @@ const mapHeroPosition = (position?: string) => {
   }
 };
 
-/* ============================================================
-   TRAZADOR DE SILUETAS — convierte el contorno de un logo real
-   en una ruta SVG dibujable. Canvas -> binarizado -> TODAS las
-   piezas significativas (no solo la mayor: los logos suelen ser
-   figuras de varias partes sueltas) -> recorrido Moore del borde
-   con criterio de parada de Jacob -> simplificacion RDP.
-   ============================================================ */
-const SKETCH_VB_W = 100;
-const SKETCH_VB_H = 125;
-
-function rdpSimplify(pts: Array<[number, number]>, eps: number): Array<[number, number]> {
-  if (pts.length < 3) return pts;
-  const d2seg = (p: [number, number], a: [number, number], b: [number, number]) => {
-    const dx = b[0] - a[0], dy = b[1] - a[1];
-    const len2 = dx * dx + dy * dy;
-    let t = len2 === 0 ? 0 : ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / len2;
-    t = Math.max(0, Math.min(1, t));
-    const ex = a[0] + t * dx - p[0], ey = a[1] + t * dy - p[1];
-    return ex * ex + ey * ey;
-  };
-  let maxD = 0, idx = 0;
-  const a = pts[0], b = pts[pts.length - 1];
-  for (let i = 1; i < pts.length - 1; i++) {
-    const d = d2seg(pts[i], a, b);
-    if (d > maxD) { maxD = d; idx = i; }
-  }
-  if (maxD > eps * eps) {
-    const left = rdpSimplify(pts.slice(0, idx + 1), eps);
-    const right = rdpSimplify(pts.slice(idx), eps);
-    return left.slice(0, -1).concat(right);
-  }
-  return [a, b];
-}
-
-function traceSilhouette(src: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      try {
-        const S = 230;
-        const iw = img.naturalWidth || S;
-        const ih = img.naturalHeight || S;
-        const w = iw >= ih ? S : Math.max(24, Math.round(S * iw / ih));
-        const h = iw >= ih ? Math.max(24, Math.round(S * ih / iw)) : S;
-        const cv = document.createElement('canvas');
-        cv.width = w; cv.height = h;
-        const cx = cv.getContext('2d', { willReadFrequently: true });
-        if (!cx) throw new Error('ctx');
-        cx.drawImage(img, 0, 0, w, h);
-        const px = cx.getImageData(0, 0, w, h).data;
-
-        // Deteccion del fondo mirando el BORDE del lienzo (mucho mas fiable
-        // que contar pixeles oscuros): si el marco es opaco y oscuro, la
-        // figura es clara (invertir umbral); si es claro o transparente, la
-        // tinta es oscura. Evita contornos degenerados en logos con fondo.
-        const isOpaqueDark = (x: number, y: number): boolean => {
-          if (x < 0 || y < 0 || x >= w || y >= h) return false;
-          const i = (y * w + x) * 4;
-          return px[i + 3] > 48 && (px[i] + px[i + 1] + px[i + 2]) / 3 < 232;
-        };
-        let ringTotal = 0, ringDark = 0;
-        for (let x = 0; x < w; x++) {
-          for (const y of [0, h - 1]) {
-            ringTotal++;
-            if (px[(y * w + x) * 4 + 3] > 48) {
-              ringDark += isOpaqueDark(x, y) ? 1 : 0;
-            }
-          }
-        }
-        for (let y = 0; y < h; y++) {
-          for (const x of [0, w - 1]) {
-            ringTotal++;
-            if (px[(y * w + x) * 4 + 3] > 48) {
-              ringDark += isOpaqueDark(x, y) ? 1 : 0;
-            }
-          }
-        }
-        let opaqueRing = 0;
-        for (let x = 0; x < w; x++) {
-          opaqueRing += px[x * 4 + 3] > 48 ? 1 : 0;
-          opaqueRing += px[((h - 1) * w + x) * 4 + 3] > 48 ? 1 : 0;
-        }
-        const solidBg = opaqueRing / (w * 2) > 0.9;
-        const invert = solidBg && ringDark > ringTotal * 0.5;
-        const inkAt = (x: number, y: number): boolean => {
-          if (x < 0 || y < 0 || x >= w || y >= h) return false;
-          const i = (y * w + x) * 4;
-          if (px[i + 3] <= 48) return false;
-          const lum = (px[i] + px[i + 1] + px[i + 2]) / 3;
-          return invert ? lum >= 200 : lum < 232;
-        };
-
-        // 1) etiquetado por inundacion de TODAS las componentes
-        const label = new Int32Array(w * h).fill(-1);
-        const sizes: Array<{ id: number; size: number }> = [];
-        let nextId = 0;
-        const stack: number[] = [];
-        for (let s = 0; s < w * h; s++) {
-          if (label[s] !== -1) continue;
-          const sx = s % w, sy = (s / w) | 0;
-          if (!inkAt(sx, sy)) continue;
-          const id = nextId++;
-          let size = 0;
-          stack.push(s);
-          label[s] = id;
-          while (stack.length) {
-            const c = stack.pop() as number;
-            size++;
-            const x0 = c % w, y0 = (c / w) | 0;
-            for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-              const nx2 = x0 + dx, ny2 = y0 + dy;
-              if (nx2 < 0 || ny2 < 0 || nx2 >= w || ny2 >= h) continue;
-              const n = ny2 * w + nx2;
-              if (label[n] === -1 && inkAt(nx2, ny2)) { label[n] = id; stack.push(n); }
-            }
-          }
-          sizes.push({ id, size });
-        }
-        sizes.sort((p, q) => q.size - p.size);
-        const top = sizes[0]?.size ?? 0;
-        const keep = sizes.filter(s2 => s2.size >= Math.max(70, top * 0.04)).slice(0, 14);
-        if (!keep.length) throw new Error('blob');
-
-        // recorrido Moore del borde (criterio de Jacob: parar al volver al
-        // inicio entrando por el mismo retroceso) — traza el borde COMPLETO.
-        const DIRS: Array<[number, number]> = [
-          [-1, 0], [-1, -1], [0, -1], [1, -1],
-          [1, 0], [1, 1], [0, 1], [-1, 1]
-        ];
-        const dirIndex = (dx: number, dy: number) =>
-          DIRS.findIndex(d2 => d2[0] === dx && d2[1] === dy);
-
-        const s2 = Math.min(SKETCH_VB_W / w, SKETCH_VB_H / h);
-        const offX = (SKETCH_VB_W - w * s2) / 2;
-        const offY = (SKETCH_VB_H - h * s2) / 2;
-        let dOut = '';
-        let ptsTotal = 0;
-        // caja envolvente global para validar que la figura sea VISIBLE
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-
-        for (const piece of keep) {
-          const bid = piece.id;
-          const isBlob = (x: number, y: number) => {
-            if (x < 0 || y < 0 || x >= w || y >= h) return false;
-            return label[y * w + x] === bid;
-          };
-          let start = -1;
-          for (let s = 0; s < w * h; s++) if (label[s] === bid) { start = s; break; }
-          if (start === -1) continue;
-          const sx = start % w, sy = (start / w) | 0;
-          let cx0 = sx, cy0 = sy;
-          let bx = sx - 1, by = sy;
-          const b0x = bx, b0y = by;
-          const contour: Array<[number, number]> = [];
-          let guard = 12 * w * h;
-          while (guard-- > 0) {
-            contour.push([cx0, cy0]);
-            let found = false;
-            for (let k = 1; k <= 8; k++) {
-              const base = dirIndex(bx - cx0, by - cy0);
-              if (base < 0) break;
-              const ang = (base + k) % 8;
-              const nx2 = cx0 + DIRS[ang][0], ny2 = cy0 + DIRS[ang][1];
-              if (isBlob(nx2, ny2)) {
-                bx = cx0 + DIRS[(ang + 7) % 8][0];
-                by = cy0 + DIRS[(ang + 7) % 8][1];
-                cx0 = nx2; cy0 = ny2;
-                found = true;
-                break;
-              }
-              bx = nx2; by = ny2;
-            }
-            if (!found) break; // pieza de un solo pixel
-            if (cx0 === sx && cy0 === sy && bx === b0x && by === b0y && contour.length > 7) break;
-          }
-          if (contour.length < 10) continue;
-
-          const norm = contour.map(([x, y]): [number, number] =>
-            [+(x * s2 + offX).toFixed(1), +(y * s2 + offY).toFixed(1)]);
-          // Simplificacion ADAPTIVA: si una pieza detallada deja demasiados
-          // puntos, se repite el RDP con epsilon creciente. Un path enorme
-          // trabaria la animacion justo al arrancar.
-          const closed = norm.concat([norm[0]]);
-          let simp = rdpSimplify(closed, 0.9);
-          let eps2 = 0.9;
-          while (simp.length > 300 && eps2 < 12) {
-            eps2 *= 1.6;
-            simp = rdpSimplify(closed, eps2);
-          }
-          if (simp.length > 300) {
-            const stride = Math.ceil(simp.length / 300);
-            simp = simp.filter((_, k) => k % stride === 0 || k === simp.length - 1);
-          }
-          if (simp.length < 3) continue;
-          for (const [qx, qy] of norm) {
-            if (qx < minX) minX = qx;
-            if (qy < minY) minY = qy;
-            if (qx > maxX) maxX = qx;
-            if (qy > maxY) maxY = qy;
-          }
-          dOut += simp.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x} ${y}`).join(' ') + ' Z ';
-          ptsTotal += simp.length;
-        }
-        if (ptsTotal < 16) throw new Error('corto');
-        // La figura debe ocupar una parte visible del lienzo; si no, el
-        // traceo salio mal y conviene usar la silueta de respaldo.
-        const bw = Math.max(0, maxX - minX);
-        const bh = Math.max(0, maxY - minY);
-        if (Math.max(bw / SKETCH_VB_W, bh / SKETCH_VB_H) < 0.35 || bw * bh < 900) {
-          throw new Error('invisible');
-        }
-        resolve(dOut.trim());
-      } catch (e) {
-        reject(e);
-      }
-    };
-    img.onerror = () => reject(new Error('load'));
-    img.src = src;
-  });
-}
-
-// Siluetas de respaldo dibujadas a mano (se usan solo si un logo no existe,
-// no carga o el traceo falla). Espacio 100x125, mismo estilo de trazo.
-const FALLBACK_SKETCH_A =
-  'M50 5 V19 M44 11.7 H56 ' +
-  'M17.3 42.5 L50 20 L82.7 42.5 ' +
-  'M13.6 44.2 H86.4 ' +
-  'M21.8 45.8 V100 M78.2 45.8 V100 M12.7 100 H87.3 ' +
-  'M42.7 100 V77.5 A7.3 7.3 0 0 1 57.3 77.5 V100 ' +
-  'M57.3 55.8 A7.3 7.3 0 1 1 57.29 55.8';
-const FALLBACK_SKETCH_B =
-  'M33.6 27.5 C39.1 12.5 62.7 9.2 71.8 20.8 ' +
-  'M67.3 15 C52.7 10 37.3 14.2 31.8 26.7 C26.8 38.3 30.5 45.8 26.8 58.3 ' +
-  'C23.2 70.8 25 82.5 29.5 93.3 C33.2 101.7 35.9 109.2 35 118.3 ' +
-  'M44.1 31.7 C40.5 37.5 41.4 43.3 45 47.5 C47.7 50.4 47.7 52.9 45 54.6 ' +
-  'M45 66.7 C53.2 62.1 63.2 63.8 69.5 69.6 C73.2 72.9 74.1 77.9 71.4 82.1 ' +
-  'M80.9 75.4 A5.9 5.9 0 1 1 80.89 75.4 ' +
-  'M62.3 82.9 C65.9 87.9 72.3 89.6 77.7 87.1 ' +
-  'M29.5 93.3 C44.5 88.3 60.9 90 71.4 99.2 C75 103.3 76.8 110 75.9 118.3';
-
 const detectDeviceType = () => {
   if (typeof window === 'undefined') return 'desktop' as const;
   const ua = window.navigator.userAgent.toLowerCase();
@@ -602,77 +361,31 @@ function HomeContent() {
       void el.offsetWidth;
       el.style.animation = '';
     });
-    // --- Siluetas line-art (version SIMPLE, solo CSS) ---
-    // La linea se dibuja con pathLength=1 + dashoffset y el punto dorado
-    // recorre la MISMA geometria con offset-path. Sin SMIL ni beginElement():
-    // todo arranca automaticamente cuando se agrega la clase art-on.
-    const NS_SVG = 'http://www.w3.org/2000/svg';
-    const injectSketch = (svgId: string, d: string, delayS: number, durS: number): void => {
-      const svg = document.getElementById(svgId);
-      if (!svg || !d) return;
-      try {
-        const path = document.createElementNS(NS_SVG, 'path');
-        path.setAttribute('class', 'sk-p');
-        path.setAttribute('d', d);
-        path.setAttribute('pathLength', '1');
-        path.style.setProperty('--d', `${durS}s`);
-        path.style.setProperty('--dl', `${delayS}s`);
-        const dot = document.createElementNS(NS_SVG, 'circle');
-        dot.setAttribute('class', 'sk-dot');
-        dot.setAttribute('r', '1.6');
-        dot.style.setProperty('--d', `${durS}s`);
-        dot.style.setProperty('--dl', `${delayS}s`);
-        dot.style.offsetPath = `path("${d}")`;
-        svg.appendChild(path);
-        svg.appendChild(dot);
-      } catch { /* si algo falla, simplemente no hay silueta */ }
-    };
-    // Nunca queda colgada: resuelve null ante cualquier fallo o demora >2.6s.
-    const safeTrace = (src: string): Promise<string | null> =>
-      new Promise(resolve => {
-        const t = window.setTimeout(() => resolve(null), 2600);
-        traceSilhouette(src)
-          .then(v => { window.clearTimeout(t); resolve(v); })
-          .catch(() => { window.clearTimeout(t); resolve(null); });
-      });
-    let artDone = false;
-    const runIntro = () => {
-      if (artDone) return;
-      artDone = true;
-      const brandingNow = store.branding.get();
-      void Promise.all([
-        brandingNow?.zona1Logo ? safeTrace(brandingNow.zona1Logo) : Promise.resolve(null),
-        brandingNow?.zona2Logo ? safeTrace(brandingNow.zona2Logo) : Promise.resolve(null)
-      ]).then(([dA, dB]) => {
-        // Ventanas fijas tras art-on: A 0.15 -> 3.15 s · B 0.70 -> 4.20 s.
-        injectSketch('splash-sketch-a', dA ?? FALLBACK_SKETCH_A, 0.15, 3.0);
-        injectSketch('splash-sketch-b', dB ?? FALLBACK_SKETCH_B, 0.7, 3.5);
-        const sp = document.getElementById('splash-pjl');
-        if (!sp) return;
-        requestAnimationFrame(() => {
-          const sp2 = document.getElementById('splash-pjl');
-          if (!sp2) return;
-          sp2.classList.add('art-on'); // linea y punto arrancan solos (CSS)
-          // Salida encadenada al arte (siempre despues del dibujo completo):
-          // fundido a +4.60s, velo a +5.25s, retiro de pantalla a +5.55s.
-          window.setTimeout(() => {
-            document.getElementById('splash-pjl')?.classList.add('is-leaving');
-          }, 4600);
-          window.setTimeout(() => {
-            root.classList.add('pjl-reveal');
-            root.classList.remove('show-splash');
-            window.setTimeout(() => setNavEntered(true), 260);
-          }, 5250);
-          window.setTimeout(() => {
-            document.getElementById('splash-pjl')?.remove();
-            root.classList.remove('pjl-reveal');
-            setNavEntered(true);
-            setSplashDone(true);
-          }, 5550);
-        });
-      });
-    };
-    window.setTimeout(runIntro, 900);
+    // --- Siluetas line-art estaticas (layout.tsx) animadas SOLO por CSS ---
+// Al aparecer art-on, las lineas se dibujan solas (dashoffset) y los
+// puntos dorados recorren sus trazos (offset-path). Sin JS extra.
+window.setTimeout(() => {
+  const sp = document.getElementById('splash-pjl');
+  if (!sp) return;
+  sp.classList.add('art-on');
+  // Salida encadenada al arte: el dibujo completo (~3.7s max) termina
+  // antes del fundido (+4.6s); velo a +5.25s y retiro a +5.55s.
+  window.setTimeout(() => {
+    document.getElementById('splash-pjl')?.classList.add('is-leaving');
+  }, 4600);
+  window.setTimeout(() => {
+    root.classList.add('pjl-reveal');
+    root.classList.remove('show-splash');
+    window.setTimeout(() => setNavEntered(true), 260);
+  }, 5250);
+  window.setTimeout(() => {
+    document.getElementById('splash-pjl')?.remove();
+    root.classList.remove('pjl-reveal');
+    setNavEntered(true);
+    setSplashDone(true);
+  }, 5550);
+}, 900);
+
     // Intencionadamente NO se cancelan en el cleanup: si el usuario navega a
     // otra página durante la intro, estos temporizadores deben igualmente
     // retirar el velo y la pantalla; cancelarlos dejaría la clase
