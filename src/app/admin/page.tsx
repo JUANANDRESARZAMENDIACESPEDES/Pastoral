@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense, type CSSProperties } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
@@ -684,20 +684,32 @@ function AdminContent() {
   // --- TERRITORY EDITOR ---
   const [capturingZone, setCapturingZone] = useState<number | null>(null);
   const [tempPolygon, setTempPolygon] = useState<[number, number][]>([]);
+  const [placingChapelId, setPlacingChapelId] = useState<string | null>(null);
 
   useEffect(() => {
     (window as any).onPJLMapClick = (lat: number, lng: number) => {
       if (capturingZone !== null) {
         setTempPolygon(prev => [...prev, [lat, lng]]);
+        return;
+      }
+      if (placingChapelId) {
+        const target = chapels.find(c => c.id === placingChapelId);
+        if (target) {
+          setChapels(chapels.map(c => (c.id === placingChapelId ? { ...c, lat, lng } : c)));
+          showToast(`📍 ${target.name} ubicada en el mapa`);
+          addLog('ubicar capilla', 'territorio', `${target.name} (${lat.toFixed(5)}, ${lng.toFixed(5)})`);
+        }
+        setPlacingChapelId(null);
       }
     };
     return () => { (window as any).onPJLMapClick = null; };
-  }, [capturingZone]);
+  }, [capturingZone, placingChapelId, chapels]);
 
   useEffect(() => {
     if (!(mod === 'capillas' && capillasView === 'territorio')) {
       setCapturingZone(null);
       setTempPolygon([]);
+      setPlacingChapelId(null);
     }
   }, [mod, capillasView]);
 
@@ -711,6 +723,76 @@ function AdminContent() {
     setTempPolygon([]);
     showToast(`Polígono Zona ${capturingZone} guardado ✔`);
     addLog('actualizar territorio', 'territorio', `Zona ${capturingZone}`);
+  };
+
+  // ─── TERRITORIO 2.0 · COBERTURA, UBICACIÓN Y EXPORT ───
+  const pointInPolygon = (lat: number, lng: number, poly: [number, number][]): boolean => {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const yi = poly[i][0], xi = poly[i][1];
+      const yj = poly[j][0], xj = poly[j][1];
+      if ((yi > lat) !== (yj > lat) && lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) inside = !inside;
+    }
+    return inside;
+  };
+
+  const territoryStats = ([1, 2, 3, 4] as const).map(num => {
+    const poly = branding[`zona${num}Polygon`] as [number, number][] | undefined;
+    const zoneList = chapels.filter(c => c.zonaId === num);
+    const placed = zoneList.filter(c => typeof c.lat === 'number' && typeof c.lng === 'number');
+    const dentro = poly && poly.length > 2 ? placed.filter(c => pointInPolygon(c.lat!, c.lng!, poly)).length : null;
+    return {
+      zona: num,
+      total: zoneList.length,
+      activas: zoneList.filter(c => c.estadoComunidad === 'Activo').length,
+      ubicadas: placed.length,
+      dentro,
+      tienePoligono: !!(poly && poly.length > 2),
+      color: (branding[`zona${num}Color`] as string) || '#C8973A'
+    };
+  });
+
+  const TERR_PRESETS = ['#C8973A', '#1A2744', '#1A3B2B', '#441A1A', '#2563EB', '#0D9488'];
+  const unplacedChapels = chapels.filter(c => typeof c.lat !== 'number' || typeof c.lng !== 'number');
+  const placingChapel = placingChapelId ? chapels.find(c => c.id === placingChapelId) || null : null;
+
+  const startPlacingChapel = (id: string) => {
+    setCapturingZone(null);
+    setTempPolygon([]);
+    setPlacingChapelId(id);
+  };
+
+  const exportTerritorioGeoJSON = () => {
+    const features: Array<Record<string, unknown>> = [];
+    ([1, 2, 3, 4] as const).forEach(num => {
+      const poly = branding[`zona${num}Polygon`] as [number, number][] | undefined;
+      if (poly && poly.length > 2) {
+        const ring = [...poly.map(p => [p[1], p[0]]), [poly[0][1], poly[0][0]]];
+        features.push({
+          type: 'Feature',
+          properties: { tipo: 'zona', zona: num, color: (branding[`zona${num}Color`] as string) || '#C8973A' },
+          geometry: { type: 'Polygon', coordinates: [ring] }
+        });
+      }
+    });
+    chapels.forEach(c => {
+      if (typeof c.lat === 'number' && typeof c.lng === 'number') {
+        features.push({
+          type: 'Feature',
+          properties: { tipo: 'capilla', nombre: c.name, zona: c.zonaId, comunidad: c.comunidadNombre, estado: c.estadoComunidad },
+          geometry: { type: 'Point', coordinates: [c.lng, c.lat] }
+        });
+      }
+    });
+    const blob = new Blob([JSON.stringify({ type: 'FeatureCollection', features }, null, 2)], { type: 'application/geo+json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'territorio-pjl.geojson';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('🗺️ Territorio exportado en GeoJSON');
+    addLog('exportar territorio', 'territorio', `${features.length} entidades`);
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -3011,20 +3093,57 @@ function AdminContent() {
                   🗺️ Gestión de Territorio
                 </button>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '26px', flexWrap: 'wrap' }}>
                 <div>
                   <h3 className="serif" style={{ fontSize: '2rem', color: 'var(--navy)', margin: 0 }}>Gestión de Territorio</h3>
-                  <p className="premium-label" style={{ color: 'var(--gold)', marginTop: '5px' }}>DELIMITACIÓN DE ZONAS Y CALLES</p>
+                  <p className="premium-label" style={{ color: 'var(--gold)', marginTop: '5px' }}>DELIMITACIÓN DE ZONAS Y COBERTURA EN VIVO</p>
                 </div>
-                {!capturingZone && (
-                  <p style={{ fontSize: '12px', color: 'var(--text-muted)', maxWidth: '300px', textAlign: 'right' }}>
-                    Selecciona una zona para comenzar a dibujar sus límites en el mapa interactivo.
-                  </p>
+                {!capturingZone && !placingChapelId && (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                    <button
+                      className="btn-premium btn-premium-outline"
+                      onClick={exportTerritorioGeoJSON}
+                      style={{ padding: '9px 16px', fontSize: '11px' }}
+                    >
+                      ⬇ EXPORTAR GEOJSON
+                    </button>
+                    <p style={{ fontSize: '11px', color: 'var(--text-muted)', maxWidth: '320px', textAlign: 'right', margin: 0 }}>
+                      Dibuja los límites de cada zona o ubica capillas sin GPS haciendo clic directo en el mapa.
+                    </p>
+                  </div>
                 )}
               </div>
 
+              {/* DASHBOARD DE COBERTURA POR ZONA */}
+              <div className="terr-dash">
+                {territoryStats.map(s => {
+                  const pct = s.total === 0 ? 0 : Math.round(((s.dentro ?? s.ubicadas) / s.total) * 100);
+                  return (
+                    <div key={s.zona} className="td-card" style={{ '--zc': s.color } as CSSProperties}>
+                      <div className="td-top">
+                        <span className="td-zona">ZONA {s.zona}</span>
+                        {s.tienePoligono ? <span className="td-tag ok">LÍMITES ✔</span> : <span className="td-tag warn">SIN LÍMITES</span>}
+                      </div>
+                      <div className="td-nums">
+                        <div><strong>{s.total}</strong><span>Capillas</span></div>
+                        <div><strong>{s.activas}</strong><span>Activas</span></div>
+                        <div><strong>{s.ubicadas}</strong><span>Con GPS</span></div>
+                      </div>
+                      <div className="td-bar"><i style={{ width: `${pct}%` }} /></div>
+                      <div className="td-foot">
+                        <span>Cobertura {pct}%</span>
+                        <span>{s.dentro === null ? (s.tienePoligono ? 'define vértices' : 'polígono pendiente') : `${s.dentro}/${s.ubicadas} dentro`}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
               <div className="territory-editor-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '30px' }}>
-                <div className="territory-map-shell" style={{ height: '600px', borderRadius: '25px', overflow: 'hidden', border: `3px solid ${capturingZone ? 'var(--gold)' : 'var(--gold-pale)'}`, position: 'relative', transition: 'border-color 0.3s ease', boxShadow: capturingZone ? '0 0 0 4px rgba(200,151,58,0.15)' : 'none' }}>
+                <div
+                  className={`territory-map-shell ${placingChapelId ? 'map-shell-placing' : ''}`}
+                  style={{ height: '600px', borderRadius: '25px', overflow: 'hidden', border: `3px solid ${capturingZone !== null || placingChapelId ? 'var(--gold)' : 'var(--gold-pale)'}`, position: 'relative', transition: 'border-color 0.3s ease', boxShadow: capturingZone !== null || placingChapelId ? '0 0 0 4px rgba(200,151,58,0.15)' : 'none' }}
+                >
                   <ZonaMap 
                     key={`territory-map-${capturingZone ?? 'view'}`}
                     selectedZone={capturingZone || 0}
@@ -3088,49 +3207,80 @@ function AdminContent() {
                           onClick={() => { setCapturingZone(null); setTempPolygon([]); }}
                           title="Cancelar"
                           style={{ padding: '10px 14px', background: 'rgba(0,0,0,0.65)', color: '#fff', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', fontWeight: 700, fontSize: '13px', cursor: 'pointer', backdropFilter: 'blur(8px)' }}
-                        >✕</button>
-                      </div>
-                    </>
-                  )}
-                </div>
+                         >✕</button>
+                       </div>
+                     </>
+                   )}
+                   {placingChapel && (
+                     <>
+                       {/* Banner de colocación */}
+                       <div className="place-banner" style={{ position: 'absolute', top: '15px', left: '15px', right: '65px', zIndex: 1000 }}>
+                         <span className="pinpulse" />
+                         <div style={{ flex: 1, minWidth: 0 }}>
+                           <div style={{ fontWeight: 900, fontSize: '13px', letterSpacing: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>UBICANDO “{placingChapel.name}”</div>
+                           <div style={{ fontSize: '10px', opacity: 0.85 }}>Haz clic en el punto exacto del mapa</div>
+                         </div>
+                       </div>
+                       <div style={{ position: 'absolute', bottom: '15px', left: '15px', right: '15px', display: 'flex', zIndex: 1000 }}>
+                         <button
+                           onClick={() => setPlacingChapelId(null)}
+                           style={{ width: '100%', padding: '10px', background: 'rgba(26,39,68,0.9)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', borderRadius: '10px', fontWeight: 700, fontSize: '12px', cursor: 'pointer', backdropFilter: 'blur(8px)', letterSpacing: '0.5px', transition: '0.2s' }}
+                         >✕ CANCELAR UBICACIÓN</button>
+                       </div>
+                     </>
+                   )}
+                 </div>
 
-                <div className="territory-zone-list" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                  {[1, 2, 3, 4].map(num => (
-                    <div key={num} style={{ 
-                      padding: '20px', 
-                      background: capturingZone === num ? 'var(--navy)' : 'var(--cream)', 
-                      color: capturingZone === num ? '#fff' : 'var(--navy)',
-                      borderRadius: '18px', 
-                      border: `1px solid ${capturingZone === num ? 'var(--gold)' : 'var(--gold-pale)'}`,
-                      transition: '0.3s ease'
-                    }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                        <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 900 }}>ZONA {num}</h4>
-                        <input 
-                          type="color" 
-                          value={branding[`zona${num}Color`] as string || '#C8973A'} 
-                          onChange={e => setBranding({...branding, [`zona${num}Color`]: e.target.value})}
-                          style={{ border: 'none', width: '30px', height: '30px', borderRadius: '50%', cursor: 'pointer', background: 'transparent' }}
-                        />
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <button 
-                          className={`btn-premium ${capturingZone === num ? 'btn-premium-gold' : 'btn-premium-outline'}`}
-                          onClick={() => {
-                            setCapturingZone(num);
-                            setTempPolygon((branding[`zona${num}Polygon`] as [number, number][]) || []);
-                          }}
-                          style={{ width: '100%', fontSize: '12px' }}
+                 <div className="territory-zone-list" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  {[1, 2, 3, 4].map((num, idx) => {
+                    const st = territoryStats[idx];
+                    const currentColor = (branding[`zona${num}Color`] as string) || '#C8973A';
+                    const hasPoly = !!(branding[`zona${num}Polygon`] as [number, number][] | undefined);
+                    return (
+                      <div
+                        key={num}
+                        className={`tz-card ${capturingZone === num ? 'tz-active' : ''}`}
+                        style={{ '--zc': currentColor, animationDelay: `${idx * 80 + 120}ms` } as CSSProperties}
+                      >
+                        <div className="tz-head">
+                          <h4 className="tz-name">ZONA {num}</h4>
+                          <input
+                            type="color"
+                            value={currentColor}
+                            onChange={e => setBranding({ ...branding, [`zona${num}Color`]: e.target.value })}
+                            title="Color de la zona"
+                            style={{ border: 'none', width: '30px', height: '30px', borderRadius: '50%', cursor: 'pointer', background: 'transparent', padding: 0 }}
+                          />
+                        </div>
+                        <div className="tz-swatches">
+                          {TERR_PRESETS.map(pc => (
+                            <button
+                              key={pc}
+                              aria-label={`Color ${pc}`}
+                              title={pc}
+                              className={`sw ${currentColor.toLowerCase() === pc.toLowerCase() ? 'on' : ''}`}
+                              style={{ background: pc }}
+                              onClick={() => setBranding({ ...branding, [`zona${num}Color`]: pc })}
+                            />
+                          ))}
+                        </div>
+                        <div className="tz-mini">
+                          <span><b>{st.total}</b> capillas</span>
+                          <span><b>{st.ubicadas}</b> con GPS</span>
+                          {!st.tienePoligono && <span className="tz-warn">⚠ sin límites</span>}
+                        </div>
+                        <button
+                          className="tz-btn gold"
+                          onClick={() => { setPlacingChapelId(null); setCapturingZone(num); setTempPolygon((branding[`zona${num}Polygon`] as [number, number][]) || []); }}
                         >
-                          {branding[`zona${num}Polygon`] ? '✏️ REDEFINIR LÍMITES' : '➕ DEFINIR LÍMITES'}
+                          {hasPoly ? '✏️ REDEFINIR LÍMITES' : '➕ DEFINIR LÍMITES'}
                         </button>
-                        {branding[`zona${num}Polygon`] && (
-                          <button 
-                            className="btn-premium" 
-                            style={{ width: '100%', fontSize: '11px', background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)' }}
+                        {hasPoly && (
+                          <button
+                            className="tz-btn danger"
                             onClick={() => {
-                              if(confirm('¿Eliminar límites de esta zona?')) {
-                                setBranding({...branding, [`zona${num}Polygon`]: undefined});
+                              if (confirm('¿Eliminar límites de esta zona?')) {
+                                setBranding({ ...branding, [`zona${num}Polygon`]: undefined });
                                 showToast(`Límites de Zona ${num} eliminados`);
                                 addLog('eliminar territorio', 'territorio', `Zona ${num}`);
                               }
@@ -3138,16 +3288,52 @@ function AdminContent() {
                           >🗑️ ELIMINAR POLÍGONO</button>
                         )}
                       </div>
+                    );
+                  })}
+
+                  {/* CAPILLAS SIN UBICAR */}
+                  <div className="unpanel">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: unplacedChapels.length ? '10px' : '0' }}>
+                      <h4 style={{ margin: 0, fontSize: '13px', color: 'var(--gold)', letterSpacing: '0.5px' }}>📍 CAPILLAS SIN UBICAR</h4>
+                      <span className="unbadge">{unplacedChapels.length}</span>
                     </div>
-                  ))}
-                  <div style={{ marginTop: '20px', padding: '20px', background: 'var(--navy)', color: '#fff', borderRadius: '18px', border: '2px solid var(--gold)' }}>
-                    <h4 style={{ margin: '0 0 10px', fontSize: '14px', color: 'var(--gold)' }}>📌 Instrucciones</h4>
-                    <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '11px', lineHeight: '1.8', opacity: 0.85 }}>
-                      <li>Haz clic en <strong>DEFINIR LÍMITES</strong> para empezar.</li>
-                      <li>Usa la <strong>rueda del mouse</strong> para acercarte.</li>
-                      <li>Haz clic en el mapa para marcar cada vértice.</li>
-                      <li>Usa <strong>↩ Deshacer</strong> si te equivocas.</li>
-                      <li>Necesitas al menos <strong>3 puntos</strong> para guardar.</li>
+                    {unplacedChapels.length === 0 ? (
+                      <p className="unok">✔ Todas las capillas tienen coordenadas GPS.</p>
+                    ) : (
+                      <>
+                        <p style={{ fontSize: '10px', opacity: 0.75, margin: '0 0 10px' }}>Toca UBICAR y luego haz clic en el mapa:</p>
+                        {unplacedChapels.slice(0, 6).map((c, i) => (
+                          <div key={c.id} className="unchip" style={{ animationDelay: `${i * 55 + 200}ms` }}>
+                            {(c.logoUrl || c.photo) ? (
+                              <img src={(c.logoUrl || c.photo) as string} alt="" style={{ width: '22px', height: '22px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                            ) : (
+                              <span className="dotz" style={{ background: (branding[`zona${c.zonaId}Color`] as string) || '#C8973A' }} />
+                            )}
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div className="uc-name">{c.name}</div>
+                              <div className="uc-sub">Zona {c.zonaId} · {c.comunidadNombre}</div>
+                            </div>
+                            <button
+                              className="unplace-btn"
+                              disabled={!!placingChapelId || capturingZone !== null}
+                              onClick={() => startPlacingChapel(c.id)}
+                            >UBICAR</button>
+                          </div>
+                        ))}
+                        {unplacedChapels.length > 6 && (
+                          <p style={{ fontSize: '9px', opacity: 0.6, margin: '6px 0 0' }}>+{unplacedChapels.length - 6} más…</p>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  <div className="unpanel" style={{ animationDelay: '300ms' }}>
+                    <h4 style={{ margin: '0 0 10px', fontSize: '13px', color: 'var(--gold)' }}>📌 Instrucciones</h4>
+                    <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '11px', lineHeight: '1.8', opacity: 0.85 }}>
+                      <li><strong>DEFINIR LÍMITES</strong>: haz clic en el mapa para marcar cada vértice.</li>
+                      <li>Mínimo <strong>3 puntos</strong>; usa ↩ Deshacer si te equivocas.</li>
+                      <li><strong>UBICAR</strong>: coloca una capilla sin GPS con un solo clic.</li>
+                      <li><strong>GEOJSON</strong>: exporta zonas y capillas para otras apps.</li>
                       <li>Los cambios se reflejan en toda la web automáticamente.</li>
                     </ul>
                   </div>

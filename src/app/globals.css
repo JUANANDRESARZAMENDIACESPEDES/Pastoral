@@ -8604,3 +8604,170 @@ html.show-splash .splash-screen { visibility: visible; }
   .sk-a { left: -14vw; top: 22%; transform: rotate(-6deg); }
   .sk-b { right: -15vw; top: auto; bottom: 4%; transform: rotate(5deg); }
 }
+
+/* ============================================================
+   GESTION DE TERRITORIO - PANEL 2.0
+   Dashboard de cobertura, tarjetas de zona, ubicacion y export
+   ============================================================ */
+@keyframes terrIn {
+  from { opacity: 0; transform: translateY(16px); }
+}
+
+/* --- Dashboard de cobertura por zona --- */
+.terr-dash { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 28px; }
+.td-card {
+  position: relative; overflow: hidden;
+  background: #FAF6EE; border: 1px solid var(--gold-pale, #E8D9B8);
+  border-radius: 16px; padding: 15px 17px 13px;
+  animation: terrIn 0.55s cubic-bezier(0.22, 0.9, 0.3, 1.25) backwards;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.td-card:nth-child(1) { animation-delay: 0.05s; }
+.td-card:nth-child(2) { animation-delay: 0.14s; }
+.td-card:nth-child(3) { animation-delay: 0.23s; }
+.td-card:nth-child(4) { animation-delay: 0.32s; }
+.td-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  background: linear-gradient(90deg, var(--zc, #C8973A), transparent 90%);
+}
+.td-card::after {
+  content: ''; position: absolute; right: -34px; top: -34px;
+  width: 92px; height: 92px; border-radius: 50%;
+  background: var(--zc, #C8973A); opacity: 0.08;
+  transition: transform 0.4s ease, opacity 0.4s ease;
+}
+.td-card:hover { transform: translateY(-4px); box-shadow: 0 12px 26px rgba(26, 39, 68, 0.12); }
+.td-card:hover::after { transform: scale(1.7); opacity: 0.14; }
+.td-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.td-zona { font-weight: 900; font-size: 12px; letter-spacing: 1.6px; color: var(--zc, #C8973A); }
+.td-tag { font-size: 8.5px; font-weight: 800; letter-spacing: 0.8px; padding: 3px 8px; border-radius: 20px; white-space: nowrap; }
+.td-tag.ok { background: rgba(16, 185, 129, 0.13); color: #059669; }
+.td-tag.warn { background: rgba(245, 158, 11, 0.16); color: #B45309; animation: tdPulse 1.7s ease infinite; }
+@keyframes tdPulse {
+  50% { box-shadow: 0 0 0 5px rgba(245, 158, 11, 0.12); }
+}
+.td-nums { display: flex; gap: 15px; margin-bottom: 10px; }
+.td-nums strong { display: block; font-family: 'Playfair Display', Georgia, serif; font-size: 20px; line-height: 1; color: var(--navy, #1A2744); }
+.td-nums span { display: block; font-size: 8.5px; letter-spacing: 1px; text-transform: uppercase; color: #8A8477; margin-top: 3px; }
+.td-bar { height: 6px; border-radius: 6px; background: rgba(26, 39, 68, 0.09); overflow: hidden; margin-bottom: 7px; }
+.td-bar i { display: block; height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--zc, #C8973A), #E6C87A); transition: width 1s cubic-bezier(0.25, 0.9, 0.3, 1); }
+.td-foot { display: flex; justify-content: space-between; gap: 6px; font-size: 9.5px; color: #8A8477; }
+
+/* --- Tarjetas de zona (rail lateral) --- */
+.tz-card {
+  position: relative; overflow: hidden;
+  background: #FAF6EE; color: var(--navy, #1A2744);
+  border-radius: 18px; border: 1px solid var(--gold-pale, #E8D9B8);
+  padding: 18px 16px 14px;
+  animation: terrIn 0.5s cubic-bezier(0.22, 0.9, 0.3, 1.2) backwards;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, background 0.3s ease;
+}
+.tz-card:hover { transform: translateX(5px); border-color: var(--zc, #C8973A); box-shadow: -6px 6px 18px rgba(26, 39, 68, 0.08); }
+.tz-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px;
+  background: linear-gradient(180deg, var(--zc, #C8973A), transparent);
+}
+.tz-active { background: var(--navy, #1A2744); color: #fff; border-color: var(--gold); }
+.tz-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 11px; position: relative; }
+.tz-name { margin: 0; font-size: 15px; font-weight: 900; letter-spacing: 1px; }
+.tz-swatches { display: flex; gap: 6px; margin-bottom: 11px; position: relative; }
+.sw {
+  width: 18px; height: 18px; border-radius: 50%; padding: 0;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 1px rgba(26, 39, 68, 0.18);
+  cursor: pointer; transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.sw:hover { transform: scale(1.3); }
+.sw.on { box-shadow: 0 0 0 2px var(--navy, #1A2744); }
+.tz-mini { display: flex; gap: 13px; font-size: 10px; opacity: 0.78; margin-bottom: 12px; flex-wrap: wrap; position: relative; }
+.tz-mini b { font-size: 12px; }
+.tz-warn { color: #F59E0B; font-weight: 800; opacity: 1 !important; }
+.tz-btn {
+  display: block; width: 100%; padding: 9px 10px; margin-bottom: 8px;
+  border-radius: 10px; font-weight: 800; font-size: 11px; letter-spacing: 0.6px;
+  border: 1px solid var(--gold-pale, #E8D9B8); background: #fff; color: var(--navy, #1A2744);
+  cursor: pointer; transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease, filter 0.2s ease;
+  position: relative;
+}
+.tz-btn:last-child { margin-bottom: 0; }
+.tz-btn:hover:not(:disabled) { border-color: var(--zc, #C8973A); color: var(--zc, #C8973A); transform: translateY(-1px); }
+.tz-btn.gold { background: var(--zc, #C8973A); border-color: var(--zc, #C8973A); color: #fff; }
+.tz-btn.gold:hover:not(:disabled) { color: #fff; filter: brightness(1.08); }
+.tz-btn.danger:hover:not(:disabled) { border-color: #EF4444 !important; color: #EF4444 !important; }
+.tz-active .tz-btn:not(.gold) { background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 255, 255, 0.25); color: #fff; }
+.tz-active .sw.on { box-shadow: 0 0 0 2px #fff; }
+
+/* --- Panel de capillas sin ubicar / instrucciones --- */
+.unpanel {
+  background: var(--navy, #1A2744); color: #fff;
+  border-radius: 18px; border: 2px solid var(--gold);
+  padding: 18px; animation: terrIn 0.5s cubic-bezier(0.22, 0.9, 0.3, 1.2) backwards;
+}
+.unbadge {
+  min-width: 22px; height: 22px; padding: 0 7px; border-radius: 20px;
+  background: var(--gold); color: var(--navy, #1A2744);
+  font-weight: 900; font-size: 11px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.unok { margin: 0; font-size: 11px; opacity: 0.85; }
+.unchip {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px; padding: 8px 10px; margin-bottom: 8px;
+  transition: background 0.2s ease, transform 0.2s ease;
+  animation: terrIn 0.45s cubic-bezier(0.22, 0.9, 0.3, 1.2) backwards;
+}
+.unchip:hover { background: rgba(255, 255, 255, 0.11); transform: translateX(3px); }
+.dotz { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.uc-name { font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.uc-sub { font-size: 9px; opacity: 0.65; letter-spacing: 0.4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.unplace-btn {
+  margin-left: auto; flex-shrink: 0;
+  background: var(--gold); color: var(--navy, #1A2744);
+  border: none; border-radius: 8px; padding: 5px 11px;
+  font-weight: 900; font-size: 10px; letter-spacing: 0.5px;
+  cursor: pointer; transition: transform 0.2s ease, filter 0.2s ease; white-space: nowrap;
+}
+.unplace-btn:hover:not(:disabled) { filter: brightness(1.12); transform: translateY(-1px); }
+.unplace-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* --- Banner de colocacion + brillo del mapa --- */
+.place-banner {
+  background: rgba(200, 151, 58, 0.95); color: var(--navy, #1A2744);
+  padding: 12px 18px; border-radius: 12px;
+  display: flex; align-items: center; gap: 12px;
+  backdrop-filter: blur(8px); pointer-events: none;
+  animation: bannIn 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+  box-shadow: 0 8px 24px rgba(200, 151, 58, 0.35);
+}
+@keyframes bannIn {
+  from { opacity: 0; transform: translateY(-14px) scale(0.96); }
+}
+.pinpulse { width: 14px; height: 14px; border-radius: 50%; background: #fff; position: relative; flex-shrink: 0; }
+.pinpulse::after {
+  content: ''; position: absolute; inset: -7px; border-radius: 50%;
+  border: 2px solid #fff; opacity: 0;
+  animation: pinPing 1.5s ease-out infinite;
+}
+@keyframes pinPing {
+  0% { transform: scale(0.45); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+.map-shell-placing { animation: shellBreath 2.2s ease-in-out infinite; }
+@keyframes shellBreath {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(200, 151, 58, 0.15); }
+  50% { box-shadow: 0 0 0 10px rgba(200, 151, 58, 0.08); }
+}
+.territory-status-banner { animation: bannIn 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.25); }
+
+/* --- Responsive y accesibilidad --- */
+@media (max-width: 1280px) { .terr-dash { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1100px) { .territory-editor-grid { grid-template-columns: 1fr !important; } }
+@media (max-width: 560px) { .terr-dash { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) {
+  .td-card, .tz-card, .unpanel, .unchip, .place-banner, .territory-status-banner, .map-shell-placing,
+  .td-tag.warn, .pinpulse::after, .terr-dash *, .tz-swatches .sw {
+    animation: none !important;
+    transition: none !important;
+  }
+}
