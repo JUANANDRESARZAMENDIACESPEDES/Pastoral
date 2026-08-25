@@ -10256,3 +10256,187 @@ html.show-splash .splash-screen { visibility: visible; }
   .cf-livechip, .cf-in > *, .cf-mdot.on,
   .cfm-card, .cfm-gear { animation: none !important; }
 }
+
+/* ============================================================
+   AGENDA PJL - CALENDARIO AUTOMATICO DEL SITIO (ag-*, cmt-*)
+   ============================================================ */
+@keyframes agGridIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+}
+@keyframes agEvIn {
+  from { opacity: 0; transform: translateX(-16px); }
+}
+@keyframes agDotPop {
+  0% { transform: scale(0); }
+  70% { transform: scale(1.5); }
+}
+
+.cal-mode-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+.cmt-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 10px 17px; border-radius: 999px;
+  font-size: 12px; font-weight: 800;
+  background: transparent; color: var(--text-muted, #8A8477);
+  border: 1px dashed rgba(26, 39, 68, 0.3);
+  cursor: pointer; transition: all 0.22s ease;
+}
+.cmt-btn:hover { color: var(--navy, #1A2744); border-color: var(--navy, #1A2744); transform: translateY(-2px); }
+.cmt-btn.on {
+  background: var(--navy, #1A2744); color: #fff;
+  border-style: solid; border-color: var(--navy, #1A2744);
+  box-shadow: 0 8px 20px -6px rgba(26, 39, 68, 0.45);
+}
+
+/* --- Contenedor --- */
+.ag-wrap {
+  background: var(--white, #fff);
+  border-radius: 18px; padding: 22px 22px 26px;
+  box-shadow: 0 12px 34px -14px rgba(26, 39, 68, 0.16);
+  border: 1px solid rgba(200, 151, 58, 0.25);
+}
+
+/* --- Cabecera mes --- */
+.ag-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.ag-monthnav { display: flex; align-items: center; gap: 9px; }
+.ag-nav {
+  width: 34px; height: 34px; border-radius: 11px;
+  border: 1px solid rgba(26, 39, 68, 0.15); background: var(--cream, #FAF6EE);
+  font-size: 17px; line-height: 1; color: var(--navy, #1A2744); cursor: pointer;
+  transition: all 0.2s ease;
+}
+.ag-nav:hover { background: var(--navy, #1A2744); color: #fff; transform: translateY(-2px); }
+.ag-mlabel {
+  min-width: 150px; text-align: center;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 17px; color: var(--navy, #1A2744); text-transform: capitalize;
+}
+.ag-today {
+  margin-left: 6px; padding: 7px 15px; border-radius: 999px;
+  border: none; background: var(--gold, #C8973A); color: #fff;
+  font-size: 11px; font-weight: 900; letter-spacing: 0.5px; cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.25s ease;
+}
+.ag-today:hover { transform: translateY(-2px) scale(1.04); box-shadow: 0 10px 22px -8px rgba(200, 151, 58, 0.6); }
+.ag-count { font-size: 11px; font-weight: 700; color: var(--text-muted, #8A8477); }
+
+/* --- Filtros --- */
+.ag-filters { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 16px; }
+.ag-pill {
+  padding: 6px 13px; border-radius: 999px; font-size: 10.5px; font-weight: 800;
+  background: transparent; color: var(--text-muted, #8A8477);
+  border: 1px solid rgba(26, 39, 68, 0.16); cursor: pointer;
+  transition: all 0.2s ease;
+}
+.ag-pill:hover { border-color: var(--gold, #C8973A); color: var(--gold, #C8973A); }
+.ag-pill.on { background: var(--gold, #C8973A); color: #fff; border-color: var(--gold, #C8973A); }
+
+/* --- Grilla --- */
+.ag-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;
+  margin-bottom: 18px;
+  animation: agGridIn 0.4s cubic-bezier(0.22, 0.9, 0.3, 1.1);
+}
+.ag-hcell {
+  text-align: center; font-size: 10px; font-weight: 900; letter-spacing: 1px;
+  color: var(--text-muted, #8A8477); padding: 5px 0 8px;
+}
+.ag-day {
+  position: relative; aspect-ratio: 1 / 0.82; border-radius: 11px;
+  border: 1px solid transparent; background: transparent;
+  font-family: inherit; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  transition: all 0.18s ease;
+}
+.ag-day.empty { cursor: default; }
+.ag-day i { font-style: normal; font-size: 13px; font-weight: 700; color: var(--navy, #1A2744); }
+.ag-day:not(.empty):hover { background: var(--cream, #FAF6EE); border-color: rgba(200, 151, 58, 0.35); transform: scale(1.06); }
+.ag-day.today { border-color: var(--navy, #1A2744); }
+.ag-day.today i { color: var(--navy, #1A2744); font-weight: 900; }
+.ag-day.has { background: rgba(200, 151, 58, 0.08); }
+.ag-day.sel {
+  background: var(--navy, #1A2744);
+  box-shadow: 0 8px 18px -6px rgba(26, 39, 68, 0.5);
+}
+.ag-day.sel i { color: #fff; }
+.ag-dots { display: flex; gap: 3px; height: 5px; }
+.ag-dots b { width: 5px; height: 5px; border-radius: 50%; animation: agDotPop 0.35s 0.15s backwards; }
+.dot-a { background: var(--gold, #C8973A); }
+.dot-n { background: #2563EB; }
+.ag-day.sel .dot-a { background: #FFD98A; }
+.ag-day.sel .dot-n { background: #9CC0FF; }
+
+/* --- Lista del dia --- */
+.ag-listhead {
+  margin: 0 0 12px; font-size: 11px; font-weight: 900;
+  letter-spacing: 1px; text-transform: uppercase; color: var(--gold, #C8973A);
+}
+.ag-empty {
+  text-align: center; padding: 30px 14px; color: var(--text-muted, #8A8477);
+  animation: agEvIn 0.4s backwards;
+}
+.ag-empty { font-size: 26px; }
+.ag-empty p { margin: 8px 0 0; font-size: 12.5px; }
+
+.ag-ev {
+  display: flex; gap: 14px;
+  padding: 14px 15px; margin-bottom: 11px;
+  border-radius: 15px; background: var(--cream, #FAF6EE);
+  border: 1px solid rgba(200, 151, 58, 0.28);
+  border-left-width: 4px;
+  animation: agEvIn 0.45s cubic-bezier(0.22, 0.9, 0.3, 1.1) backwards;
+  animation-delay: var(--ad, 0ms);
+  transition: transform 0.22s ease, box-shadow 0.25s ease;
+}
+.ag-ev:hover { transform: translateX(4px); box-shadow: 0 10px 24px -12px rgba(26, 39, 68, 0.2); }
+.ag-ev.actividad { border-left-color: var(--gold, #C8973A); }
+.ag-ev.noticia { border-left-color: #2563EB; }
+
+.age-date {
+  flex-shrink: 0; width: 46px; height: 50px; border-radius: 12px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: var(--white, #fff); border: 1px solid rgba(26, 39, 68, 0.08);
+}
+.age-date b { font-family: 'Playfair Display', Georgia, serif; font-size: 19px; line-height: 1; color: var(--navy, #1A2744); }
+.age-date small { font-size: 9px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: var(--text-muted, #8A8477); }
+
+.age-body { flex: 1; min-width: 0; }
+.age-kind { font-size: 9.5px; font-weight: 900; letter-spacing: 0.7px; text-transform: uppercase; color: var(--gold, #C8973A); }
+.ag-ev.noticia .age-kind { color: #2563EB; }
+.age-body h5 { margin: 5px 0 4px; font-size: 14.5px; color: var(--navy, #1A2744); line-height: 1.35; }
+.age-body p {
+  margin: 0; font-size: 12px; line-height: 1.55; color: var(--text-muted, #8A8477);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.age-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
+.age-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 6px 12px; border-radius: 999px;
+  font-size: 10.5px; font-weight: 800; text-decoration: none; cursor: pointer;
+  border: 1px solid rgba(26, 39, 68, 0.18); background: var(--white, #fff); color: var(--navy, #1A2744);
+  transition: all 0.2s ease;
+}
+.age-gcal:hover { background: #2563EB; border-color: #2563EB; color: #fff; transform: translateY(-2px); }
+.age-note { border: none; background: transparent; padding-left: 2px; }
+.age-note:hover { color: var(--gold, #C8973A); transform: translateX(2px); }
+.age-chip {
+  font-size: 9.5px; font-weight: 800; padding: 4px 10px; border-radius: 999px;
+  background: rgba(16, 185, 129, 0.1); color: #059669;
+}
+
+/* --- Responsive --- */
+@media (max-width: 640px) {
+  .ag-wrap { padding: 16px 12px 20px; border-radius: 15px; }
+  .ag-head { flex-direction: column; align-items: stretch; }
+  .ag-monthnav { justify-content: center; }
+  .ag-count { text-align: center; }
+  .ag-filters { justify-content: center; }
+  .ag-day { aspect-ratio: 1 / 0.72; border-radius: 9px; }
+  .ag-day i { font-size: 12px; }
+  .ag-ev { flex-direction: row; gap: 11px; padding: 12px; }
+  .age-date { width: 40px; height: 44px; }
+  .age-date b { font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ag-grid, .ag-ev, .ag-empty, .ag-dots b,
+  .cmt-btn, .ag-nav, .ag-today, .age-btn { animation: none !important; transition: none !important; }
+}

@@ -232,6 +232,178 @@ function MaintenanceScreen({ message, email }: { message?: string; email?: strin
 }
 
 
+type AgEvent = {
+  id: string;
+  title: string;
+  dateObj: Date;
+  kind: 'actividad' | 'noticia';
+  desc: string;
+  category?: string;
+  inscription?: boolean;
+  newsRef?: PublicNewsItem;
+};
+
+function pad2(n: number) { return String(n).padStart(2, '0'); }
+const AG_MONTHS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+function gcalTemplateUrl(ev: AgEvent): string {
+  const f = (d: Date) => `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}`;
+  const end = new Date(ev.dateObj.getFullYear(), ev.dateObj.getMonth(), ev.dateObj.getDate() + 1);
+  let url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(ev.title)}&dates=${f(ev.dateObj)}/${f(end)}`;
+  if (ev.desc) url += `&details=${encodeURIComponent(ev.desc.slice(0, 280))}`;
+  if (ev.category) url += `&location=${encodeURIComponent('Pastoral Juvenil Luque\u00f1a \u00b7 ' + ev.category)}`;
+  return url;
+}
+
+function AgendaCalendar({ activities, news, onOpenNews }: { activities: Activity[]; news: PublicNewsItem[]; onOpenNews: (n: PublicNewsItem) => void }) {
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${pad2(today.getMonth() + 1)}-${pad2(today.getDate())}`;
+  const [viewYm, setViewYm] = useState({ y: today.getFullYear(), m: today.getMonth() });
+  const [selKey, setSelKey] = useState(todayKey);
+  const [kindFilter, setKindFilter] = useState<'all' | 'actividad' | 'noticia'>('all');
+
+  const normKey = (d: Date) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+
+  const allEvents: Record<string, AgEvent[]> = {};
+  activities.filter(a => a.active !== false).forEach(a => {
+    const d = new Date(a.date);
+    if (isNaN(d.getTime())) return;
+    const k = normKey(d);
+    (allEvents[k] = allEvents[k] || []).push({
+      id: `act-${a.id}`, title: a.title, dateObj: d, kind: 'actividad',
+      desc: a.description || a.category || '', category: a.category, inscription: a.inscription,
+    });
+  });
+  news.forEach(n => {
+    const rawDate = n.event_date || n.date;
+    if (!rawDate) return;
+    const d = new Date(rawDate);
+    if (isNaN(d.getTime())) return;
+    const k = normKey(d);
+    (allEvents[k] = allEvents[k] || []).push({
+      id: `news-${n.id}`, title: n.title, dateObj: d, kind: 'noticia',
+      desc: n.subtitle || n.body?.slice(0, 160) || '', category: 'Evento especial',
+      inscription: !!n.inscription_url, newsRef: n,
+    });
+  });
+  Object.values(allEvents).forEach(list => list.sort((a, b) => a.title.localeCompare(b.title)));
+
+  const lead = (new Date(viewYm.y, viewYm.m, 1).getDay() + 6) % 7;
+  const dim = new Date(viewYm.y, viewYm.m + 1, 0).getDate();
+  const cells: Array<number | null> = [];
+  for (let i = 0; i < lead; i++) cells.push(null);
+  for (let d = 1; d <= dim; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const visibleOf = (k: string) =>
+    (allEvents[k] || []).filter(e => kindFilter === 'all' || e.kind === kindFilter);
+
+  const monthEventsCount = Object.keys(allEvents)
+    .filter(k => k.startsWith(`${viewYm.y}-${pad2(viewYm.m + 1)}`))
+    .reduce((acc, k) => acc + visibleOf(k).length, 0);
+
+  const [sy, sm, sd] = selKey.split('-').map(Number);
+  const selEvents = visibleOf(selKey);
+
+  return (
+    <div className="ag-wrap">
+      <div className="ag-head">
+        <div className="ag-monthnav">
+          <button
+            className="ag-nav"
+            aria-label="Mes anterior"
+            onClick={() => setViewYm(v => v.m === 0 ? { y: v.y - 1, m: 11 } : { ...v, m: v.m - 1 })}
+          >{'\u2039'}</button>
+          <b className="ag-mlabel">{AG_MONTHS[viewYm.m]} {viewYm.y}</b>
+          <button
+            className="ag-nav"
+            aria-label="Mes siguiente"
+            onClick={() => setViewYm(v => v.m === 11 ? { y: v.y + 1, m: 0 } : { ...v, m: v.m + 1 })}
+          >{'\u203A'}</button>
+          <button
+            className="ag-today"
+            onClick={() => {
+              setViewYm({ y: today.getFullYear(), m: today.getMonth() });
+              setSelKey(todayKey);
+            }}
+          >Hoy</button>
+        </div>
+        <span className="ag-count">{monthEventsCount} evento{monthEventsCount === 1 ? '' : 's'} este mes</span>
+      </div>
+
+      <div className="ag-filters" role="group" aria-label="Filtrar tipo de evento">
+        {([['all', 'Todos'], ['actividad', '⛪ Actividades'], ['noticia', '✨ Fechas especiales']] as const).map(([val, label]) => (
+          <button key={val} className={`ag-pill ${kindFilter === val ? 'on' : ''}`} onClick={() => setKindFilter(val)}>{label}</button>
+        ))}
+      </div>
+
+      <div className="ag-grid" key={`${viewYm.y}-${viewYm.m}`} role="grid" aria-label={`Eventos de ${AG_MONTHS[viewYm.m]}`}>
+        {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => (
+          <span key={`h${i}`} className="ag-hcell">{d}</span>
+        ))}
+        {cells.map((d, ci) => {
+          if (!d) return <span key={`e${ci}`} className="ag-day empty" />;
+          const k = `${viewYm.y}-${pad2(viewYm.m + 1)}-${pad2(d)}`;
+          const evs = visibleOf(k);
+          const hasA = evs.some(e => e.kind === 'actividad');
+          const hasN = evs.some(e => e.kind === 'noticia');
+          return (
+            <button
+              key={k}
+              className={`ag-day${k === todayKey ? ' today' : ''}${evs.length ? ' has' : ''}${selKey === k ? ' sel' : ''}`}
+              onClick={() => setSelKey(k)}
+              aria-label={`${d} de ${AG_MONTHS[viewYm.m]}, ${evs.length} eventos`}
+            >
+              <i>{d}</i>
+              {evs.length > 0 && (
+                <span className="ag-dots">
+                  {hasA && <b className="dot-a" />}
+                  {hasN && <b className="dot-n" />}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="ag-list" key={selKey}>
+        <p className="ag-listhead">
+          {sd} de {AG_MONTHS[sm - 1]} · {selEvents.length === 0 ? 'sin eventos' : `${selEvents.length} evento${selEvents.length === 1 ? '' : 's'}`}
+        </p>
+        {selEvents.length === 0 ? (
+          <div className="ag-empty">🌤️<p>Nada programado para este día.</p></div>
+        ) : selEvents.map((ev, i) => (
+          <article key={ev.id} className={`ag-ev ${ev.kind}`} style={{ '--ad': `${i * 60}ms` } as CSSProperties}>
+            <div className="age-date" aria-hidden="true">
+              <b>{ev.dateObj.getDate()}</b>
+              <small>{AG_MONTHS[ev.dateObj.getMonth()].slice(0, 3)}</small>
+            </div>
+            <div className="age-body">
+              <span className="age-kind">{ev.kind === 'actividad' ? '⛪ Actividad' : '✨ Fecha especial'}{ev.category ? ` · ${ev.category}` : ''}</span>
+              <h5>{ev.title}</h5>
+              {ev.desc && <p>{ev.desc}</p>}
+              <div className="age-actions">
+                <a className="age-btn age-gcal" href={gcalTemplateUrl(ev)} target="_blank" rel="noreferrer" title="Añadir a tu Google Calendar">
+                  ＋ Mi Calendar
+                </a>
+                {ev.newsRef && (
+                  <button className="age-btn age-note" onClick={() => onOpenNews(ev.newsRef!)}>
+                    Ver nota →
+                  </button>
+                )}
+                {ev.kind === 'actividad' && ev.inscription && (
+                  <span className="age-chip">Inscripción abierta</span>
+                )}
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
 function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -323,6 +495,7 @@ const [newsSearch, setNewsSearch] = useState('');
   const [liveHeroImages, setLiveHeroImages] = useState<HeroSlide[]>([]);
   const [heroIntervalSecs, setHeroIntervalSecs] = useState<number>(3);
   const [liveHeroIndex, setLiveHeroIndex] = useState(0);
+  const [calMode, setCalMode] = useState<'pjl' | 'gcal'>('pjl');
   const [liveDocs, setLiveDocs] = useState<DocItem[]>([]);
   const [splashDone, setSplashDone] = useState(false);
 
@@ -2217,16 +2390,36 @@ window.setTimeout(() => {
                 </div>
               </div>
               
-              {/* Google Calendar (Right Column) */}
+              {/* Columna derecha: Agenda PJL + Calendario institucional */}
               <div>
                 <div className="section-head reveal" onClick={() => navigate('agenda')}>
-                  <span style={{ display: 'block', marginBottom: '4px', fontSize: '12px', fontWeight: 700, letterSpacing: '2px', color: 'var(--gold)', textTransform: 'uppercase' }}>SINCRONIZACIÓN</span>
-                  <h3 style={{ margin: '10px 0' }}>Google Calendar</h3>
+                  <span style={{ display: 'block', marginBottom: '4px', fontSize: '12px', fontWeight: 700, letterSpacing: '2px', color: 'var(--gold)', textTransform: 'uppercase' }}>SINCRONIZACIÓN AUTOMÁTICA</span>
+                  <h3 style={{ margin: '10px 0' }}>Agenda &amp; Calendario</h3>
                   <div className="line"></div>
                 </div>
-                <div className="reveal calendar-wrapper" style={{ animationDelay: '0.2s', height: 'clamp(480px, 70vw, 650px)' }}>
-                  <div className="calendar-inner">
-                    {publicCalendarEmbedUrl ? (
+
+                <div className="cal-mode-tabs reveal" role="tablist" aria-label="Modo del calendario">
+                  <button role="tab" aria-selected={calMode === 'pjl'} className={`cmt-btn ${calMode === 'pjl' ? 'on' : ''}`} onClick={() => setCalMode('pjl')}>
+                    📅 Agenda PJL
+                  </button>
+                  {publicCalendarEmbedUrl && (
+                    <button role="tab" aria-selected={calMode === 'gcal'} className={`cmt-btn ${calMode === 'gcal' ? 'on' : ''}`} onClick={() => setCalMode('gcal')}>
+                      🗓️ Institucional
+                    </button>
+                  )}
+                </div>
+
+                {(calMode === 'pjl' || !publicCalendarEmbedUrl) ? (
+                  <div className="reveal" style={{ animationDelay: '0.15s' }}>
+                    <AgendaCalendar
+                      activities={liveActivities}
+                      news={liveNews}
+                      onOpenNews={(n) => setSelectedNews(n)}
+                    />
+                  </div>
+                ) : (
+                  <div className="reveal calendar-wrapper" style={{ animationDelay: '0.2s', height: 'clamp(480px, 70vw, 650px)' }}>
+                    <div className="calendar-inner">
                       <iframe
                         src={publicCalendarEmbedUrl}
                         title="Google Calendar institucional"
@@ -2235,15 +2428,9 @@ window.setTimeout(() => {
                         loading="lazy"
                         referrerPolicy="no-referrer-when-downgrade"
                       ></iframe>
-                    ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>
-                        <div style={{ fontSize: '48px', marginBottom: '20px', color: 'var(--gold)' }}>📅</div>
-                        <p style={{ fontWeight: 600, color: 'var(--navy)' }}>Calendario no vinculado</p>
-                        <p style={{ fontSize: '14px', marginTop: '10px', textAlign: 'center', maxWidth: '250px' }}>El administrador debe agregar la URL pública de Google Calendar en el panel.</p>
-                      </div>
-                    )}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </section>
