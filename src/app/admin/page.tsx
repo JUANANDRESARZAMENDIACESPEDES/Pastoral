@@ -677,6 +677,12 @@ function AdminContent() {
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiResponse, setAiResponse] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiMode, setAiMode] = useState('redes');
+  const [aiHistory, setAiHistory] = useLS<{ id: string; mode: string; prompt: string; text: string; at: number }[]>('aiHistory', []);
+  const [aiKeyStored, setAiKeyStored] = useLS<string>('aiKey', '');
+  const [aiKeyInput, setAiKeyInput] = useState('');
+  const [aiKeyVisible, setAiKeyVisible] = useState(false);
+  const [aiKeyStatus, setAiKeyStatus] = useState<'idle' | 'validating' | 'valid' | 'invalid'>('idle');
 
   // --- FILTERS ---
   const [searchTerm, setSearchTerm] = useState('');
@@ -2022,81 +2028,248 @@ function AdminContent() {
 
 
           {/* ASISTENTE IA */}
-          {mod === 'asistente' && (
-            <div className="animate-reveal pjl-card" style={{ padding: '40px', maxWidth: '900px', margin: '0 auto' }}>
-              <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-                <span style={{ fontSize: '48px', display: 'block', marginBottom: '10px' }}>🤖</span>
-                <h3 className="serif" style={{ color: 'var(--navy)', fontSize: '24px', marginBottom: '8px' }}>Asistente Inteligente PJL</h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
-                  Escribe lo que necesitas y Google Gemini generará contenido para tus noticias, redes sociales o documentos.
-                </p>
-              </div>
+          {mod === 'asistente' && (() => {
+            const AI_MODES = [
+              { id: 'redes', icon: '📱', label: 'Redes', hint: 'un post breve para Instagram/Facebook con emojis y hashtags relevantes' },
+              { id: 'noticia', icon: '📰', label: 'Noticia', hint: 'un artículo periodístico con titular potente, bajada y cuerpo claro' },
+              { id: 'reflexion', icon: '🙏', label: 'Reflexión', hint: 'una reflexión espiritual cálida, inspirada en la Palabra de Dios' },
+              { id: 'documento', icon: '📄', label: 'Documento', hint: 'un texto formal estructurado con secciones y subtítulos' },
+              { id: 'email', icon: '✉️', label: 'Email', hint: 'un correo cordial con saludo, cuerpo bien organizado y despedida' },
+            ];
+            const AI_SUGGESTIONS = [
+              'Invitación al retiro espiritual de Semana Santa',
+              'Convocatoria de nuevos voluntarios para la catequesis',
+              'Felicitación por las confirmaciones de este año',
+              'Resumen de la jornada de servicio comunitario',
+              'Anuncio de la peregrinación juvenil anual',
+            ];
+            const activeMode = AI_MODES.find(m => m.id === aiMode) || AI_MODES[0];
+            const modeMetaOf = (mid: string) => AI_MODES.find(m => m.id === mid) || { icon: '✨', label: 'IA' };
+            const haceMin = (t: number) => {
+              const m = Math.max(0, Math.floor((Date.now() - t) / 60000));
+              if (m < 1) return 'recién';
+              if (m < 60) return `hace ${m} min`;
+              const h = Math.floor(m / 60);
+              if (h < 24) return `hace ${h} h`;
+              return `hace ${Math.floor(h / 24)} d`;
+            };
 
-              <div style={{ marginBottom: '20px' }}>
-                <label className="premium-label" style={{ display: 'block', marginBottom: '10px' }}>¿En qué te ayudo hoy?</label>
-                <textarea
-                  className="pjl-input"
-                  style={{ minHeight: '120px', resize: 'vertical' }}
-                  placeholder="Ej: Escribe un post para Instagram invitando al próximo retiro espiritual de la Pastoral Juvenil..."
-                  value={aiPrompt}
-                  onChange={(e) => setAiPrompt(e.target.value)}
-                  disabled={isAiLoading}
-                />
-              </div>
+            const generarConIA = async () => {
+              if (!aiPrompt.trim() || isAiLoading) return;
+              setIsAiLoading(true);
+              setAiResponse('');
+              try {
+                const finalPrompt =
+                  `[Instrucción]: Redacta ${activeMode.hint} para la Pastoral Juvenil Luqueña. ` +
+                  `Responde directamente con el contenido solicitado.\n\n[Solicitud]: ${aiPrompt}`;
+                const res = await fetch('/api/ai', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ prompt: finalPrompt, apiKey: aiKeyStored || undefined })
+                });
+                const data = await res.json();
+                if (res.ok && data.text) {
+                  setAiResponse(data.text);
+                  setAiHistory([{ id: Date.now().toString(), mode: aiMode, prompt: aiPrompt, text: data.text, at: Date.now() }, ...aiHistory].slice(0, 8));
+                  showToast('Contenido generado exitosamente ✨');
+                  addLog('generar contenido IA', 'asistente', `${activeMode.label}: ${aiPrompt.slice(0, 50)}${aiPrompt.length > 50 ? '…' : ''}`);
+                } else {
+                  showToast('Error: ' + (data.error || 'respuesta vacía'));
+                }
+              } catch {
+                showToast('Hubo un error de conexión con la IA');
+              } finally {
+                setIsAiLoading(false);
+              }
+            };
 
-              <button
-                className="btn-premium btn-premium-gold"
-                style={{ width: '100%', padding: '14px', fontSize: '15px' }}
-                disabled={isAiLoading || !aiPrompt.trim()}
-                onClick={async () => {
-                  if (!aiPrompt.trim()) return;
-                  setIsAiLoading(true);
-                  setAiResponse('');
-                  try {
-                    const res = await fetch('/api/ai', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ prompt: aiPrompt })
-                    });
-                    const data = await res.json();
-                    if (res.ok) {
-                      setAiResponse(data.text);
-                      showToast('Contenido generado exitosamente ✨');
-                    } else {
-                      showToast('Error: ' + data.error);
-                    }
-                  } catch (e) {
-                    showToast('Hubo un error de conexión con la IA');
-                  } finally {
-                    setIsAiLoading(false);
-                  }
-                }}
-              >
-                {isAiLoading ? 'Generando respuesta...' : 'Generar con IA ✨'}
-              </button>
+            const descargarTxt = () => {
+              const blob = new Blob([aiResponse], { type: 'text/plain;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `contenido-gemini-${Date.now()}.txt`;
+              a.click();
+              URL.revokeObjectURL(url);
+              showToast('📄 Texto descargado');
+            };
 
-              {aiResponse && (
-                <div className="animate-reveal" style={{ marginTop: '30px', padding: '25px', background: 'var(--cream)', borderRadius: '12px', border: '1px solid var(--gold-pale)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                    <h4 className="serif" style={{ color: 'var(--navy)' }}>Respuesta Generada</h4>
-                    <button
-                      className="btn-premium btn-premium-outline"
-                      style={{ padding: '6px 12px', fontSize: '11px' }}
-                      onClick={() => {
-                        navigator.clipboard.writeText(aiResponse);
-                        showToast('Copiado al portapapeles 📋');
-                      }}
-                    >
-                      Copiar Texto
-                    </button>
-                  </div>
-                  <div style={{ whiteSpace: 'pre-wrap', color: 'var(--navy)', fontSize: '14px', lineHeight: '1.6' }}>
-                    {aiResponse}
+            return (
+              <div className="animate-reveal pjl-card" style={{ padding: '40px', maxWidth: '1000px', margin: '0 auto' }}>
+                <div className="ai-hero">
+                  <div className="ai-orb" aria-hidden="true"><span>✨</span></div>
+                  <div>
+                    <h3 className="serif" style={{ color: 'var(--navy)', fontSize: '24px', margin: '0 0 6px' }}>Asistente Inteligente PJL</h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '13.5px', margin: 0 }}>
+                      Escribe lo que necesitas y Google Gemini generará contenido para tus noticias, redes o documentos.
+                    </p>
+                    <span className="ai-badge">⚡ Gemini 3.7 Flash</span>
                   </div>
                 </div>
-              )}
-            </div>
-          )}
+
+                {/* CONEXION / CLAVE API */}
+                <div className="ai-keybox">
+                  <div className="aik-head">
+                    <b>🔑 Conexión Gemini</b>
+                    <span className={`aik-state st-${aiKeyStatus}`}>
+                      {aiKeyStatus === 'validating' ? '◌ Validando…'
+                        : aiKeyStatus === 'valid' ? '✓ Clave válida'
+                        : aiKeyStatus === 'invalid' ? '✕ Clave inválida'
+                        : aiKeyStored ? '● Configurada' : '○ Sin configurar'}
+                    </span>
+                  </div>
+                  <div className="aik-row">
+                    <div className="aik-field">
+                      <input
+                        type={aiKeyVisible ? 'text' : 'password'}
+                        value={aiKeyInput}
+                        onChange={e => { setAiKeyInput(e.target.value); setAiKeyStatus('idle'); }}
+                        placeholder={aiKeyStored ? '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022 (clave guardada)' : 'Pega tu clave de API (AIza… o AQ…)'}
+                        autoComplete="off"
+                        spellCheck={false}
+                      />
+                      <button
+                        type="button"
+                        className="aik-eye"
+                        onClick={() => setAiKeyVisible(v => !v)}
+                        title={aiKeyVisible ? 'Ocultar clave' : 'Mostrar clave'}
+                        aria-label={aiKeyVisible ? 'Ocultar clave' : 'Mostrar clave'}
+                      >{aiKeyVisible ? '🙈' : '👁️'}</button>
+                    </div>
+                    <button
+                      className="btn-premium btn-premium-outline aik-btn"
+                      disabled={aiKeyStatus === 'validating' || (!aiKeyInput.trim() && !aiKeyStored)}
+                      onClick={async () => {
+                        const k = (aiKeyInput.trim() || aiKeyStored).trim();
+                        if (!k) { showToast('Escribe una clave primero'); return; }
+                        setAiKeyStatus('validating');
+                        try {
+                          const res = await fetch('/api/ai/validate', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ apiKey: k })
+                          });
+                          const data = await res.json();
+                          setAiKeyStatus(data.valid ? 'valid' : 'invalid');
+                          showToast(data.valid ? '✅ Clave válida — ¡Gemini listo!' : '❌ ' + (data.error || 'Clave rechazada'));
+                        } catch {
+                          setAiKeyStatus('invalid');
+                          showToast('Error de conexión al validar la clave');
+                        }
+                      }}
+                    >{aiKeyStatus === 'validating' ? 'Validando…' : 'Validar'}</button>
+                    <button
+                      className="btn-premium btn-premium-gold aik-btn"
+                      disabled={!aiKeyInput.trim()}
+                      onClick={() => { setAiKeyStored(aiKeyInput.trim()); setAiKeyInput(''); setAiKeyStatus('idle'); showToast('🔐 Clave guardada en el panel'); }}
+                    >Guardar</button>
+                  </div>
+                  <small>Consigue tu clave gratis en <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer">aistudio.google.com/apikey</a>. Se guarda solo en este panel, nunca en el código.</small>
+                </div>
+
+                {/* MODOS */}
+                <label className="premium-label" style={{ display: 'block', marginBottom: '10px' }}>FORMATO DEL CONTENIDO</label>
+                <div className="ai-modes" role="group" aria-label="Elegir formato">
+                  {AI_MODES.map(m => (
+                    <button
+                      key={m.id}
+                      className={`ai-mode ${aiMode === m.id ? 'on' : ''}`}
+                      onClick={() => setAiMode(m.id)}
+                    >
+                      <i>{m.icon}</i>{m.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* ENTRADA */}
+                <div className="ai-inputbox">
+                  <textarea
+                    className="pjl-input ai-textarea"
+                    placeholder={`Ej: Escribe ${activeMode.hint.split(' con ')[0]} invitando al próximo retiro espiritual…`}
+                    value={aiPrompt}
+                    onChange={(e) => setAiPrompt(e.target.value)}
+                    disabled={isAiLoading}
+                    maxLength={4000}
+                  />
+                  <div className="ai-ta-foot">
+                    <div className="ai-sugg">
+                      {AI_SUGGESTIONS.map(s => (
+                        <button key={s} disabled={isAiLoading} onClick={() => setAiPrompt(s)} title={s}>{s}</button>
+                      ))}
+                    </div>
+                    <span className="ai-count">{aiPrompt.length}/4000</span>
+                  </div>
+                </div>
+
+                <button
+                  className="btn-premium btn-premium-gold ai-go"
+                  disabled={isAiLoading || !aiPrompt.trim()}
+                  onClick={generarConIA}
+                >
+                  {isAiLoading ? (<><i className="ai-spin">◌</i> Generando respuesta…</>) : (<>Generar con IA ✨</>)}
+                </button>
+
+                {/* PENSANDO */}
+                {isAiLoading && (
+                  <div className="ai-thinking" role="status">
+                    <div className="ai-dots" aria-hidden="true"><i /><i /><i /></div>
+                    <div className="ai-phrases" aria-hidden="true">
+                      <span>Consultando a Gemini…</span>
+                      <span>Dando forma al mensaje…</span>
+                      <span>Añadiendo un toque de luz…</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* RESULTADO */}
+                {aiResponse && (
+                  <div className="ai-result">
+                    <div className="air-head">
+                      <div className="air-title">
+                        <span className="air-flag">✨</span>
+                        <div>
+                          <b>Respuesta Generada</b>
+                          <small>{activeMode.icon} {activeMode.label} · {aiResponse.trim().split(/\s+/).length} palabras</small>
+                        </div>
+                      </div>
+                      <div className="air-actions">
+                        <button onClick={() => { navigator.clipboard.writeText(aiResponse); showToast('Copiado al portapapeles 📋'); }} title="Copiar">📋 Copiar</button>
+                        <button onClick={descargarTxt} title="Descargar .txt">⬇️ Descargar</button>
+                        <button onClick={generarConIA} title="Generar otra versión">🔄 Regenerar</button>
+                      </div>
+                    </div>
+                    <div className="air-body">{aiResponse}</div>
+                  </div>
+                )}
+
+                {/* HISTORIAL */}
+                {aiHistory.length > 0 && (
+                  <div className="ai-hist">
+                    <div className="ai-hist-head">
+                      <b>🕘 Generaciones recientes</b>
+                      <button
+                        onClick={() => { if (confirm('¿Vaciar el historial del asistente?')) { setAiHistory([]); showToast('Historial del asistente vacío'); } }}
+                      >✕ Vaciar</button>
+                    </div>
+                    <div className="ai-hist-list">
+                      {aiHistory.map(h => (
+                        <button
+                          key={h.id}
+                          className="ai-hitem"
+                          disabled={isAiLoading}
+                          onClick={() => { setAiPrompt(h.prompt); setAiMode(h.mode); setAiResponse(h.text); showToast('Generación restaurada'); }}
+                        >
+                          <span className="aih-ico">{modeMetaOf(h.mode).icon}</span>
+                          <span className="aih-prompt">{h.prompt}</span>
+                          <time>{haceMin(h.at)}</time>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* APARIENCIA */}
           {mod === 'apariencia' && (() => {

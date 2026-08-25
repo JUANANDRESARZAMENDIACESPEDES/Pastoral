@@ -1,21 +1,38 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
 
+const GEMINI_MODEL = 'gemini-3.7-flash';
+
 export async function POST(req: Request) {
   try {
-    const { prompt } = await req.json();
+    const { prompt, apiKey } = await req.json();
 
     if (!prompt) {
       return NextResponse.json({ error: 'El prompt es requerido' }, { status: 400 });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: 'Falta configurar GEMINI_API_KEY.' }, { status: 500 });
+    const key: string | undefined = apiKey || process.env.GEMINI_API_KEY;
+    if (!key) {
+      return NextResponse.json(
+        { error: 'Configura tu clave de Gemini en el panel (Asistente IA → Conexión Gemini).' },
+        { status: 500 }
+      );
     }
 
-    const ai = new GoogleGenerativeAI(apiKey);
-    const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const ai = new GoogleGenerativeAI(key);
+    const model = ai.getGenerativeModel({
+      model: GEMINI_MODEL,
+      systemInstruction:
+        'Eres el asistente de comunicación de la Pastoral Juvenil Luqueña (Paraguay), ' +
+        'un movimiento pastoral católico. Escribes siempre en español, con tono cercano, ' +
+        'esperanzador y profesional, usando emojis con moderación cuando el formato lo permita. ' +
+        'Prioriza un lenguaje inclusivo, juvenil y fiel a la fe católica.',
+      generationConfig: {
+        temperature: 0.9,
+        maxOutputTokens: 2048,
+      },
+    });
+
     const result = await model.generateContent(prompt);
 
     return NextResponse.json({ text: result.response.text() });

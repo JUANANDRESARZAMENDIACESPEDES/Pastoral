@@ -538,4 +538,6 @@ export const store = {
   chapels:   { get: () => load<Chapel[]>('chapels',          DEFAULT_CHAPELS),    set: (v: Chapel[])        => save('chapels', v) },
   stats:     { get: () => load<PageStat[]>('stats',          DEFAULT_STATS),      set: (v: PageStat[])      => save('stats', v) },
   logs:      { get: () => load<ActivityLog[]>('logs',        []),                 set: (v: ActivityLog[])   => save('logs', v) },
+  aiHistory: { get: () => load<{ id: string; mode: string; prompt: string; text: string; at: number }[]>('aiHistory', []), set: (v: { id: string; mode: string; prompt: string; text: string; at: number }[]) => save('aiHistory', v) },
+  aiKey:     { get: () => load<string>('aiKey', ''), set: (v: string) => save('aiKey', v) },
 };
