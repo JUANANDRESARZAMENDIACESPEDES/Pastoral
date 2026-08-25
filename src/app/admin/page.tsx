@@ -683,6 +683,11 @@ function AdminContent() {
   const [capZoneFilter, setCapZoneFilter] = useState<number | 'all'>('all');
   const [capEstadoFilter, setCapEstadoFilter] = useState<'all' | 'Activo' | 'Nucleación' | 'sinGPS'>('all');
 
+  // --- HISTORIAL: PAGINACION Y FILTROS ---
+  const [logSearch, setLogSearch] = useState('');
+  const [logModule, setLogModule] = useState<string>('all');
+  const [logPage, setLogPage] = useState(1);
+
   // --- TERRITORY EDITOR ---
   const [capturingZone, setCapturingZone] = useState<number | null>(null);
   const [tempPolygon, setTempPolygon] = useState<[number, number][]>([]);
@@ -3436,78 +3441,230 @@ function AdminContent() {
           )}
 
           {/* HISTORIAL / LOGS */}
-          {mod === 'logs' && (
-            <div className="animate-reveal pjl-card" style={{ padding: '40px' }}>
-              <div className="admin-section-header admin-stack-mobile" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                <div className="admin-section-title-group">
-                  <h3 className="serif" style={{ fontSize: '2rem', color: 'var(--navy)', margin: 0 }}>Historial de Actividad</h3>
-                  <p className="premium-label" style={{ color: 'var(--gold)', marginTop: '5px' }}>REGISTRO DE ACCIONES ADMINISTRATIVAS</p>
-                </div>
-                <button className="btn-premium btn-premium-outline admin-section-action" onClick={() => {
-                  if(confirm('¿Limpiar todo el historial?')) {
-                    setLogs([]);
-                    showToast('Historial limpiado');
-                  }
-                }}>LIMPIAR HISTORIAL</button>
-              </div>
+          {mod === 'logs' && (() => {
+            const LOG_PAGE_SIZE = 8;
+            const MOD_META: Record<string, { icon: string; label: string }> = {
+              territorio: { icon: '\u{1F5FA}\uFE0F', label: 'Territorio' },
+              capillas: { icon: '\u26EA', label: 'Capillas' },
+              noticias: { icon: '\u{1F4F0}', label: 'Noticias' },
+              usuarios: { icon: '\u{1F464}', label: 'Usuarios' },
+              actividades: { icon: '\u{1F4C5}', label: 'Actividades' },
+              documentos: { icon: '\u{1F4C4}', label: 'Documentos' },
+              galeria: { icon: '\u{1F5BC}\uFE0F', label: 'Galería' },
+              carrusel: { icon: '\u{1F3A0}', label: 'Carrusel' },
+              faq: { icon: '\u2753', label: 'FAQ' },
+              sistema: { icon: '\u2699\uFE0F', label: 'Sistema' },
+            };
+            const toneOf = (action: string): 'danger' | 'ok' | 'info' | 'gold' => {
+              const a = action.toLowerCase();
+              if (a.includes('eliminar') || a.includes('limpiar')) return 'danger';
+              if (a.includes('crear') || a.includes('agregar') || a.includes('publicar') || a.includes('aprobar')) return 'ok';
+              if (a.includes('inicio de sesi\u00f3n') || a.includes('sesi\u00f3n') || a.includes('enviar') || a.includes('reenviar')) return 'info';
+              return 'gold';
+            };
+            const hace = (iso: string) => {
+              const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+              if (s < 60) return 'hace instantes';
+              const m = Math.floor(s / 60);
+              if (m < 60) return `hace ${m} min`;
+              const h = Math.floor(m / 60);
+              if (h < 24) return `hace ${h} h`;
+              return `hace ${Math.floor(h / 24)} d`;
+            };
+            const pageNums = (cur: number, tot: number): (number | '...')[] => {
+              if (tot <= 7) return Array.from({ length: tot }, (_, i) => i + 1);
+              const keep = new Set([1, tot, cur - 1, cur, cur + 1].filter(p => p >= 1 && p <= tot));
+              const arr = [...keep].sort((a, b) => a - b);
+              const res: (number | '...')[] = [];
+              arr.forEach((p, i) => {
+                if (i && p - arr[i - 1] > 1) res.push('...');
+                res.push(p);
+              });
+              return res;
+            };
 
-              <div className="pjl-table-container admin-table-scroll">
-                <table className="pjl-table">
-                  <thead>
-                    <tr>
-                      <th>FECHA / HORA</th>
-                      <th>USUARIO</th>
-                      <th>ACCIÓN</th>
-                      <th>MÓDULO</th>
-                      <th>DETALLES</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {logs.length === 0 ? (
-                      <tr>
-                        <td colSpan={5} style={{ padding: 0 }}>
-                          <div className="pjl-empty-state" style={{ border: 'none', background: 'transparent' }}>
-                            <div className="empty-icon">📜</div>
-                            <h4 className="empty-title">Historial vacío</h4>
-                            <p className="empty-desc">Cuando empieces a gestionar el contenido, todas las acciones quedarán registradas en este historial.</p>
-                          </div>
-                        </td>
-                      </tr>
-                    ) : (
-                      logs.map(log => (
-                        <tr key={log.id}>
-                          <td style={{ fontSize: '12px' }}>{new Date(log.timestamp).toLocaleString()}</td>
-                          <td>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span style={{ fontSize: '20px' }}>👤</span>
-                              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <span style={{ fontWeight: 'bold' }}>{log.userName}</span>
-                                <span style={{ fontSize: '10px', opacity: 0.6 }}>ID: {log.userId}</span>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <span style={{ 
-                              padding: '4px 10px', 
-                              borderRadius: '20px', 
-                              fontSize: '11px', 
-                              fontWeight: 'bold',
-                              background: log.action.includes('eliminar') ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)',
-                              color: log.action.includes('eliminar') ? '#ef4444' : '#22c55e'
-                            }}>
-                              {log.action.toUpperCase()}
-                            </span>
-                          </td>
-                          <td><span className="premium-label" style={{ fontSize: '10px' }}>{log.module.toUpperCase()}</span></td>
-                          <td style={{ fontSize: '13px', fontStyle: 'italic', color: 'var(--text-muted)' }}>{log.details || '-'}</td>
-                        </tr>
-                      ))
+            const modulesPresent = Array.from(new Set(logs.map(l => l.module)));
+            const lq = logSearch.trim().toLowerCase();
+            const filteredLogs = logs.filter(l => {
+              if (logModule !== 'all' && l.module !== logModule) return false;
+              if (!lq) return true;
+              return [l.action, l.details, l.userName].some(v => (v || '').toLowerCase().includes(lq));
+            });
+            const totalPages = Math.max(1, Math.ceil(filteredLogs.length / LOG_PAGE_SIZE));
+            const safePage = Math.min(logPage, totalPages);
+            const pageLogs = filteredLogs.slice((safePage - 1) * LOG_PAGE_SIZE, safePage * LOG_PAGE_SIZE);
+
+            const hoyStr = new Date().toDateString();
+            const countHoy = logs.filter(l => new Date(l.timestamp).toDateString() === hoyStr).length;
+            const weekAgoMs = Date.now() - 7 * 864e5;
+            const countSemana = logs.filter(l => new Date(l.timestamp).getTime() >= weekAgoMs).length;
+
+            const exportLogsCSV = () => {
+              if (!filteredLogs.length) { showToast('No hay registros para exportar'); return; }
+              const rows: string[][] = [
+                ['Fecha', 'Hora', 'Usuario', 'ID Usuario', 'Acción', 'Módulo', 'Detalles'],
+                ...filteredLogs.map(l => {
+                  const d = new Date(l.timestamp);
+                  return [
+                    d.toLocaleDateString('es-PY'),
+                    d.toLocaleTimeString('es-PY'),
+                    l.userName, l.userId, l.action, l.module, l.details || ''
+                  ];
+                }),
+              ];
+              const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\n');
+              const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `historial-pjl-${new Date().toISOString().slice(0, 10)}.csv`;
+              a.click();
+              URL.revokeObjectURL(url);
+              showToast('\u{1F4E5} Historial exportado en CSV');
+            };
+
+            return (
+              <div className="animate-reveal pjl-card" style={{ padding: '40px' }}>
+                <div className="admin-section-header admin-stack-mobile" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                  <div className="admin-section-title-group">
+                    <h3 className="serif" style={{ fontSize: '2rem', color: 'var(--navy)', margin: 0 }}>Historial de Actividad</h3>
+                    <p className="premium-label" style={{ color: 'var(--gold)', marginTop: '5px' }}>REGISTRO DE ACCIONES ADMINISTRATIVAS</p>
+                  </div>
+                  <div className="admin-stack-mobile" style={{ display: 'flex', gap: '10px' }}>
+                    <button className="btn-premium btn-premium-outline admin-section-action lg-export" onClick={exportLogsCSV}>
+                      <span className="lg-xico">{'\u2913'}</span> EXPORTAR CSV
+                    </button>
+                    <button className="btn-premium btn-premium-outline admin-section-action lg-clear" onClick={() => {
+                      if (confirm('¿Deseas limpiar todo el historial?')) {
+                        setLogs([]);
+                        setLogPage(1);
+                        showToast('Historial limpiado');
+                        addLog('limpiar historial', 'sistema', `${logs.length} registros eliminados`);
+                      }
+                    }}>LIMPIAR HISTORIAL</button>
+                  </div>
+                </div>
+
+                {/* ESTADISTICAS */}
+                <div className="lg-stats">
+                  <div className="lg-stat"><b>{logs.length}</b><span>Total registros</span></div>
+                  <div className="lg-stat lg-st-hoy"><b>{countHoy}</b><span>Hoy</span></div>
+                  <div className="lg-stat lg-st-sem"><b>{countSemana}</b><span>Esta semana</span></div>
+                  <div className="lg-stat lg-st-mod"><b>{modulesPresent.length}</b><span>Módulos activos</span></div>
+                </div>
+
+                {/* TOOLBAR */}
+                <div className="lg-toolbar">
+                  <div className="lg-searchbox">
+                    <span>{'\u{1F50D}'}</span>
+                    <input
+                      type="text"
+                      placeholder="Buscar acción, detalle o usuario…"
+                      value={logSearch}
+                      onChange={e => { setLogSearch(e.target.value); setLogPage(1); }}
+                      aria-label="Buscar en el historial"
+                    />
+                    {logSearch && (
+                      <button title="Limpiar" aria-label="Limpiar búsqueda" onClick={() => { setLogSearch(''); setLogPage(1); }}>{'\u2715'}</button>
                     )}
-                  </tbody>
-                </table>
+                  </div>
+                  <div className="lg-chips" role="group" aria-label="Filtrar por módulo">
+                    <button
+                      className={`lg-chip ${logModule === 'all' ? 'on' : ''}`}
+                      onClick={() => { setLogModule('all'); setLogPage(1); }}
+                    >Todos</button>
+                    {modulesPresent.map(mk => (
+                      <button
+                        key={mk}
+                        className={`lg-chip ${logModule === mk ? 'on' : ''}`}
+                        onClick={() => { setLogModule(mk); setLogPage(1); }}
+                      >
+                        {(MOD_META[mk] || { icon: '\u{1F4E6}' }).icon} {(MOD_META[mk] || { label: mk }).label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <p className="lg-count">
+                  {filteredLogs.length} de {logs.length} registros
+                  {(logSearch || logModule !== 'all') && <> · filtros activos <button className="lg-reset" onClick={() => { setLogSearch(''); setLogModule('all'); setLogPage(1); }}>limpiar {'\u2715'}</button></>}
+                </p>
+
+                {/* LISTA PAGINADA */}
+                {logs.length === 0 ? (
+                  <div className="lg-empty">
+                    <span className="lge-ico">{'\u{1F4DC}'}</span>
+                    <h4>Historial vacío</h4>
+                    <p>Cuando empieces a gestionar el contenido, todas las acciones quedarán registradas aquí.</p>
+                  </div>
+                ) : pageLogs.length === 0 ? (
+                  <div className="lg-empty">
+                    <span className="lge-ico">{'\u{1F50D}'}</span>
+                    <h4>Sin resultados</h4>
+                    <p>Ningún registro coincide con los filtros aplicados.</p>
+                    <button className="btn-premium btn-premium-outline" style={{ marginTop: '14px' }} onClick={() => { setLogSearch(''); setLogModule('all'); setLogPage(1); }}>
+                      VER TODO EL HISTORIAL
+                    </button>
+                  </div>
+                ) : (
+                  <div className="lg-list" key={safePage}>
+                    {pageLogs.map((log, idx) => {
+                      const tone = toneOf(log.action);
+                      const meta = MOD_META[log.module] || { icon: '\u{1F4E6}', label: log.module };
+                      return (
+                        <article key={log.id} className={`lg-card lg-${tone}`} style={{ '--d': `${idx * 45}ms` } as CSSProperties}>
+                          <div className="lg-top">
+                            <span className="lg-ico">{meta.icon}</span>
+                            <span className="lg-action">{log.action.toUpperCase()}</span>
+                            <span className="lg-ago">{hace(log.timestamp)}</span>
+                          </div>
+                          {log.details && <p className="lg-det">{log.details}</p>}
+                          <div className="lg-foot">
+                            <span className="lg-user"><i>{(log.userName || '?').charAt(0).toUpperCase()}</i>{log.userName}</span>
+                            <span className="lg-dot">{meta.label}</span>
+                            <time>
+                              {new Date(log.timestamp).toLocaleString('es-PY', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                            </time>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* PAGINACION */}
+                {totalPages > 1 && (
+                  <div className="lg-pages">
+                    <button
+                      className="lg-pg lg-nav"
+                      disabled={safePage === 1}
+                      onClick={() => setLogPage(safePage - 1)}
+                      aria-label="Página anterior"
+                    >{'\u2039'}</button>
+                    {pageNums(safePage, totalPages).map((p, i) =>
+                      p === '...' ? (
+                        <span key={`gap${i}`} className="lg-gap">{'\u2026'}</span>
+                      ) : (
+                        <button
+                          key={p}
+                          className={`lg-pg ${p === safePage ? 'on' : ''}`}
+                          onClick={() => setLogPage(p)}
+                          aria-current={p === safePage ? 'page' : undefined}
+                        >{p}</button>
+                      )
+                    )}
+                    <button
+                      className="lg-pg lg-nav"
+                      disabled={safePage === totalPages}
+                      onClick={() => setLogPage(safePage + 1)}
+                      aria-label="Página siguiente"
+                    >{'\u203A'}</button>
+                    <span className="lg-pageinfo">Página {safePage} de {totalPages}</span>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* NOTICIAS */}
           {mod === 'noticias' && (
