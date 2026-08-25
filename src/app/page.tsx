@@ -215,6 +215,23 @@ const getNewsResources = (news: PublicNewsItem): NewsResource[] => {
 };
 
 
+function MaintenanceScreen({ message, email }: { message?: string; email?: string }) {
+  return (
+    <div className="cfm-wrap">
+      <div className="cfm-card">
+        <div className="cfm-gear" aria-hidden="true">⚙️</div>
+        <span className="cfm-kicker">Pastoral Juvenil Luqueña</span>
+        <h1 className="cfm-title">Estamos mejorando<br />el sitio 🙏</h1>
+        <p className="cfm-msg">
+          {message?.trim() || 'Realizamos tareas de mantenimiento para servirte mejor. Volvemos en unos momentos.'}
+        </p>
+        {email && <a className="cfm-mail" href={`mailto:${email}`}>✉️ {email}</a>}
+      </div>
+    </div>
+  );
+}
+
+
 function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -663,6 +680,27 @@ window.setTimeout(() => {
   const activeHeroPosition = activeHeroSlide
     ? mapHeroPosition(isMobileViewport ? activeHeroSlide.mobilePosition : activeHeroSlide.desktopPosition)
     : 'center center';
+
+  // --- CONFIG: titulo y meta descripcion dinamicos ---
+  useEffect(() => {
+    const t = siteContent.siteTitle?.trim();
+    if (t) document.title = t;
+    const d = siteContent.siteDescription?.trim();
+    if (d) {
+      let md = document.querySelector('meta[name="description"]');
+      if (!md) {
+        md = document.createElement('meta');
+        md.setAttribute('name', 'description');
+        document.head.appendChild(md);
+      }
+      md.setAttribute('content', d);
+    }
+  }, [siteContent.siteTitle, siteContent.siteDescription]);
+
+  // --- CONFIG: modo mantenimiento ---
+  if (siteContent.maintenanceMode && !searchParams.get('preview')) {
+    return <MaintenanceScreen message={siteContent.maintenanceMessage} email={siteContent.contactEmail} />;
+  }
 
   return (
     <div className={isHighContrast ? 'high-contrast' : ''} style={{ '--font-size-base': `${fontSize}px` } as React.CSSProperties}>

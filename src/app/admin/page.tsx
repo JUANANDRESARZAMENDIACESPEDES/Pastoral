@@ -684,6 +684,10 @@ function AdminContent() {
   const [aiKeyVisible, setAiKeyVisible] = useState(false);
   const [aiKeyStatus, setAiKeyStatus] = useState<'idle' | 'validating' | 'valid' | 'invalid'>('idle');
 
+  // --- CONFIGURACION DEL SITIO ---
+  const [cfgTab, setCfgTab] = useState<'general' | 'social' | 'integraciones' | 'visibilidad' | 'mantenimiento'>('general');
+  const [showCalSecret, setShowCalSecret] = useState(false);
+
   // --- FILTERS ---
   const [searchTerm, setSearchTerm] = useState('');
   const [capZoneFilter, setCapZoneFilter] = useState<number | 'all'>('all');
@@ -4841,161 +4845,439 @@ function AdminContent() {
           })()}
 
           {/* CONFIGURACIÓN */}
-          {mod === 'configuracion' && (
-            <div className="animate-reveal">
-              <div className="admin-section-header" style={{ marginBottom: '24px' }}>
+          {mod === 'configuracion' && (() => {
+            const CFG_TABS = [
+              { id: 'general', icon: '🏠', label: 'General' },
+              { id: 'social', icon: '💬', label: 'Redes y Contacto' },
+              { id: 'integraciones', icon: '🔌', label: 'Integraciones' },
+              { id: 'visibilidad', icon: '👁️', label: 'Visibilidad' },
+              { id: 'mantenimiento', icon: '🛠️', label: 'Mantenimiento' },
+            ] as const;
+            const SOCIAL_META: Record<string, { icon: string; label: string; ph: string }> = {
+              facebook: { icon: '📘', label: 'Facebook', ph: 'https://facebook.com/tu-pagina' },
+              instagram: { icon: '📸', label: 'Instagram', ph: 'https://instagram.com/tu-cuenta' },
+              youtube: { icon: '📺', label: 'YouTube', ph: 'https://youtube.com/@tu-canal' },
+              tiktok: { icon: '🎵', label: 'TikTok', ph: 'https://tiktok.com/@tu-cuenta' },
+              twitter: { icon: '🐦', label: 'X / Twitter', ph: 'https://x.com/tu-cuenta' },
+            };
+            const SECTION_META: Record<string, { icon: string; label: string; desc: string }> = {
+              zonas: { icon: '🗺️', label: 'Zonas Pastorales', desc: 'Territorio, capillas y mapa interactivo' },
+              consejo: { icon: '👥', label: 'Consejo', desc: 'Equipo de coordinación y áreas' },
+              agenda: { icon: '📅', label: 'Agenda', desc: 'Actividades y calendario de eventos' },
+              institucional: { icon: '🏛️', label: 'Institucional', desc: 'Misión, visión, líneas y documentos' },
+              faq: { icon: '❓', label: 'Preguntas Frecuentes', desc: 'Ayuda rápida para visitantes' },
+              contacto: { icon: '✉️', label: 'Contacto', desc: 'Formulario y datos de la sede' },
+            };
+            const waDigits = (content.whatsappNumber || '').replace(/[^\d]/g, '');
+            const waOk = waDigits.length >= 9;
+            const gaVal = (content.googleAnalyticsId || '').trim();
+            const gaOk = !gaVal || /^G-[A-Z0-9]{5,}$/i.test(gaVal);
+            const activeCount = Object.values(sections).filter(Boolean).length;
+            const totalSections = Object.keys(sections).length;
+
+            const guardarCfg = (nombre: string) => {
+              showToast(`✔ ${nombre} guardado`);
+              addLog('guardar configuración', 'sistema', nombre);
+            };
+            const descargarBackup = () => {
+              const dump: Record<string, string | null> = {};
+              for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k && k.startsWith('pjl_')) dump[k] = localStorage.getItem(k);
+              }
+              const blob = new Blob([JSON.stringify(dump, null, 2)], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `pjl-backup-${new Date().toISOString().slice(0, 10)}.json`;
+              a.click();
+              URL.revokeObjectURL(url);
+              showToast('📦 Backup descargado');
+              addLog('respaldo de datos', 'sistema', `${Object.keys(dump).length} colecciones`);
+            };
+            const restaurarBackup = (file?: File | null) => {
+              if (!file) return;
+              if (!confirm(`¿Restaurar "${file.name}"? Se reemplazarán los datos actuales del sitio.`)) return;
+              const reader = new FileReader();
+              reader.onload = () => {
+                try {
+                  const obj = JSON.parse(String(reader.result)) as Record<string, unknown>;
+                  const keys = Object.keys(obj).filter(k => k.startsWith('pjl_'));
+                  if (!keys.length) { showToast('El archivo no contiene datos del sitio'); return; }
+                  keys.forEach(k => {
+                    const v = obj[k];
+                    localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
+                  });
+                  keys.forEach(k => window.dispatchEvent(new CustomEvent('pjl_store_update', { detail: { key: k.replace('pjl_', '') } })));
+                  showToast(`✅ ${keys.length} colecciones restauradas · recargando…`);
+                  addLog('restaurar backup', 'sistema', file.name);
+                  setTimeout(() => window.location.reload(), 1100);
+                } catch {
+                  showToast('Archivo inválido o corrupto');
+                }
+              };
+              reader.readAsText(file);
+            };
+
+            return (
+            <div className="animate-reveal" style={{ maxWidth: '1080px', margin: '0 auto' }}>
+              <div className="admin-section-header" style={{ marginBottom: '20px' }}>
                 <div className="admin-section-title-group">
-                  <h3 className="serif admin-section-title" style={{ margin: 0 }}>Configuración General</h3>
-                  <p className="admin-section-desc">Redes sociales, integraciones externas y herramientas de mantenimiento del sitio.</p>
+                  <h3 className="serif admin-section-title" style={{ margin: 0 }}>Configuración del Sitio</h3>
+                  <p className="admin-section-desc">Identidad, contacto, integraciones y mantenimiento — todo tu sitio web en un solo lugar.</p>
                 </div>
+                <span className="cf-livechip">● Cambios al instante</span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
-              
-              {/* COL 1: REDES Y MANTENIMIENTO */}
-              <div style={{ display: 'grid', gap: '30px' }}>
-                <div className="pjl-card" style={{ padding: '40px' }}>
-                  <h3 className="serif" style={{ marginBottom: '30px' }}>Redes Sociales</h3>
-                  <div style={{ display: 'grid', gap: '20px' }}>
-                    {Object.entries(social).map(([key, val]) => (
-                      <div key={key} className="form-group">
-                        <label className="premium-label">{key.toUpperCase()}</label>
-                        <input 
-                          className="pjl-input" 
-                          value={val as string} 
-                          onChange={e => setSocial({...social, [key]: e.target.value})} 
-                          placeholder={`URL de ${key}`}
+
+              <nav className="cf-tabs" role="tablist">
+                {CFG_TABS.map(t => (
+                  <button
+                    key={t.id}
+                    role="tab"
+                    aria-selected={cfgTab === t.id}
+                    className={`cf-tab ${cfgTab === t.id ? 'on' : ''}`}
+                    onClick={() => setCfgTab(t.id)}
+                  >
+                    <i>{t.icon}</i>{t.label}
+                  </button>
+                ))}
+              </nav>
+
+              {/* ===== GENERAL ===== */}
+              {cfgTab === 'general' && (
+                <div className="cf-grid cf-in">
+
+                  <div className="cf-card">
+                    <h4 className="cf-h">🏷️ Identidad en el navegador</h4>
+                    <div className="form-group">
+                      <label className="premium-label">NOMBRE DEL SITIO (PESTAÑA DEL NAVEGADOR)</label>
+                      <input
+                        className="pjl-input"
+                        value={content.siteTitle || ''}
+                        onChange={e => setContent({ ...content, siteTitle: e.target.value })}
+                        placeholder="Pastoral Juvenil Luqueña"
+                      />
+                    </div>
+                    {content.siteTitle?.trim() ? (
+                      <div className="cf-tabprev" aria-hidden="true">
+                        <span /><span /><span />
+                        <em>{content.siteTitle.trim()} · PJL</em>
+                      </div>
+                    ) : null}
+
+                    <div className="form-group" style={{ marginTop: '18px' }}>
+                      <label className="premium-label">DESCRIPCIÓN PARA GOOGLE (META DESCRIPTION)</label>
+                      <textarea
+                        className="pjl-input"
+                        rows={3}
+                        style={{ resize: 'vertical' }}
+                        maxLength={200}
+                        value={content.siteDescription || ''}
+                        onChange={e => setContent({ ...content, siteDescription: e.target.value })}
+                        placeholder="Sitio oficial de la Pastoral Juvenil Luqueña: fe, comunidad y servicio con los jóvenes de Luque."
+                      />
+                      <p className={`cf-count ${(content.siteDescription || '').length > 160 ? 'warn' : ''}`}>
+                        {(content.siteDescription || '').length}/160 caracteres recomendados
+                      </p>
+                    </div>
+
+                    <button className="btn-premium btn-premium-gold cf-save" onClick={() => guardarCfg('Identidad del sitio')}>GUARDAR IDENTIDAD</button>
+                  </div>
+
+                  <div className="cf-card">
+                    <h4 className="cf-h">🔧 Modo mantenimiento</h4>
+                    <div className={`cf-maint ${content.maintenanceMode ? 'on' : ''}`}>
+                      <div className="cf-maint-top">
+                        <span className={`cf-mdot ${content.maintenanceMode ? 'on' : ''}`} />
+                        <b>{content.maintenanceMode ? 'SITIO EN MANTENIMIENTO' : 'SITIO VISIBLE AL PÚBLICO'}</b>
+                        <label className="pjl-switch" style={{ marginLeft: 'auto' }}>
+                          <input
+                            type="checkbox"
+                            checked={!!content.maintenanceMode}
+                            onChange={e => setContent({ ...content, maintenanceMode: e.target.checked })}
+                          />
+                          <span className="pjl-slider" />
+                        </label>
+                      </div>
+                      <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '10px 0 0' }}>
+                        Al activarlo, los visitantes verán una pantalla informativa en lugar de la página principal.
+                      </p>
+                      {content.maintenanceMode && (
+                        <>
+                          <textarea
+                            className="pjl-input"
+                            rows={2}
+                            style={{ marginTop: '14px', resize: 'vertical' }}
+                            value={content.maintenanceMessage || ''}
+                            onChange={e => setContent({ ...content, maintenanceMessage: e.target.value })}
+                            placeholder="Mensaje personalizado para los visitantes…"
+                          />
+                          <p style={{ fontSize: '11px', marginTop: '8px', color: 'var(--gold)' }}>
+                            Tip: abre <code>?preview=1</code> al final de la dirección para ver el sitio normal mientras dure el mantenimiento.
+                          </p>
+                        </>
+                      )}
+                    </div>
+                    <button
+                      className="btn-premium btn-premium-gold cf-save"
+                      onClick={() => guardarCfg(content.maintenanceMode ? 'Modo mantenimiento ACTIVADO' : 'Modo mantenimiento desactivado')}
+                    >GUARDAR MODO</button>
+                  </div>
+                </div>
+              )}
+
+              {/* ===== REDES Y CONTACTO ===== */}
+              {cfgTab === 'social' && (
+                <div className="cf-grid cf-in">
+
+                  <div className="cf-card">
+                    <h4 className="cf-h">🌐 Redes sociales</h4>
+                    <div style={{ display: 'grid', gap: '14px' }}>
+                      {Object.entries(social).map(([key, val]) => {
+                        const meta = SOCIAL_META[key] || { icon: '🔗', label: key, ph: `https://${key}.com/…` };
+                        return (
+                          <div key={key} className="cf-srow">
+                            <span title={meta.label}>{meta.icon}</span>
+                            <input
+                              className="pjl-input"
+                              value={val as string}
+                              placeholder={meta.ph}
+                              onChange={e => setSocial({ ...social, [key]: e.target.value })}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <button className="btn-premium btn-premium-gold cf-save" onClick={() => guardarCfg('Redes sociales')}>GUARDAR REDES</button>
+                  </div>
+
+                  <div className="cf-card">
+                    <h4 className="cf-h">📮 Contacto directo</h4>
+                    <div style={{ display: 'grid', gap: '16px' }}>
+                      <div className="form-group">
+                        <label className="premium-label">WHATSAPP DE CONTACTO</label>
+                        <input
+                          className="pjl-input"
+                          value={content.whatsappNumber || ''}
+                          placeholder="+595 981 123 456"
+                          onChange={e => setContent({ ...content, whatsappNumber: e.target.value })}
+                        />
+                        {waDigits ? (
+                          <a
+                            className={`cf-wa ${waOk ? '' : 'bad'}`}
+                            href={waOk ? `https://wa.me/${waDigits}` : undefined}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {waOk ? '💬 Probar enlace de WhatsApp' : '⚠️ Número incompleto'}
+                          </a>
+                        ) : null}
+                      </div>
+                      <div className="form-group">
+                        <label className="premium-label">EMAIL OFICIAL DE CONTACTO</label>
+                        <input
+                          className="pjl-input"
+                          value={content.contactEmail || ''}
+                          placeholder="info@pjlluque.org"
+                          onChange={e => setContent({ ...content, contactEmail: e.target.value })}
                         />
                       </div>
-                    ))}
-                    <button className="btn-premium btn-premium-gold" style={{ marginTop: '10px' }} onClick={() => showToast('Redes sociales actualizadas ✔')}>GUARDAR REDES</button>
+                      <div className="form-group">
+                        <label className="premium-label">DIRECCIÓN DE LA SEDE</label>
+                        <input
+                          className="pjl-input"
+                          value={content.contactAddress || ''}
+                          placeholder="Santuario Virgen del Rosario, Luque"
+                          onChange={e => setContent({ ...content, contactAddress: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <button className="btn-premium btn-premium-gold cf-save" onClick={() => guardarCfg('Datos de contacto')}>GUARDAR CONTACTO</button>
                   </div>
                 </div>
+              )}
 
-                <div className="pjl-card" style={{ padding: '40px' }}>
-                  <h3 className="serif" style={{ marginBottom: '25px' }}>⚙️ Mantenimiento</h3>
-                  <div style={{ display: 'grid', gap: '15px' }}>
-                    <div style={{ padding: '20px', background: 'var(--cream)', borderRadius: '15px', border: '1px solid var(--gold-pale)' }}>
-                      <p style={{ margin: 0, fontSize: '13px', fontWeight: 700 }}>Respaldo de Datos</p>
-                      <p style={{ margin: '5px 0 15px', fontSize: '11px', color: 'var(--text-muted)' }}>Descarga un archivo con toda la información del sitio.</p>
-                      <button onClick={() => {
-                        const data = JSON.stringify(localStorage);
-                        const blob = new Blob([data], {type: 'application/json'});
-                        const url = URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = 'pjl_backup.json';
-                        link.click();
-                      }} className="btn-premium btn-premium-gold" style={{ width: '100%' }}>DESCARGAR BACKUP JSON</button>
-                    </div>
+              {/* ===== INTEGRACIONES ===== */}
+              {cfgTab === 'integraciones' && (
+                <div className="cf-card cf-in">
+                  <h4 className="cf-h">🔌 Servicios externos y analítica</h4>
+                  <div style={{ display: 'grid', gap: '18px' }}>
 
-                    <div style={{ padding: '20px', background: 'var(--cream)', borderRadius: '15px', border: '1px solid var(--gold-pale)' }}>
-                      <p style={{ margin: 0, fontSize: '13px', fontWeight: 700 }}>Reiniciar Estadísticas</p>
-                      <p style={{ margin: '5px 0 15px', fontSize: '11px', color: 'var(--text-muted)' }}>Borra todos los contadores de visitas e interacciones.</p>
-                      <button onClick={resetStats} className="btn-premium btn-premium-outline" style={{ width: '100%', borderColor: '#ef4444', color: '#ef4444' }}>REINICIAR A 0</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* COL 2: VISIBILIDAD E INTEGRACIONES */}
-              <div style={{ display: 'grid', gap: '30px' }}>
-                <div className="pjl-card" style={{ padding: '40px' }}>
-                  <h3 className="serif" style={{ marginBottom: '25px' }}>🌐 Integraciones</h3>
-                  <div style={{ display: 'grid', gap: '20px' }}>
-                    
-                    {/* VATICAN WIDGET TOGGLE */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', background: 'var(--cream)', borderRadius: '15px', border: '1px solid var(--gold-pale)' }}>
+                    <div className="cf-trow">
                       <div>
-                        <p style={{ fontWeight: 700, color: 'var(--navy)', margin: 0, fontSize: '13px' }}>Widget Vaticano</p>
-                        <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Muestra noticias del Vaticano en el menú</p>
+                        <b>Widget del Vaticano</b>
+                        <small>Noticias de Vatican News en el menú del sitio público</small>
                       </div>
                       <label className="pjl-switch">
-                        <input type="checkbox" checked={!!branding.showVaticanWidget} onChange={(e) => setBranding({...branding, showVaticanWidget: e.target.checked})} />
-                        <span className="pjl-slider"></span>
+                        <input
+                          type="checkbox"
+                          checked={!!branding.showVaticanWidget}
+                          onChange={e => setBranding({ ...branding, showVaticanWidget: e.target.checked })}
+                        />
+                        <span className="pjl-slider" />
                       </label>
                     </div>
 
                     <div className="form-group">
-                      <label className="premium-label">ID / CORREO / URL EMBED DE GOOGLE CALENDAR</label>
-                      <input 
-                        className="pjl-input" 
-                        value={content.googleCalendarUrl || ''} 
-                        onChange={e => setContent({...content, googleCalendarUrl: e.target.value})} 
-                        placeholder="ej: tu-email@gmail.com o enlace embed de Google Calendar"
-                      />
-                      <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '5px' }}>Acepta correo del calendario, ID o enlace de inserción. Las opciones de visibilidad se guardan arriba.</p>
-                    </div>
-
-                    <div className="form-group">
-                      <label className="premium-label">GOOGLE CLIENT ID</label>
+                      <label className="premium-label">GOOGLE CALENDAR (ID / CORREO / EMBED)</label>
                       <input
                         className="pjl-input"
-                        value={content.googleCalendarClientId || ''}
-                        onChange={e => setContent({ ...content, googleCalendarClientId: e.target.value })}
-                        placeholder="xxx.apps.googleusercontent.com"
+                        value={content.googleCalendarUrl || ''}
+                        placeholder="tu-email@gmail.com o enlace embed"
+                        onChange={e => setContent({ ...content, googleCalendarUrl: e.target.value })}
                       />
                     </div>
 
-                    <div className="form-group">
-                      <label className="premium-label">GOOGLE CLIENT SECRET</label>
-                      <input
-                        className="pjl-input"
-                        type="password"
-                        value={content.googleCalendarClientSecret || ''}
-                        onChange={e => setContent({ ...content, googleCalendarClientSecret: e.target.value })}
-                        placeholder="Client secret de Google"
-                      />
-                    </div>
-
-                    <button className="btn-premium btn-premium-gold" onClick={() => showToast('Configuración de integraciones guardada ✔')}>GUARDAR CAMBIOS</button>
-                  </div>
-                </div>
-
-                <div className="pjl-card" style={{ padding: '40px' }}>
-                  <h3 className="serif" style={{ marginBottom: '30px' }}>Visibilidad de Secciones</h3>
-                  <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '25px' }}>
-                    Activa o desactiva la visibilidad de las secciones principales del sitio web.
-                  </p>
-                  <div style={{ display: 'grid', gap: '12px' }}>
-                    {Object.entries(sections).map(([key, val]) => (
-                      <div key={key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', background: 'var(--cream)', borderRadius: '15px', border: '1px solid var(--gold-pale)' }}>
-                        <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--navy)', textTransform: 'uppercase' }}>{key.replace(/([A-Z])/g, ' $1')}</span>
-                        <label className="pjl-switch">
-                          <input type="checkbox" checked={val} onChange={() => setSections({...sections, [key as keyof typeof sections]: !val})} />
-                          <span className="pjl-slider"></span>
-                        </label>
+                    <div className="cf-2col">
+                      <div className="form-group">
+                        <label className="premium-label">GOOGLE CLIENT ID</label>
+                        <input
+                          className="pjl-input"
+                          value={content.googleCalendarClientId || ''}
+                          placeholder="xxx.apps.googleusercontent.com"
+                          onChange={e => setContent({ ...content, googleCalendarClientId: e.target.value })}
+                        />
                       </div>
-                    ))}
-                  </div>
-                </div>
+                      <div className="form-group">
+                        <label className="premium-label">CLIENT SECRET</label>
+                        <div className="cf-secret">
+                          <input
+                            type={showCalSecret ? 'text' : 'password'}
+                            className="pjl-input"
+                            value={content.googleCalendarClientSecret || ''}
+                            placeholder={'\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022'}
+                            autoComplete="new-password"
+                            onChange={e => setContent({ ...content, googleCalendarClientSecret: e.target.value })}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowCalSecret(v => !v)}
+                            title={showCalSecret ? 'Ocultar secret' : 'Mostrar secret'}
+                            aria-label={showCalSecret ? 'Ocultar secret' : 'Mostrar secret'}
+                          >{showCalSecret ? '\u{1F648}' : '\u{1F441}\uFE0F'}</button>
+                        </div>
+                      </div>
+                    </div>
 
-                <div className="pjl-card" style={{ padding: '40px' }}>
-                  <h3 className="serif" style={{ marginBottom: '30px' }}>📊 Datos Oficiales y SEO</h3>
-                  <div style={{ display: 'grid', gap: '20px' }}>
-                    <div className="form-group">
-                      <label className="premium-label">EMAIL OFICIAL DE CONTACTO</label>
-                      <input className="pjl-input" value={content.contactEmail || ''} onChange={e => setContent({...content, contactEmail: e.target.value})} placeholder="ejemplo@pjlluque.org" />
-                    </div>
-                    <div className="form-group">
-                      <label className="premium-label">DIRECCIÓN (SEDE)</label>
-                      <input className="pjl-input" value={content.contactAddress || ''} onChange={e => setContent({...content, contactAddress: e.target.value})} placeholder="Santuario Virgen del Rosario, Luque" />
-                    </div>
                     <div className="form-group">
                       <label className="premium-label">GOOGLE ANALYTICS ID</label>
-                      <input className="pjl-input" value={content.googleAnalyticsId || ''} onChange={e => setContent({...content, googleAnalyticsId: e.target.value})} placeholder="G-XXXXXXXXXX" />
+                      <div className="cf-inline">
+                        <input
+                          className="pjl-input"
+                          value={content.googleAnalyticsId || ''}
+                          placeholder="G-XXXXXXXXXX"
+                          onChange={e => setContent({ ...content, googleAnalyticsId: e.target.value })}
+                        />
+                        {gaVal ? <span className={`cf-badge ${gaOk ? 'ok' : 'bad'}`}>{gaOk ? '\u2713 Formato correcto' : '\u2715 Debe iniciar con G-'}</span> : null}
+                      </div>
                     </div>
+
                     <div className="form-group">
                       <label className="premium-label">META PIXEL ID</label>
-                      <input className="pjl-input" value={content.metaPixelId || ''} onChange={e => setContent({...content, metaPixelId: e.target.value})} placeholder="123456789012345" />
+                      <input
+                        className="pjl-input"
+                        value={content.metaPixelId || ''}
+                        placeholder="123456789012345"
+                        onChange={e => setContent({ ...content, metaPixelId: e.target.value })}
+                      />
                     </div>
-                    <button className="btn-premium btn-premium-gold" onClick={() => showToast('Datos SEO guardados ✔')}>GUARDAR SEO</button>
+                  </div>
+                  <button className="btn-premium btn-premium-gold cf-save" onClick={() => guardarCfg('Integraciones')}>GUARDAR INTEGRACIONES</button>
+                </div>
+              )}
+
+              {/* ===== VISIBILIDAD ===== */}
+              {cfgTab === 'visibilidad' && (
+                <div className="cf-card cf-in">
+                  <h4 className="cf-h">👁️ Secciones visibles en el sitio público</h4>
+                  <p className="cf-sub">Desactiva temporalmente secciones enteras sin borrar su contenido. <b>{activeCount} de {totalSections}</b> activas.</p>
+                  <div className="cf-vgrid">
+                    {Object.entries(sections).map(([key, val]) => {
+                      const meta = SECTION_META[key] || { icon: '\u{1F4C4}', label: key, desc: '' };
+                      return (
+                        <div key={key} className={`cf-vrow ${val ? '' : 'off'}`}>
+                          <span className="cfv-ico">{meta.icon}</span>
+                          <div className="cfv-txt">
+                            <b>{meta.label}</b>
+                            <small>{meta.desc}</small>
+                          </div>
+                          <label className="pjl-switch">
+                            <input
+                              type="checkbox"
+                              checked={val}
+                              onChange={() => setSections({ ...sections, [key as keyof typeof sections]: !val })}
+                            />
+                            <span className="pjl-slider" />
+                          </label>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="cf-bar">
+                    <button
+                      className="btn-premium btn-premium-outline cf-mini"
+                      onClick={() => { setSections(Object.fromEntries(Object.keys(sections).map(k => [k, true])) as unknown as typeof sections); showToast('Todas las secciones activadas'); }}
+                    >ACTIVAR TODAS</button>
+                    <button
+                      className="btn-premium btn-premium-outline cf-mini"
+                      onClick={() => { setSections(Object.fromEntries(Object.keys(sections).map(k => [k, false])) as unknown as typeof sections); showToast('Secciones desactivadas'); }}
+                    >DESACTIVAR TODAS</button>
                   </div>
                 </div>
-              </div>
-              </div>
+              )}
 
+              {/* ===== MANTENIMIENTO ===== */}
+              {cfgTab === 'mantenimiento' && (
+                <div className="cf-grid cf-in">
+
+                  <div className="cf-card">
+                    <h4 className="cf-h">📦 Respaldos</h4>
+                    <div style={{ display: 'grid', gap: '14px' }}>
+                      <div className="cf-mcard">
+                        <b>Descargar backup completo</b>
+                        <p>Copia de seguridad de todo el contenido del sitio en un archivo JSON.</p>
+                        <button className="btn-premium btn-premium-gold" onClick={descargarBackup}>{'\u2B07'} DESCARGAR BACKUP</button>
+                      </div>
+                      <div className="cf-mcard">
+                        <b>Restaurar desde backup</b>
+                        <p>Sube un archivo JSON previamente descargado para recuperar los datos.</p>
+                        <input
+                          id="cfRestoreFile"
+                          type="file"
+                          accept=".json,application/json"
+                          style={{ display: 'none' }}
+                          onChange={e => { restaurarBackup(e.target.files?.[0]); e.target.value = ''; }}
+                        />
+                        <button className="btn-premium btn-premium-outline" onClick={() => document.getElementById('cfRestoreFile')?.click()}>{'\u2B06'} SELECCIONAR ARCHIVO</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="cf-card">
+                    <h4 className="cf-h">{'\u{1F5C2}\uFE0F'} Datos guardados</h4>
+                    <div className="cf-dgrid">
+                      {(['news', 'activities', 'faq', 'docs', 'gallery', 'profiles', 'users', 'chapels'] as const).map(k => {
+                        let n = 0;
+                        try { n = ((store[k].get as () => unknown[])()?.length) || 0; } catch { n = 0; }
+                        const LABELS: Record<typeof k, string> = { news: 'Noticias', activities: 'Actividades', faq: 'FAQs', docs: 'Documentos', gallery: 'Galería', profiles: 'Perfiles', users: 'Usuarios', chapels: 'Capillas' };
+                        return (
+                          <div key={k} className="cf-dchip">
+                            <b>{n}</b><span>{LABELS[k]}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="cf-mcard danger" style={{ marginTop: '14px' }}>
+                      <b>Zona de riesgo</b>
+                      <p>Pone en cero todos los contadores de visitas e interacciones. Esta acción no se puede deshacer.</p>
+                      <button className="btn-premium btn-premium-outline" style={{ borderColor: '#ef4444', color: '#ef4444' }} onClick={resetStats}>REINICIAR ESTADÍSTICAS</button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+            );
+          })()}
 
         </div>
       </main>

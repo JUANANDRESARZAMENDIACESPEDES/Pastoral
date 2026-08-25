@@ -105,6 +105,11 @@ export interface SiteContent  {
   contactAddress: string;
   googleAnalyticsId: string;
   metaPixelId: string;
+  siteTitle?: string;
+  siteDescription?: string;
+  whatsappNumber?: string;
+  maintenanceMode?: boolean;
+  maintenanceMessage?: string;
 }
 export interface ActiveSections { zonas: boolean; consejo: boolean; agenda: boolean; institucional: boolean; faq: boolean; contacto: boolean; }
 export interface Branding { 
