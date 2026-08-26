@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Fraunces, Manrope, Libre_Baskerville } from "next/font/google";
-import FaviconSync from "../components/FaviconSync";
 import ThemeLoader from "../components/ThemeLoader";
 import "./globals.css";
 import "./responsive-fix.css";
@@ -73,6 +72,18 @@ export default function RootLayout({
               '@media (prefers-reduced-motion:reduce){#splash-pjl{display:none!important}html.show-splash body>*:not(#splash-pjl){visibility:visible!important}}',
               '@media (prefers-reduced-motion:reduce){.top-nav .brand-logo-wrap,.top-nav .brand-text,.top-nav .nav-links .nav-item{opacity:1 !important}}',
             ].join(''),
+          }}
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){
+  function setFavicon(u){var l=document.querySelectorAll('link[rel="icon"],link[rel="apple-touch-icon"]');for(var i=0;i<l.length;i++)l[i].remove();var c=document.createElement('link');c.rel='icon';c.type='image/png';c.href=u;document.head.insertBefore(c,document.head.firstChild);var a=document.createElement('link');a.rel='apple-touch-icon';a.href=u;document.head.appendChild(a)}
+  function drawCircle(img){var s=256,ca=document.createElement('canvas');ca.width=s;ca.height=s;var x=ca.getContext('2d');x.beginPath();x.arc(s/2,s/2,s/2,0,Math.PI*2);x.closePath();x.clip();var m=Math.min(img.width,img.height);x.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,s,s);setFavicon(ca.toDataURL('image/png'))}
+  function loadLogo(){try{var r=localStorage.getItem('pjl_branding');if(!r)return;var b=JSON.parse(r);var u=b&&b.mainLogo;if(!u)return;if(u.indexOf('data:')===0){var img=new Image();img.onload=function(){drawCircle(img)};img.src=u}else{fetch(u).then(function(res){return res.blob()}).then(function(blob){var reader=new FileReader();reader.onload=function(){var img=new Image();img.onload=function(){drawCircle(img)};img.onerror=function(){setFavicon(u)};img.src=reader.result};reader.readAsDataURL(blob)}).catch(function(){setFavicon(u)})}}catch(e){}}
+  setTimeout(loadLogo,50);
+  function onStore(e){try{var d=e.detail||{};if(d.key==='branding')setTimeout(loadLogo,50)}catch(ex){}}
+  if(typeof window!=='undefined'){window.addEventListener('pjl_store_update',onStore);window.addEventListener('storage',function(e){if(e.key==='pjl_branding')setTimeout(loadLogo,50)})}
+})();`,
           }}
         />
       </head>
@@ -215,7 +226,6 @@ export default function RootLayout({
           </div>
         </div>
         <noscript><style>{"#splash-pjl{display:none!important}"}</style></noscript>
-        <FaviconSync />
         <ThemeLoader />
         {children}
         <Script

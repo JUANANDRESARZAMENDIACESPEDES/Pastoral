@@ -6,24 +6,23 @@ export default function FaviconSync() {
     let cancelled = false;
     let retries = 0;
 
-    function removeStaticIcons() {
-      document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach(el => el.remove());
-    }
-
     function applyFavicon(dataUrl: string) {
-      removeStaticIcons();
-      let link = document.querySelector('link[data-favicon-dyn]') as HTMLLinkElement | null;
-      if (!link) {
-        link = document.createElement('link');
-        link.rel = 'icon';
-        link.type = 'image/png';
-        link.setAttribute('data-favicon-dyn', '1');
-        document.head.prepend(link);
-      }
+      const existing = document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]');
+      existing.forEach(el => el.remove());
+
+      const link = document.createElement('link');
+      link.rel = 'icon';
+      link.type = 'image/png';
       link.href = dataUrl;
+      document.head.insertBefore(link, document.head.firstChild);
+
+      const apple = document.createElement('link');
+      apple.rel = 'apple-touch-icon';
+      apple.href = dataUrl;
+      document.head.appendChild(apple);
     }
 
-    function updateFavicon() {
+    function tryLoad() {
       if (cancelled) return;
       try {
         const raw = localStorage.getItem('pjl_branding');
@@ -32,56 +31,59 @@ export default function FaviconSync() {
         const logoUrl = branding?.mainLogo;
         if (!logoUrl) { retry(); return; }
 
+        if (logoUrl.endsWith('.svg') || logoUrl.startsWith('data:')) {
+          fetch(logoUrl)
+            .then(r => r.blob())
+            .then(blob => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                if (cancelled) return;
+                const img = new Image();
+                img.onload = () => drawCircle(img);
+                img.onerror = () => { applyFavicon(logoUrl); };
+                img.src = reader.result as string;
+              };
+              reader.readAsDataURL(blob);
+            })
+            .catch(() => { applyFavicon(logoUrl); });
+          return;
+        }
+
         const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-          if (cancelled) return;
-          const size = 256;
-          const canvas = document.createElement('canvas');
-          canvas.width = size;
-          canvas.height = size;
-          const ctx = canvas.getContext('2d');
-          if (!ctx) return;
-          ctx.beginPath();
-          ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
-          ctx.closePath();
-          ctx.clip();
-          const minDim = Math.min(img.width, img.height);
-          const srcX = (img.width - minDim) / 2;
-          const srcY = (img.height - minDim) / 2;
-          ctx.drawImage(img, srcX, srcY, minDim, minDim, 0, 0, size, size);
-          applyFavicon(canvas.toDataURL('image/png'));
-        };
-        img.onerror = () => retry();
+        img.onload = () => drawCircle(img);
+        img.onerror = () => { applyFavicon(logoUrl); };
         img.src = logoUrl;
       } catch { retry(); }
     }
 
+    function drawCircle(img: HTMLImageElement) {
+      if (cancelled) return;
+      const s = 256;
+      const c = document.createElement('canvas');
+      c.width = s; c.height = s;
+      const ctx = c.getContext('2d');
+      if (!ctx) return;
+      ctx.beginPath();
+      ctx.arc(s / 2, s / 2, s / 2, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      const m = Math.min(img.width, img.height);
+      ctx.drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, s, s);
+      applyFavicon(c.toDataURL('image/png'));
+    }
+
     function retry() {
-      if (cancelled || retries >= 20) return;
+      if (cancelled || retries >= 30) return;
       retries++;
-      setTimeout(updateFavicon, Math.min(retries * 200, 2000));
+      setTimeout(tryLoad, Math.min(retries * 150, 3000));
     }
 
-    const timer = setTimeout(updateFavicon, 100);
-
-    function onStoreUpdate(e: Event) {
-      const detail = (e as CustomEvent).detail;
-      if (detail?.key === 'branding') { retries = 0; updateFavicon(); }
-    }
-    function onStorage(e: StorageEvent) {
-      if (e.key === 'pjl_branding') { retries = 0; updateFavicon(); }
-    }
-
-    window.addEventListener('pjl_store_update', onStoreUpdate);
+    const t = setTimeout(tryLoad, 50);
+    function onStore(e: Event) { if ((e as CustomEvent).detail?.key === 'branding') { retries = 0; tryLoad(); } }
+    function onStorage(e: StorageEvent) { if (e.key === 'pjl_branding') { retries = 0; tryLoad(); } }
+    window.addEventListener('pjl_store_update', onStore);
     window.addEventListener('storage', onStorage);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-      window.removeEventListener('pjl_store_update', onStoreUpdate);
-      window.removeEventListener('storage', onStorage);
-    };
+    return () => { cancelled = true; clearTimeout(t); window.removeEventListener('pjl_store_update', onStore); window.removeEventListener('storage', onStorage); };
   }, []);
 
   return null;
