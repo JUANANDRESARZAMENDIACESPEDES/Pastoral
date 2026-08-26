@@ -4,20 +4,39 @@ import { useEffect } from 'react';
 export default function FaviconSync() {
   useEffect(() => {
     let cancelled = false;
+    let retries = 0;
 
-    const updateFavicon = () => {
+    function removeStaticIcons() {
+      document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach(el => el.remove());
+    }
+
+    function applyFavicon(dataUrl: string) {
+      removeStaticIcons();
+      let link = document.querySelector('link[data-favicon-dyn]') as HTMLLinkElement | null;
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        link.type = 'image/png';
+        link.setAttribute('data-favicon-dyn', '1');
+        document.head.prepend(link);
+      }
+      link.href = dataUrl;
+    }
+
+    function updateFavicon() {
+      if (cancelled) return;
       try {
         const raw = localStorage.getItem('pjl_branding');
-        if (!raw) return;
+        if (!raw) { retry(); return; }
         const branding = JSON.parse(raw);
         const logoUrl = branding?.mainLogo;
-        if (!logoUrl) return;
+        if (!logoUrl) { retry(); return; }
 
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = () => {
           if (cancelled) return;
-          const size = 192;
+          const size = 256;
           const canvas = document.createElement('canvas');
           canvas.width = size;
           canvas.height = size;
@@ -31,32 +50,28 @@ export default function FaviconSync() {
           const srcX = (img.width - minDim) / 2;
           const srcY = (img.height - minDim) / 2;
           ctx.drawImage(img, srcX, srcY, minDim, minDim, 0, 0, size, size);
-          const dataUrl = canvas.toDataURL('image/png');
-          let link = document.querySelector('link[data-favicon-dyn]') as HTMLLinkElement | null;
-          if (!link) {
-            link = document.createElement('link');
-            link.rel = 'icon';
-            link.type = 'image/png';
-            link.setAttribute('data-favicon-dyn', '1');
-            document.head.appendChild(link);
-          }
-          link.href = dataUrl;
+          applyFavicon(canvas.toDataURL('image/png'));
         };
-        img.onerror = () => {};
+        img.onerror = () => retry();
         img.src = logoUrl;
-      } catch {}
-    };
+      } catch { retry(); }
+    }
 
-    const timer = setTimeout(updateFavicon, 300);
+    function retry() {
+      if (cancelled || retries >= 20) return;
+      retries++;
+      setTimeout(updateFavicon, Math.min(retries * 200, 2000));
+    }
 
-    const onStoreUpdate = (e: Event) => {
+    const timer = setTimeout(updateFavicon, 100);
+
+    function onStoreUpdate(e: Event) {
       const detail = (e as CustomEvent).detail;
-      if (detail?.key === 'branding') updateFavicon();
-    };
-
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === 'pjl_branding') updateFavicon();
-    };
+      if (detail?.key === 'branding') { retries = 0; updateFavicon(); }
+    }
+    function onStorage(e: StorageEvent) {
+      if (e.key === 'pjl_branding') { retries = 0; updateFavicon(); }
+    }
 
     window.addEventListener('pjl_store_update', onStoreUpdate);
     window.addEventListener('storage', onStorage);
