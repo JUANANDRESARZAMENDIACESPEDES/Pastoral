@@ -50,6 +50,12 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${displayFont.variable} ${bodyFont.variable} ${accentFont.variable}`} suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+        <link rel="preload" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&display=swap" as="style" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&display=swap" media="print" />
+        <script dangerouslySetInnerHTML={{ __html: "var pf=document.querySelector('link[href*=\"Playfair\"][media=\"print\"]');if(pf)pf.onload=function(){this.media='all'};" }} />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
         {/* Critical CSS anti-destello, en DOS fases:
             1) La navbar nace oculta y SOLO su animación la revela.
@@ -230,7 +236,7 @@ export default function RootLayout({
         {children}
         <Script
           src="https://www.vaticannews.va/etc/designs/vaticannews/widget/widget.js"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
           id="vaticannews-widget"
         />
       </body>

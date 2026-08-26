@@ -627,7 +627,7 @@ window.setTimeout(() => {
   useEffect(() => {
     // Small delay to avoid 'setState in effect' warning for synchronous mount sync
     const timer = setTimeout(syncData, 0);
-    const interval = setInterval(syncData, 5000);
+    const interval = setInterval(syncData, 60000);
     const onStorage = (event: StorageEvent) => {
       if (!event.key || event.key.startsWith('pjl_')) syncData();
     };
@@ -672,7 +672,7 @@ window.setTimeout(() => {
     };
 
     fetchRealNews();
-    const interval = setInterval(fetchRealNews, 10000);
+    const interval = setInterval(fetchRealNews, 120000);
     return () => clearInterval(interval);
   }, []);
 
