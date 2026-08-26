@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Fraunces, Manrope, Libre_Baskerville } from "next/font/google";
+import FaviconSync from "../components/FaviconSync";
 import ThemeLoader from "../components/ThemeLoader";
 import "./globals.css";
 import "./responsive-fix.css";
@@ -214,6 +215,7 @@ export default function RootLayout({
           </div>
         </div>
         <noscript><style>{"#splash-pjl{display:none!important}"}</style></noscript>
+        <FaviconSync />
         <ThemeLoader />
         {children}
         <Script
