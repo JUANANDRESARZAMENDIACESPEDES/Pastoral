@@ -110,6 +110,19 @@ export interface SiteContent  {
   whatsappNumber?: string;
   maintenanceMode?: boolean;
   maintenanceMessage?: string;
+  /* ── NUEVOS CAMPOS: «Nosotros» ampliado ── */
+  nosotrosIntro: string;
+  nosotrosHistoria: string;
+  nosotrosLema: string;
+  contactoDireccion: string;
+  contactoTel: string;
+  contactoWeb: string;
+  contactoSede: string;
+  horariosEncuentro: string;
+  horariosFormacion: string;
+  horariosMisaLocal: string;
+  servicios: { id: string; title: string; desc: string; icon: string }[];
+  logros: { id: string; valor: string; label: string; icon: string }[];
 }
 export interface ActiveSections { zonas: boolean; consejo: boolean; agenda: boolean; institucional: boolean; faq: boolean; contacto: boolean; }
 export interface Branding { 
@@ -287,6 +300,28 @@ export const DEFAULT_CONTENT: SiteContent = {
   contactAddress: 'Santuario Virgen del Rosario, Luque',
   googleAnalyticsId: '',
   metaPixelId: '',
+  nosotrosIntro: 'Somos la Pastoral Juvenil Luqueña (PJL), una comunidad eclesial viva que camina junto a los jóvenes de la ciudad de Luque desde hace más de dos décadas. Nuestra casa es la iglesia y nuestro motor es el servicio.',
+  nosotrosHistoria: 'Nacimos del deseo de reunir a la juventud luqueña alrededor de la fe, creciendo de una pequeña comunidad a una pastoral con presencia en las cuatro zonas pastorales de la diócesis. Cada año sumamos nuevos jóvenes que encuentran en la PJL un espacio de amistad, formación y compromiso.',
+  nosotrosLema: '«Avivando la llama de Cristo en tu corazón»',
+  contactoDireccion: '',
+  contactoTel: '',
+  contactoWeb: '',
+  contactoSede: '',
+  horariosEncuentro: '',
+  horariosFormacion: '',
+  horariosMisaLocal: '',
+  servicios: [
+    { id: 's1', title: 'Formación Integral', desc: 'Talleres, jornadas y procesos de acompañamiento para el crecimiento humano y espiritual.', icon: '🎓' },
+    { id: 's2', title: 'Misión y Evangelización', desc: 'Acciones misioneras que llevan la alegría del Evangelio a toda la ciudad de Luque.', icon: '✝️' },
+    { id: 's3', title: 'Acción Solidaria', desc: 'Servicio a los más necesitados a través de campañas, visitas y obras de caridad.', icon: '🤲' },
+    { id: 's4', title: 'Encuentros y Comunidad', desc: 'Convivencias, retiros y celebraciones que fortalecen los lazos de hermandad.', icon: '🔥' },
+  ],
+  logros: [
+    { id: 'l1', valor: '20', label: 'Años de fe', icon: '⏳' },
+    { id: 'l2', valor: '300+', label: 'Jóvenes activos', icon: '👥' },
+    { id: 'l3', valor: '4', label: 'Zonas pastorales', icon: '🗺️' },
+    { id: 'l4', valor: '12+', label: 'Comunidades', icon: '🏛️' },
+  ],
 };
 
 export const DEFAULT_CHAPELS: Chapel[] = [

@@ -2838,6 +2838,7 @@ function AdminContent() {
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   {[
                     { id: 'institucional', label: 'INSTITUCIONAL' },
+                    { id: 'nosotros', label: 'NOSOTROS' },
                     { id: 'textos_inicio', label: 'TEXTOS DE INICIO' },
                     { id: 'mision_vision', label: 'MISIÓN/VISIÓN' },
                     { id: 'objetivos', label: 'OBJETIVOS' },
@@ -3069,6 +3070,103 @@ function AdminContent() {
                           </div>
                         ))}
                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB: NOSOTROS (contacto, horarios, servicios, logros, historia ampliada) */}
+                {activeContentTab === 'nosotros' && (
+                  <div className="animate-reveal" style={{ display: 'grid', gap: '24px' }}>
+                    <div className="pjl-card" style={{ padding: '24px 28px', background: 'var(--cream)', border: '1px solid var(--gold-pale)', borderRadius: '24px' }}>
+                      <h4 className="serif" style={{ marginBottom: '6px', color: 'var(--navy)' }}>🙌 Sección «Nosotros»</h4>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: '0 0 18px' }}>Textos que se muestran en las páginas Institucional, Nuestra Historia y Estatuto.</p>
+
+                      <div className="form-group">
+                        <label className="premium-label">INTRODUCCIÓN (QUIÉNES SOMOS)</label>
+                        <textarea className="pjl-input" rows={3} value={content.nosotrosIntro || ''} onChange={e => setContent({ ...content, nosotrosIntro: e.target.value })} placeholder="Resumen breve de la pastoral..." />
+                      </div>
+                      <div className="form-group">
+                        <label className="premium-label">LEMA / FRASE</label>
+                        <input className="pjl-input" value={content.nosotrosLema || ''} onChange={e => setContent({ ...content, nosotrosLema: e.target.value })} placeholder="«Avivando la llama de Cristo en tu corazón»" />
+                      </div>
+                      <div className="form-group">
+                        <label className="premium-label">HISTORIA AMPLIADA</label>
+                        <textarea className="pjl-input" rows={5} value={content.nosotrosHistoria || ''} onChange={e => setContent({ ...content, nosotrosHistoria: e.target.value })} placeholder="Narra el origen y crecimiento de la PJL..." />
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                        <div className="form-group">
+                          <label className="premium-label">DECANATO</label>
+                          <input className="pjl-input" value={content.decanato || ''} onChange={e => setContent({ ...content, decanato: e.target.value })} />
+                        </div>
+                        <div className="form-group">
+                          <label className="premium-label">PARROQUIA</label>
+                          <input className="pjl-input" value={content.parroquia || ''} onChange={e => setContent({ ...content, parroquia: e.target.value })} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pjl-card" style={{ padding: '24px 28px', background: '#fff', border: '1px solid var(--gold-pale)', borderRadius: '24px' }}>
+                      <h4 className="serif" style={{ marginBottom: '18px', color: 'var(--navy)' }}>📞 Contacto y ubicación</h4>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                        <div className="form-group"><label className="premium-label">SEDE</label><input className="pjl-input" value={content.contactoSede || ''} onChange={e => setContent({ ...content, contactoSede: e.target.value })} placeholder="Ej: Parroquia..." /></div>
+                        <div className="form-group"><label className="premium-label">DIRECCIÓN</label><input className="pjl-input" value={content.contactoDireccion || ''} onChange={e => setContent({ ...content, contactoDireccion: e.target.value })} /></div>
+                        <div className="form-group"><label className="premium-label">TELÉFONO</label><input className="pjl-input" value={content.contactoTel || ''} onChange={e => setContent({ ...content, contactoTel: e.target.value })} /></div>
+                        <div className="form-group"><label className="premium-label">EMAIL</label><input className="pjl-input" value={content.contactEmail || ''} onChange={e => setContent({ ...content, contactEmail: e.target.value })} /></div>
+                        <div className="form-group" style={{ gridColumn: '1 / -1' }}><label className="premium-label">SITIO WEB</label><input className="pjl-input" value={content.contactoWeb || ''} onChange={e => setContent({ ...content, contactoWeb: e.target.value })} /></div>
+                      </div>
+                    </div>
+
+                    <div className="pjl-card" style={{ padding: '24px 28px', background: 'var(--cream)', border: '1px solid var(--gold-pale)', borderRadius: '24px' }}>
+                      <h4 className="serif" style={{ marginBottom: '18px', color: 'var(--navy)' }}>🕐 Horarios</h4>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+                        <div className="form-group"><label className="premium-label">ENCUENTROS</label><input className="pjl-input" value={content.horariosEncuentro || ''} onChange={e => setContent({ ...content, horariosEncuentro: e.target.value })} placeholder="Ej: Sábados 15:00 hs" /></div>
+                        <div className="form-group"><label className="premium-label">FORMACIÓN</label><input className="pjl-input" value={content.horariosFormacion || ''} onChange={e => setContent({ ...content, horariosFormacion: e.target.value })} /></div>
+                        <div className="form-group"><label className="premium-label">MISAS</label><input className="pjl-input" value={content.horariosMisaLocal || ''} onChange={e => setContent({ ...content, horariosMisaLocal: e.target.value })} /></div>
+                      </div>
+                    </div>
+
+                    {/* SERVICIOS / AREAS */}
+                    <div className="pjl-card" style={{ padding: '24px 28px', background: '#fff', border: '1px solid var(--gold-pale)', borderRadius: '24px' }}>
+                      <h4 className="serif" style={{ marginBottom: '6px', color: 'var(--navy)' }}>🤝 Áreas de trabajo / Servicios</h4>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: '0 0 16px' }}>Se muestran como tarjetas en la página Institucional.</p>
+                      <div style={{ display: 'grid', gap: '14px' }}>
+                        {(content.servicios || []).map((sv, idx) => (
+                          <div key={sv.id} style={{ display: 'grid', gridTemplateColumns: '80px 1fr auto', gap: '12px', alignItems: 'center', background: 'var(--cream)', borderRadius: '16px', border: '1px solid var(--gold-pale)', padding: '14px' }}>
+                            <input className="pjl-input" value={sv.icon || ''} onChange={e => { const arr = [...(content.servicios||[])]; arr[idx] = { ...arr[idx], icon: e.target.value }; setContent({ ...content, servicios: arr }); }} placeholder="Icono" style={{ textAlign: 'center' }} />
+                            <div style={{ display: 'grid', gap: '8px' }}>
+                              <input className="pjl-input" value={sv.title || ''} onChange={e => { const arr = [...(content.servicios||[])]; arr[idx] = { ...arr[idx], title: e.target.value }; setContent({ ...content, servicios: arr }); }} placeholder="Título del área" />
+                              <input className="pjl-input" value={sv.desc || ''} onChange={e => { const arr = [...(content.servicios||[])]; arr[idx] = { ...arr[idx], desc: e.target.value }; setContent({ ...content, servicios: arr }); }} placeholder="Descripción breve" />
+                            </div>
+                            <button className="btn-premium btn-premium-outline" style={{ color: '#EF4444', borderColor: 'rgba(239,68,68,0.4)', padding: '8px 12px', fontSize: '11px' }} onClick={() => setContent({ ...content, servicios: (content.servicios||[]).filter(a => a.id !== sv.id) })}>✕</button>
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        className="btn-premium btn-premium-gold"
+                        style={{ marginTop: '16px', padding: '10px 18px', fontSize: '11px' }}
+                        onClick={() => setContent({ ...content, servicios: [...(content.servicios||[]), { id: 's' + Date.now(), title: '', desc: '', icon: '✨' }] })}
+                      >+ Agregar área</button>
+                    </div>
+
+                    {/* LOGROS / CIFRAS */}
+                    <div className="pjl-card" style={{ padding: '24px 28px', background: '#fff', border: '1px solid var(--gold-pale)', borderRadius: '24px' }}>
+                      <h4 className="serif" style={{ marginBottom: '6px', color: 'var(--navy)' }}>🏆 Cifras y logros clave</h4>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: '0 0 16px' }}>Se muestran como contadores animados en Institucional e Historia.</p>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        {(content.logros || []).map((lg, idx) => (
+                          <div key={lg.id} style={{ display: 'grid', gridTemplateColumns: '56px 1fr 1fr auto', gap: '10px', alignItems: 'center', background: 'var(--cream)', borderRadius: '16px', border: '1px solid var(--gold-pale)', padding: '12px' }}>
+                            <input className="pjl-input" value={lg.icon || ''} onChange={e => { const arr = [...(content.logros||[])]; arr[idx] = { ...arr[idx], icon: e.target.value }; setContent({ ...content, logros: arr }); }} placeholder="Icono" style={{ textAlign: 'center' }} />
+                            <input className="pjl-input" value={lg.valor || ''} onChange={e => { const arr = [...(content.logros||[])]; arr[idx] = { ...arr[idx], valor: e.target.value }; setContent({ ...content, logros: arr }); }} placeholder="Ej: 20" />
+                            <input className="pjl-input" value={lg.label || ''} onChange={e => { const arr = [...(content.logros||[])]; arr[idx] = { ...arr[idx], label: e.target.value }; setContent({ ...content, logros: arr }); }} placeholder="Ej: Años de fe" />
+                            <button className="btn-premium btn-premium-outline" style={{ color: '#EF4444', borderColor: 'rgba(239,68,68,0.4)', padding: '8px 12px', fontSize: '11px' }} onClick={() => setContent({ ...content, logros: (content.logros||[]).filter(a => a.id !== lg.id) })}>✕</button>
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        className="btn-premium btn-premium-gold"
+                        style={{ marginTop: '16px', padding: '10px 18px', fontSize: '11px' }}
+                        onClick={() => setContent({ ...content, logros: [...(content.logros||[]), { id: 'l' + Date.now(), valor: '', label: '', icon: '✨' }] })}
+                      >+ Agregar cifra</button>
                     </div>
                   </div>
                 )}

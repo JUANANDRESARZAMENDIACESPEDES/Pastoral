@@ -1651,43 +1651,67 @@ window.setTimeout(() => {
 
         {/* ESTATUTO / OBJETIVO */}
         {currentPage === 'estatuto' && (
-          <section className="section-pjl section-tint tint-violet">
+          <section className="section-pjl nosotros-page">
             <div className="container">
-              <div className="section-head">
-                <span className="premium-label">NORMATIVA</span>
-                <h3>Estatuto y <i>Objetivos</i></h3>
-                <div className="line"></div>
+              <div className="nosotros-hero reveal" style={{ paddingBottom: '20px' }}>
+                <div className="nosotros-hero-badge"><span>✦</span> NORMATIVA</div>
+                <h2 className="serif nosotros-hero-title">Estatuto y <i style={{ color: 'var(--gold)', fontFamily: 'var(--font-display)' }}>Objetivos</i></h2>
+                <div className="nosotros-hero-divider"><span className="dot">†</span></div>
               </div>
-              <div className="mvv-grid" style={{ marginBottom: '60px' }}>
-                <div className="mvv-card" style={{ gridColumn: 'span 2' }}>
+
+              <div className="estatuto-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' }}>
+                <div className="mvv-card nosotros-ident-card reveal" style={{ '--ad': '0.05s' } as CSSProperties}>
+                  <div className="equipos-icon">🎯</div>
                   <h4>Objetivo General</h4>
                   <p>{siteContent.objetivoGeneral || DEFAULT_CONTENT.objetivoGeneral}</p>
                 </div>
-                <div className="mvv-card">
+                <div className="mvv-card nosotros-ident-card reveal" style={{ '--ad': '0.15s' } as CSSProperties}>
+                  <div className="equipos-icon">🧭</div>
                   <h4>Líneas de Acción</h4>
                   <p>{siteContent.lineasAccion || DEFAULT_CONTENT.lineasAccion}</p>
                 </div>
               </div>
-              <div className="mvv-card" style={{ borderLeft: 'none', borderRight: '4px solid var(--gold)' }}>
-                <h4>Cuerpo del Estatuto</h4>
+
+              <div className="mvv-card reveal" style={{ '--ad': '0.2s', borderLeft: 'none', borderRight: '4px solid var(--gold)', borderRadius: '18px' } as CSSProperties}>
+                <h4>📜 Cuerpo del Estatuto</h4>
                 <p style={{ whiteSpace: 'pre-line' }}>{siteContent.estatuto || DEFAULT_CONTENT.estatuto}</p>
               </div>
+
+              {(siteContent.organigrama || siteContent.decanato || siteContent.parroquia) && (
+                <div className="estatuto-meta" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginTop: '32px' }}>
+                  {siteContent.decanato && <div className="estatuto-mini reveal"><span>🏛️</span><strong>Decanato</strong><p>{siteContent.decanato}</p></div>}
+                  {siteContent.parroquia && <div className="estatuto-mini reveal"><span>⛪</span><strong>Parroquia</strong><p>{siteContent.parroquia}</p></div>}
+                  {siteContent.organigrama && <div className="estatuto-mini reveal"><span>🗂️</span><strong>Estructura</strong><p>{siteContent.organigrama}</p></div>}
+                </div>
+              )}
             </div>
           </section>
         )}
 
         {/* HISTORIA - TIMELINE */}
         {currentPage === 'historia' && (
-          <section className="section-pjl history-premium-section">
+          <section className="section-pjl history-premium-section nosotros-page">
             <div className="container">
-              <div className="section-head history-premium-head">
-                <span className="premium-label">LEGADO</span>
-                <h3>Nuestra <i>Historia</i></h3>
-                <p style={{ color: 'var(--text-muted)', maxWidth: '640px', margin: '14px auto 0', fontSize: '15px', lineHeight: 1.8 }}>
-                  Una línea de tiempo más visual y memorable para mostrar el crecimiento de la Pastoral Juvenil Luqueña.
-                </p>
-                <div className="line"></div>
+              <div className="nosotros-hero reveal">
+                <div className="nosotros-hero-badge"><span>✦</span> LEGADO</div>
+                <h2 className="serif nosotros-hero-title">Nuestra <i style={{ color: 'var(--gold)', fontFamily: 'var(--font-display)' }}>Historia</i></h2>
+                <div className="nosotros-hero-divider"><span className="dot">†</span></div>
+                <p className="nosotros-hero-intro">{siteContent.nosotrosHistoria || 'Seguí la línea de tiempo...'}</p>
               </div>
+
+              {/* CIFRAS / LOGROS */}
+              {(siteContent.logros && siteContent.logros.length > 0) && (
+                <div className="nosotros-logros" style={{ marginBottom: '56px' }}>
+                  {siteContent.logros.map((lg, i) => (
+                    <div key={lg.id} className="nosotros-logro reveal" style={{ '--ad': `${i * 0.09}s` } as CSSProperties}>
+                      <span className="nl-ico">{lg.icon}</span>
+                      <strong>{lg.valor}</strong>
+                      <small>{lg.label}</small>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="timeline">
                 {siteContent.historiaTimeline && siteContent.historiaTimeline.length > 0 ? (
                   siteContent.historiaTimeline.map((item, i) => (
@@ -1736,23 +1760,122 @@ window.setTimeout(() => {
 
         {/* --- PAGE: INSTITUCIONAL --- */}
         {currentPage === 'institucional' && (
-          <section className="section-pjl section-tint tint-gold">
-             <div className="container">
-                <div className="section-head reveal">
-                  <span className="premium-label">ORGANIZACIÓN</span>
-                  <h3>Estructura <i>Institucional</i></h3>
-                  <div className="line"></div>
+          <section className="section-pjl nosotros-page">
+            <div className="container">
+              {/* HERO DE INSTITUCIONAL */}
+              <div className="nosotros-hero reveal">
+                <div className="nosotros-hero-badge"><span>✦</span> QUIÉNES SOMOS</div>
+                <h2 className="serif nosotros-hero-title">{siteContent.instiTitulo || 'Nuestra Identidad'}</h2>
+                <div className="nosotros-hero-divider"><span className="dot">†</span></div>
+                <p className="nosotros-hero-intro">{siteContent.nosotrosIntro || 'Somos la Pastoral Juvenil Luqueña, una comunidad eclesial viva...'}</p>
+                <div className="nosotros-lema">
+                  <span className="q">“</span>
+                  {siteContent.nosotrosLema || '«Avivando la llama de Cristo en tu corazón»'}
+                  <span className="q">”</span>
                 </div>
-                <div className="insti-page-grid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '60px', alignItems: 'center' }}>
-                  <div className="reveal">
-                    <h4 className="serif" style={{ fontSize: '32px', color: 'var(--navy)', marginBottom: '25px' }}>{siteContent.instiTitulo}</h4>
-                    <p style={{ fontSize: '1.1rem', lineHeight: '1.8', color: 'var(--text-muted)', textAlign: 'justify', whiteSpace: 'pre-line' }}>{siteContent.instiDesc}</p>
+              </div>
+
+              {/* CIFRAS / LOGROS */}
+              {(siteContent.logros && siteContent.logros.length > 0) && (
+                <div className="nosotros-logros">
+                  {siteContent.logros.map((lg, i) => (
+                    <div key={lg.id} className="nosotros-logro reveal" style={{ '--ad': `${i * 0.09}s` } as CSSProperties}>
+                      <span className="nl-ico">{lg.icon}</span>
+                      <strong>{lg.valor}</strong>
+                      <small>{lg.label}</small>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* MISIÓN / VISIÓN / VALORES */}
+              <div className="nosotros-identidad">
+                <div className={`mvv-card nosotros-ident-card reveal ${siteContent.mision ? 'has' : ''}`} style={{ '--ad': '0.05s' } as CSSProperties}>
+                  <div className="equipos-icon">🎯</div>
+                  <h4>Misión</h4>
+                  <p>{siteContent.mision || 'Acompañar a los jóvenes...'}</p>
+                </div>
+                <div className={`mvv-card nosotros-ident-card reveal ${siteContent.vision ? 'has' : ''}`} style={{ '--ad': '0.15s' } as CSSProperties}>
+                  <div className="equipos-icon">🔭</div>
+                  <h4>Visión</h4>
+                  <p>{siteContent.vision || 'Ser una pastoral viva y misionera...'}</p>
+                </div>
+                <div className={`mvv-card nosotros-ident-card reveal ${siteContent.valores ? 'has' : ''}`} style={{ '--ad': '0.25s' } as CSSProperties}>
+                  <div className="equipos-icon">💎</div>
+                  <h4>Valores</h4>
+                  <p>{siteContent.valores || 'Fe, Comunidad, Servicio...'}</p>
+                </div>
+              </div>
+
+              {/* HISTORIA AMPLIADA + IMAGEN */}
+              <div className="nosotros-historia">
+                <div className="nh-media reveal">
+                  {siteContent.instiFoto ? (
+                    <img src={siteContent.instiFoto} alt="Imagen Institucional" />
+                  ) : (
+                    <div className="nh-media-placeholder">🕊️</div>
+                  )}
+                  <div className="nh-media-caption">{siteContent.instiSubtitle || ''}</div>
+                </div>
+                <div className="nh-text reveal" style={{ '--ad': '0.15s' } as CSSProperties}>
+                  <span className="premium-label nh-eyebrow">NUESTRO CAMINO</span>
+                  <h3 className="serif nh-title">Una historia de <i style={{ color: 'var(--gold)', fontFamily: 'var(--font-display)' }}>fe y servicio</i></h3>
+                  <p>{siteContent.nosotrosHistoria || siteContent.instiDesc || 'Somos una pastoral que camina...'}</p>
+                  {siteContent.decanato && <p><strong>Decanato:</strong> {siteContent.decanato}</p>}
+                  {siteContent.parroquia && <p><strong>Parroquia:</strong> {siteContent.parroquia}</p>}
+                </div>
+              </div>
+
+              {/* SERVICIOS / ÁREAS DE TRABAJO */}
+              {(siteContent.servicios && siteContent.servicios.length > 0) && (
+                <div className="nosotros-servicios">
+                  <div className="ns-head reveal">
+                    <span className="premium-label">ÁREAS DE TRABAJO</span>
+                    <h3 className="serif">Así <i style={{ color: 'var(--gold)', fontFamily: 'var(--font-display)' }}>servimos</i></h3>
                   </div>
-                  <div className="reveal" style={{ animationDelay: '0.2s' }}>
-                    <img src={siteContent.instiFoto} style={{ width: '100%', borderRadius: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }} alt="Imagen Institucional Secundaria" />
+                  <div className="ns-grid">
+                    {siteContent.servicios.map((sv, i) => (
+                      <div key={sv.id} className="ns-card reveal" style={{ '--ad': `${i * 0.08}s`, '--ic': ['#C8973A','#2563EB','#059669','#7C3AED'][i % 4] } as CSSProperties}>
+                        <span className="ns-icon">{sv.icon}</span>
+                        <h4>{sv.title}</h4>
+                        <p>{sv.desc}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
-             </div>
+              )}
+
+              {/* CONTACTO + HORARIOS */}
+              <div className="nosotros-contacto">
+                <div className="nc-block reveal">
+                  <h4>📍 Dónde encontrarnos</h4>
+                  <ul>
+                    {siteContent.contactoSede && <li><span className="nc-k">Sede:</span> {siteContent.contactoSede}</li>}
+                    {siteContent.contactoDireccion && <li><span className="nc-k">Dirección:</span> {siteContent.contactoDireccion}</li>}
+                    {siteContent.contactoTel && <li><span className="nc-k">Teléfono:</span> {siteContent.contactoTel}</li>}
+                    {siteContent.contactEmail && <li><span className="nc-k">Email:</span> {siteContent.contactEmail}</li>}
+                    {siteContent.contactoWeb && <li><span className="nc-k">Web:</span> {siteContent.contactoWeb}</li>}
+                  </ul>
+                </div>
+                <div className="nc-block reveal" style={{ '--ad': '0.12s' } as CSSProperties}>
+                  <h4>🕐 Horarios de encuentro</h4>
+                  <ul>
+                    {siteContent.horariosEncuentro && <li><span className="nc-k">Encuentros:</span> {siteContent.horariosEncuentro}</li>}
+                    {siteContent.horariosFormacion && <li><span className="nc-k">Formación:</span> {siteContent.horariosFormacion}</li>}
+                    {siteContent.horariosMisaLocal && <li><span className="nc-k">Misas:</span> {siteContent.horariosMisaLocal}</li>}
+                  </ul>
+                  {!siteContent.horariosEncuentro && !siteContent.horariosFormacion && !siteContent.horariosMisaLocal && (
+                    <p className="nc-empty">Consultá la agenda pastoral para conocer los horarios de cada encuentro.</p>
+                  )}
+                </div>
+                <div className="nc-block nc-cta reveal" style={{ '--ad': '0.24s' } as CSSProperties}>
+                  <span className="nc-cta-ico">🙌</span>
+                  <h4>¿Querés sumarte?</h4>
+                  <p>Acercate a tu capilla zonal o escribinos por nuestras redes. ¡Todos los jóvenes son bienvenidos!</p>
+                  <button type="button" className="btn-premium btn-premium-gold" onClick={() => navigate('contacto')}>HABLEMOS</button>
+                </div>
+              </div>
+            </div>
           </section>
         )}
 
