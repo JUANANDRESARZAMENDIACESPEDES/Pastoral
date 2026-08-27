@@ -2095,10 +2095,24 @@ window.setTimeout(() => {
 
                   <span className="premium-label">DIÓCESIS DE SAN LORENZO</span>
                   <h2 className="serif">Zona <em className="zh-gold">{selectedZone}</em></h2>
-                  <div className="line" style={{ margin: '20px auto 30px', background: 'var(--gold)', width: '120px', height: '4px' }}></div>
-                  <p style={{ fontSize: '1.8rem', color: 'rgba(255,255,255,0.9)', letterSpacing: '1px', fontFamily: 'var(--font-display)', fontWeight: 300 }}>
-                    {zonasInfo.find(z => z.id === selectedZone)?.name}
+                  <div className="line" style={{ margin: '20px auto 24px', background: 'var(--gold)', width: '120px', height: '4px' }}></div>
+                  <p style={{ fontSize: '1.8rem', color: 'rgba(255,255,255,0.9)', letterSpacing: '1px', fontFamily: 'var(--font-display)', fontWeight: 500 }}>
+                    {zonasInfo.find(z => z.id === selectedZone)?.name || `${['Centro','Norte','Sur','Este','Oeste'][selectedZone] || `Zona ${selectedZone}`}`}
                   </p>
+
+                  {(() => {
+                    const zhChapels = liveChapels.filter(c => c.zonaId === selectedZone);
+                    const zhTotal = zhChapels.length;
+                    const zhActivos = zhChapels.filter(c => c.estadoComunidad === 'Activo').length;
+                    const zhNucleacion = zhChapels.filter(c => c.estadoComunidad === 'Nucleación').length;
+                    return (
+                      <div className="zone-hero-stats reveal">
+                        <div className="zh-stat"><strong>{zhTotal}</strong><span>Comunidades</span></div>
+                        <div className="zh-stat"><strong>{zhActivos}</strong><span>Activas</span></div>
+                        <div className="zh-stat"><strong>{zhNucleacion}</strong><span>Nucleación</span></div>
+                      </div>
+                    );
+                  })()}
                </div>
             </section>
 
