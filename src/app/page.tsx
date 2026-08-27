@@ -413,7 +413,7 @@ function HomeContent() {
   // --- STATE ---
   const [fontSize, setFontSize] = useState(16);
   const [isHighContrast, setIsHighContrast] = useState(false);
-  const [activeZoneTab, setActiveZoneTab] = useState<'capillas' | 'coordination' | 'mapa' | 'comunidades'>('capillas');
+  const [activeZoneTab, setActiveZoneTab] = useState<'capillas' | 'coordination' | 'mapa'>('capillas');
   const [selectedProfile, setSelectedProfile] = useState<MemberProfile | null>(null);
   const [selectedHistoryItem, setSelectedHistoryItem] = useState<TimelineEvent | null>(null);
   const [activeConsejoTab, setActiveConsejoTab] = useState('coordinacion');
@@ -2122,7 +2122,6 @@ window.setTimeout(() => {
                   {([
                     { id: 'capillas', label: 'Capillas', ico: '⛪' },
                     { id: 'coordination', label: 'Coordinadores', ico: '👥' },
-                    { id: 'comunidades', label: 'Comunidades', ico: '✨' },
                     { id: 'mapa', label: 'Mapa', ico: '🗺️' }
                   ] as const).map((t, i) => (
                     <button key={t.id} type="button" role="tab" aria-selected={activeZoneTab === t.id}
@@ -2253,91 +2252,77 @@ window.setTimeout(() => {
 
 
 
-                {activeZoneTab === 'comunidades' && (
-                  <div className="zone-grid">
-                    {liveChapels.filter(c => c.zonaId === selectedZone && c.comunidadNombre).map((c, i) => (
-                      <div key={c.id} className="chapel-premium-card reveal" style={{ animationDelay: `${i * 0.1}s`, cursor: 'pointer' }} onClick={() => setActiveZoneTab('capillas')}>
-                        <div className="chapel-details" style={{ padding: '30px' }}>
-                          <span style={{ color: 'var(--gold)', fontWeight: 800, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '2px' }}>Comunidad Juvenil</span>
-                          <h4 style={{ fontSize: '1.5rem', color: 'var(--navy)', margin: '10px 0 20px', overflowWrap: 'break-word', wordBreak: 'break-word' }}>{c.comunidadNombre}</h4>
-                          
-                          <div className="line" style={{ width: '40px', background: 'var(--gold-pale)', marginBottom: '20px' }}></div>
-                          
-                          <div className="detail-item">
-                            <span className="icon">⚡</span>
-                            <div>
-                              <p className="label">ESTADO ACTUAL</p>
-                              <p className="value" style={{ color: c.estadoComunidad === 'Activo' ? '#2ecc71' : 'var(--gold)', fontWeight: 700 }}>
-                                {c.estadoComunidad}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          <p className="comm-go">
-                             Ir a la capilla <span aria-hidden="true">→</span>
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                    {liveChapels.filter(c => c.zonaId === selectedZone && c.comunidadNombre).length === 0 && (
-                      <div className="pjl-empty-state" style={{ gridColumn: '1 / -1' }}>
-                        <div className="empty-icon">✨</div>
-                        <h4 className="empty-title">Comunidades en actualización</h4>
-                        <p className="empty-desc">Aún no hay comunidades juveniles con nombre registradas en esta zona.</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {/* LISTA GLOBAL TAMBIÉN AQUÍ (SOLICITADO) */}
+                {/* DIRECTORIO DE COMUNIDADES DE ESTA ZONA (mismo estilo que el directorio general) */}
                 <div className="reveal" style={{ marginTop: '80px', borderTop: '2px solid var(--gold-pale)', paddingTop: '60px' }}>
                   <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-                    <h4 className="serif" style={{ fontSize: '1.8rem', color: 'var(--navy)' }}>Directorio de todas las <i>Zonas</i></h4>
-                    <p style={{ color: 'var(--gold)', fontSize: '14px' }}>Buscador general de comunidades juveniles</p>
+                    <span className="premium-label" style={{ background: 'var(--cream)', color: 'var(--gold)', padding: '5px 15px', borderRadius: '20px' }}>ORGANIZACIÓN</span>
+                    <h4 className="serif" style={{ fontSize: '28px', color: 'var(--navy)', margin: '15px 0 8px' }}>Directorio de Comunidades · <i>Zona {selectedZone}</i></h4>
+                    <p style={{ color: 'var(--gold)', fontSize: '14px' }}>Encuentra a todos los grupos juveniles activos de esta zona pastoral.</p>
                   </div>
-                  
-                  <div className="pjl-table-container">
-                    <table className="pjl-table">
-                      <thead>
-                        <tr>
-                          <th>COMUNIDAD</th>
-                          <th>CAPILLA</th>
-                          <th>ZONA</th>
-                          <th>ESTADO</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {liveChapels
-                          .filter(c => c.comunidadNombre)
-                          .map(c => (
-                          <tr key={c.id}>
-                            <td style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                              {c.logoUrl ? (
-                                <SafeImg src={c.logoUrl} alt={`Logo de ${c.comunidadNombre}`} fallback="⛪" fallbackStyle={{ fontSize: '16px', borderRadius: '50%' }} style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover' }} />
-                              ) : (
-                                <span style={{ fontSize: '1.2rem' }}>⛪</span>
-                              )}
-                              {c.comunidadNombre}
-                            </td>
-                            <td>{c.name}</td>
-                            <td><span className="premium-label" style={{ fontSize: '0.6rem' }}>Zona {c.zonaId}</span></td>
-                            <td>
-                              <span style={{ 
-                                padding: '4px 10px', 
-                                borderRadius: '20px', 
-                                fontSize: '10px', 
-                                fontWeight: 800,
-                                background: c.estadoComunidad === 'Activo' ? 'rgba(46,204,113,0.1)' : 'rgba(200,151,58,0.1)',
-                                color: c.estadoComunidad === 'Activo' ? '#27ae60' : 'var(--gold)'
-                              }}>
-                                {c.estadoComunidad}
+
+                  <div className="dir-list">
+                    {liveChapels
+                      .filter(c => c.zonaId === selectedZone && c.comunidadNombre)
+                      .sort((a, b) => a.comunidadNombre.localeCompare(b.comunidadNombre))
+                      .map((c, i) => {
+                        const open = expandedCommIds.has(c.id);
+                        const accent = zoneColors[c.zonaId as 1 | 2 | 3 | 4];
+                        return (
+                          <div key={c.id}
+                               className={`dir-card ${open ? 'is-open' : ''}`}
+                               style={{ animationDelay: `${Math.min(i * 0.06, 0.6)}s`, '--zaccent': accent } as React.CSSProperties}>
+                            <button type="button" className="dir-head" aria-expanded={open} onClick={() => toggleExpandedComm(c.id)}>
+                              <span className="dir-logo" aria-hidden="true">
+                                <SafeImg src={c.logoUrl} alt="" fallback="⛪" fallbackStyle={{ fontSize: '22px' }} />
                               </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                              <span className="dir-id">
+                                <span className="dir-zone">Zona {c.zonaId}</span>
+                                <strong className="dir-name">{c.comunidadNombre}</strong>
+                                <span className="dir-church">⛪ {c.name}</span>
+                              </span>
+                              <span className={`dir-status ${c.estadoComunidad === 'Activo' ? 'is-ok' : 'is-nuc'}`}>
+                                <i aria-hidden="true"></i>{c.estadoComunidad}
+                              </span>
+                              <span className="dir-chevron" aria-hidden="true">▾</span>
+                            </button>
+                            <div className="dir-body">
+                              <div className="dir-body-in">
+                                {c.address && (
+                                  <div className="dir-row">
+                                    <span className="dr-ico" aria-hidden="true">📍</span>
+                                    <div><p className="dr-label">DIRECCIÓN</p><p className="dr-val">{c.address}</p></div>
+                                  </div>
+                                )}
+                                <div className="dir-row">
+                                  <span className="dr-ico" aria-hidden="true">⛪</span>
+                                  <div><p className="dr-label">CAPILLA / SEDE</p><p className="dr-val">{c.name}</p></div>
+                                </div>
+                                <div className="dir-row">
+                                  <span className="dr-ico" aria-hidden="true">⚡</span>
+                                  <div><p className="dr-label">ESTADO DE LA COMUNIDAD</p><p className="dr-val">{c.estadoComunidad}</p></div>
+                                </div>
+                                <div className="dir-actions">
+                                  {c.locationUrl && (
+                                    <a href={c.locationUrl} target="_blank" rel="noreferrer" className="dir-btn dir-btn-gold">🗺️ Ver en Google Maps</a>
+                                  )}
+                                  <button type="button" className="dir-btn dir-btn-line"
+                                          onClick={(e) => { e.stopPropagation(); setActiveZoneTab('capillas'); }}>
+                                    Ver en Capillas <span aria-hidden="true">→</span>
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                   </div>
+                  {liveChapels.filter(c => c.zonaId === selectedZone && c.comunidadNombre).length === 0 && (
+                    <div className="pjl-empty-state">
+                      <div className="empty-icon">⛪</div>
+                      <h4 className="empty-title">No hay comunidades en esta zona</h4>
+                      <p className="empty-desc">Las comunidades de esta zona se irán publicando próximamente. Volvé a visitarla pronto.</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </section>
