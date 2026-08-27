@@ -1003,9 +1003,17 @@ window.setTimeout(() => {
                 <span className="nav-txt">Consejo PJL</span>
                 <span className="nav-caret" aria-hidden="true">▾</span>
               </button>
-              <div className="dropdown-pjl">
-                {councilTabs.map(t => (
-                  <button key={t.id} type="button" onClick={() => { navigate('consejo'); setActiveConsejoTab(t.id); }} className="dropdown-link">{t.label}</button>
+              <div className="dropdown-pjl dropdown-council">
+                <div className="dd-head">👥 Consejo de la PJL</div>
+                {councilTabs.map((t, i) => (
+                  <button key={t.id} type="button" style={{ '--ad': `${i * 0.05}s` } as CSSProperties} onClick={() => { navigate('consejo'); setActiveConsejoTab(t.id); }}
+                    className="dd-team">
+                    <span className="dd-team-ico" style={{ '--tg': ['#C8973A','#2563EB','#059669','#7C3AED','#EF4444'][i % 5] } as CSSProperties}>{councilTabMeta[t.id]?.icon || '•'}</span>
+                    <span className="dd-team-body">
+                      <strong>{t.label}</strong>
+                      <em>{councilTabMeta[t.id]?.desc || ''}</em>
+                    </span>
+                  </button>
                 ))}
               </div>
             </li>
@@ -1015,9 +1023,23 @@ window.setTimeout(() => {
                 <span className="nav-txt">Zonas</span>
                 <span className="nav-caret" aria-hidden="true">▾</span>
               </button>
-              <div className="dropdown-pjl">
-                {zonasInfo.map(z => (
-                  <button key={z.id} type="button" onClick={() => { navigate('zonas'); setActiveZoneTab('capillas'); setSelectedZone(z.id); }} className="dropdown-link">{z.name ? `Zona ${z.id} – ${z.name}` : `Zona ${z.id}`}</button>
+              <div className="dropdown-pjl dropdown-zones">
+                <div className="dd-head">🗺️ Nuestras Zonas Pastorales</div>
+                {zonasInfo.map((z, i) => (
+                  <button key={z.id} type="button" style={{ '--ad': `${i * 0.05}s` } as CSSProperties} onClick={() => { navigate('zonas'); setActiveZoneTab('capillas'); setSelectedZone(z.id); }}
+                    className="dd-zone">
+                    <span className="dd-zone-logo">
+                      {branding[`zona${z.id}Logo`] ? (
+                        <SafeImg src={branding[`zona${z.id}Logo`] as string} alt={`Logotipo de la Zona ${z.id}`} fallback={`${z.id}`} fallbackStyle={{ fontSize: '22px', fontWeight: 800 }} />
+                      ) : (
+                        <span className="dd-zone-fallback">{z.id}</span>
+                      )}
+                    </span>
+                    <span className="dd-zone-body">
+                      <strong>Zona {z.id}</strong>
+                      <em>{z.name || `${['Centro','Norte','Sur','Este','Oeste'][z.id] || `Zona ${z.id}`}`}</em>
+                    </span>
+                  </button>
                 ))}
               </div>
             </li>
@@ -1113,10 +1135,13 @@ window.setTimeout(() => {
                 <span className={`drawer-caret ${mobileSubmenuOpen['consejo'] ? 'open' : ''}`}>▾</span>
               </button>
               {mobileSubmenuOpen['consejo'] && (
-                <ul className="drawer-sublinks">
-                  {councilTabs.map(t => (
+                <ul className="drawer-sublinks drawer-sublinks-rich">
+                  {councilTabs.map((t, i) => (
                     <li key={t.id}>
-                      <Link href="/?page=consejo" onClick={(e) => { navigate('consejo', e); setActiveConsejoTab(t.id); setIsMobileMenuOpen(false); }} className="drawer-sublink">{t.label}</Link>
+                      <Link href="/?page=consejo" onClick={(e) => { navigate('consejo', e); setActiveConsejoTab(t.id); setIsMobileMenuOpen(false); }} className="drawer-sublink drawer-sublink-rich">
+                        <span className="dd-team-ico" style={{ '--tg': ['#C8973A','#2563EB','#059669','#7C3AED','#EF4444'][i % 5] } as CSSProperties}>{councilTabMeta[t.id]?.icon || '•'}</span>
+                        <span className="dd-team-body"><strong>{t.label}</strong><em>{councilTabMeta[t.id]?.desc || ''}</em></span>
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -1130,10 +1155,19 @@ window.setTimeout(() => {
                 <span className={`drawer-caret ${mobileSubmenuOpen['zonas'] ? 'open' : ''}`}>▾</span>
               </button>
               {mobileSubmenuOpen['zonas'] && (
-                <ul className="drawer-sublinks">
+                <ul className="drawer-sublinks drawer-sublinks-rich">
                   {zonasInfo.map(z => (
                     <li key={z.id}>
-                      <Link href="/?page=zonas" onClick={(e) => { navigate('zonas', e); setActiveZoneTab('capillas'); setSelectedZone(z.id); setIsMobileMenuOpen(false); }} className="drawer-sublink">Zona {z.id} – {z.name}</Link>
+                      <Link href="/?page=zonas" onClick={(e) => { navigate('zonas', e); setActiveZoneTab('capillas'); setSelectedZone(z.id); setIsMobileMenuOpen(false); }} className="drawer-sublink drawer-sublink-rich">
+                        <span className="dd-zone-logo">
+                          {branding[`zona${z.id}Logo`] ? (
+                            <SafeImg src={branding[`zona${z.id}Logo`] as string} alt={`Logotipo de la Zona ${z.id}`} fallback={`${z.id}`} fallbackStyle={{ fontSize: '20px', fontWeight: 800 }} />
+                          ) : (
+                            <span className="dd-zone-fallback">{z.id}</span>
+                          )}
+                        </span>
+                        <span className="dd-zone-body"><strong>Zona {z.id}</strong><em>{z.name || `${['Centro','Norte','Sur','Este','Oeste'][z.id] || `Zona ${z.id}`}`}</em></span>
+                      </Link>
                     </li>
                   ))}
                 </ul>
