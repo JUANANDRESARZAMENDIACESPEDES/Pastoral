@@ -84,7 +84,7 @@ function SafeImg({ src, alt, style, className, fallback = '⛪', fallbackStyle }
       </span>
     );
   }
-  return <img src={src} alt={alt} style={style} className={className} loading="lazy" onError={() => setErr(true)} />;
+  return <img src={src} alt={alt} style={style} className={className} loading="lazy" decoding="async" onError={() => setErr(true)} />;
 };
 
 const mapHeroPosition = (position?: string) => {
@@ -419,6 +419,8 @@ function HomeContent() {
   const [activeConsejoTab, setActiveConsejoTab] = useState('coordinacion');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [globalCommFilter, setGlobalCommFilter] = useState<number | 'all'>('all');
+  const [newsEmail, setNewsEmail] = useState('');
+  const [newsSubscribed, setNewsSubscribed] = useState(false);
   const [expandedCommIds, setExpandedCommIds] = useState<Set<string>>(new Set());
   const toggleExpandedComm = (id: string) => {
     setExpandedCommIds(prev => {
@@ -491,7 +493,9 @@ const [newsSearch, setNewsSearch] = useState('');
   const [liveNews, setLiveNews] = useState<PublicNewsItem[]>([]);
   const [liveFaq, setLiveFaq] = useState<FaqItem[]>([]);
   const [liveProfiles, setLiveProfiles] = useState<MemberProfile[]>([]);
-  const [branding, setBranding] = useState<Branding>(DEFAULT_BRANDING);
+  const [branding, setBranding] = useState<Branding>(() =>
+    typeof window !== 'undefined' ? store.branding.get() : DEFAULT_BRANDING
+  );
   const [liveHeroImages, setLiveHeroImages] = useState<HeroSlide[]>([]);
   const [heroIntervalSecs, setHeroIntervalSecs] = useState<number>(3);
   const [liveHeroIndex, setLiveHeroIndex] = useState(0);
@@ -3254,102 +3258,223 @@ window.setTimeout(() => {
       )}
 
       {/* 4. FOOTER INSTITUCIONAL REFINADO */}
+      {(() => {
+        const realTel = siteContent.contactoTel || '';
+        const hoursTrim = [
+          { ico: '🕐', label: 'ENCUENTROS', val: siteContent.horariosEncuentro || '' },
+          { ico: '🎓', label: 'FORMACIÓN', val: siteContent.horariosFormacion || '' },
+          { ico: '⛪', label: 'MISAS', val: siteContent.horariosMisaLocal || '' }
+        ].filter(h => h.val);
+        return (
       <footer className="footer-pjl">
+        <div className="footer-ornament" aria-hidden="true"><span></span><span></span><span></span></div>
         <div className="container">
+          <div className="footer-topline"><span></span><i>†</i><span></span></div>
           <div className="footer-grid">
-            
+
             {/* Columna 1: Branding y Redes */}
-            <div>
-              <div className="logo-area" style={{ cursor: 'pointer', marginBottom: '20px' }} onClick={() => navigate('home')}>
-                {branding.mainLogo && <img src={branding.mainLogo} className="logo-img-circular" style={{ height: '60px', width: '60px', marginRight: '15px' }} alt="Logo Footer PJL" />}
+            <div className="footer-col footer-col-brand">
+              <div className="logo-area footer-brand-row" style={{ cursor: 'pointer', marginBottom: '20px' }} onClick={() => navigate('home')}>
+                <span className="footer-logo-badge">
+                  {branding.mainLogo && <img src={branding.mainLogo} className="logo-img-circular" style={{ height: '100%', width: '100%', objectFit: 'cover' }} alt="Logo Footer PJL" loading="lazy" decoding="async" />}
+                </span>
                 <div>
-                  <h2 className="serif" style={{ color: '#fff', fontSize: '24px', margin: 0, lineHeight: 1 }}>PJL</h2>
+                  <h2 className="serif" style={{ color: '#fff', fontSize: '26px', margin: 0, lineHeight: 1 }}>PJL</h2>
                   <p style={{ color: 'var(--gold)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '2px', margin: 0 }}>Pastoral Juvenil Luqueña</p>
                 </div>
               </div>
-              <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', lineHeight: '1.8', marginBottom: '30px', maxWidth: '300px' }}>
+              <p className="footer-about">
                 Jóvenes de Luque que caminan en la fe, crecen en comunidad y transforman el mundo desde el amor de Cristo.
               </p>
-              <div className="footer-social-custom" style={{ display: 'flex', gap: '15px' }}>
-                <a href={liveSocial.instagram} target="_blank" rel="noreferrer" className="btn-icon-minimalist">IG</a>
-                <a href={liveSocial.facebook} target="_blank" rel="noreferrer" className="btn-icon-minimalist">FB</a>
-                <a href={`https://wa.me/${liveSocial.whatsapp.replace(/\D/g,'')}`} target="_blank" rel="noreferrer" className="btn-icon-minimalist">WA</a>
+
+              <div className="footer-social-wrap">
+                <span className="footer-social-title">Seguinos</span>
+                <div className="footer-social">
+                  <a href={liveSocial.instagram} target="_blank" rel="noreferrer" className="fs-badge" data-label="Instagram" aria-label="Instagram"><span>📸</span></a>
+                  <a href={liveSocial.facebook} target="_blank" rel="noreferrer" className="fs-badge" data-label="Facebook" aria-label="Facebook"><span>👍</span></a>
+                  <a href={liveSocial.youtube} target="_blank" rel="noreferrer" className="fs-badge" data-label="YouTube" aria-label="YouTube"><span>▶️</span></a>
+                  <a href={`https://wa.me/${liveSocial.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="fs-badge" data-label="WhatsApp" aria-label="WhatsApp"><span>💬</span></a>
+                </div>
               </div>
             </div>
 
-            {/* Columna 1: Navegación */}
-            <div>
-              <h4 style={{ color: 'var(--gold)', marginBottom: '25px', letterSpacing: '2px', fontSize: '13px', textTransform: 'uppercase' }}>🧭 Navegación</h4>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: '15px' }}>
+            {/* Columna 2: Navegación */}
+            <div className="footer-col">
+              <h4 className="footer-title">🧭 Navegación</h4>
+              <ul className="footer-links">
                 <li><button className="footer-link-btn" onClick={() => navigate('home')}>Inicio</button></li>
-                <li><button className="footer-link-btn" onClick={() => navigate('estatuto')}>Estatuto</button></li>
+                <li><button className="footer-link-btn" onClick={() => navigate('institucional')}>Institucional</button></li>
                 <li><button className="footer-link-btn" onClick={() => navigate('consejo')}>Consejo PJL</button></li>
                 <li><button className="footer-link-btn" onClick={() => navigate('zonas')}>Zonas</button></li>
+                <li><button className="footer-link-btn" onClick={() => navigate('estatuto')}>Estatuto</button></li>
               </ul>
             </div>
 
-            {/* Columna 2: Comunidad */}
-            <div>
-              <h4 style={{ color: 'var(--gold)', marginBottom: '25px', letterSpacing: '2px', fontSize: '13px', textTransform: 'uppercase' }}>🌍 Comunidad</h4>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: '15px' }}>
+            {/* Columna 3: Comunidad */}
+            <div className="footer-col">
+              <h4 className="footer-title">🌍 Comunidad</h4>
+              <ul className="footer-links">
                 <li><button className="footer-link-btn" onClick={() => navigate('agenda')}>Agenda Pastoral</button></li>
                 <li><button className="footer-link-btn" onClick={() => navigate('noticias')}>Últimas Noticias</button></li>
-                <li><button className="footer-link-btn" onClick={() => navigate('contacto')}>Contacto</button></li>
+                <li><button className="footer-link-btn" onClick={() => navigate('documentos')}>Documentos</button></li>
                 <li><button className="footer-link-btn" onClick={() => navigate('preguntas')}>Preguntas Frecuentes</button></li>
+                <li><button className="footer-link-btn" onClick={() => navigate('contacto')}>Contacto</button></li>
               </ul>
             </div>
-            
-            {/* Columna 3: Ubicación y Contacto */}
-            <div>
-              <h4 style={{ color: 'var(--gold)', marginBottom: '25px', letterSpacing: '2px', fontSize: '13px', textTransform: 'uppercase' }}>📍 Ubicación</h4>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: '15px', color: 'rgba(255,255,255,0.7)', fontSize: '14px', lineHeight: '1.6' }}>
-                <li style={{ display: 'flex', gap: '8px' }}><span>⛪</span> Catedral Virgen del Rosario</li>
-                <li style={{ display: 'flex', gap: '8px' }}><span>🇵🇾</span> Luque - Paraguay</li>
-                <li style={{ display: 'flex', gap: '8px' }}><span>📧</span> pjl.luque@gmail.com</li>
+
+            {/* Columna 4: Contacto y Horarios */}
+            <div className="footer-col">
+              <h4 className="footer-title">📍 Contacto</h4>
+              <ul className="footer-contact">
+                <li className="fc-item">
+                  <span className="fc-ico">⛪</span>
+                  <div><p className="fc-label">SEDE</p><p className="fc-val">{siteContent.contactoSede || 'Catedral Virgen del Rosario'}</p></div>
+                </li>
+                <li className="fc-item">
+                  <span className="fc-ico">📍</span>
+                  <div><p className="fc-label">DIRECCIÓN</p><p className="fc-val">{siteContent.contactoDireccion || 'Luque - Paraguay'}</p></div>
+                </li>
+                <li className="fc-item">
+                  <span className="fc-ico">📧</span>
+                  <div><p className="fc-label">EMAIL</p><p className="fc-val">pjl.luque@gmail.com</p></div>
+                </li>
+                {realTel && (
+                  <li className="fc-item">
+                    <span className="fc-ico">📞</span>
+                    <div><p className="fc-label">TELÉFONO</p><p className="fc-val">{realTel}</p></div>
+                  </li>
+                )}
               </ul>
             </div>
-            
+
+            {/* Columna 5: Suscríbete / Horarios */}
+            <div className="footer-col footer-col-news">
+              <h4 className="footer-title">✉️ Boletín Pastoral</h4>
+              <p className="footer-news-note">Recibí novedades, retiros y celebraciones en tu correo.</p>
+              {newsSubscribed ? (
+                <div className="footer-news-ok">✓ ¡Gracias por suscribirte! Te avisaremos de cada novedad.</div>
+              ) : (
+                <form className="footer-news-form" onSubmit={(e) => { e.preventDefault(); if (newsEmail.includes('@')) { setNewsSubscribed(true); } }}>
+                  <input
+                    type="email"
+                    className="footer-news-input"
+                    placeholder="tucorreo@ejemplo.com"
+                    value={newsEmail}
+                    onChange={(e) => setNewsEmail(e.target.value)}
+                    aria-label="Correo electrónico"
+                    required
+                  />
+                  <button type="submit" className="footer-news-btn">Suscribirme</button>
+                </form>
+              )}
+              <div className="footer-hours">
+                <h4 className="footer-title" style={{ marginTop: '26px' }}>🕐 Encuentros</h4>
+                <ul className="footer-contact">
+                  {hoursTrim.length ? hoursTrim.map((h, i) => (
+                    <li key={i} className="fc-item fc-item-mini"><span className="fc-ico">{h.ico}</span><div><p className="fc-label">{h.label}</p><p className="fc-val">{h.val}</p></div></li>
+                  )) : (
+                    <li className="fc-item fc-item-mini"><span className="fc-ico">🕐</span><div><p className="fc-label">ENCUENTROS</p><p className="fc-val">Escribinos por WhatsApp</p></div></li>
+                  )}
+                </ul>
+              </div>
+            </div>
+
           </div>
-          <div style={{ marginTop: '70px', paddingTop: '30px', borderTop: '1px solid rgba(255,255,255,0.05)', textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>
-            © {new Date().getFullYear()} Pastoral Juvenil Luqueña. Desarrollado para la Gloria de Dios.
+
+          <div className="footer-bottom">
+            <span className="fb-copy">© {new Date().getFullYear()} Pastoral Juvenil Luqueña · Hecho con fe ❤ </span>
+            <span className="fb-faith">† &ldquo;Caminamos juntos hacia el cielo&rdquo;</span>
           </div>
         </div>
       </footer>
+        );
+      })()}
       
       {/* Styles inline for footer links just to keep it clean */}
       <style dangerouslySetInnerHTML={{__html: `
-        .footer-link-btn {
-          background: none;
-          border: none;
-          color: rgba(255,255,255,0.7);
-          font-family: inherit;
-          font-size: 14px;
-          cursor: pointer;
-          padding: 0;
-          text-align: left;
-          transition: 0.3s;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        .footer-link-btn:hover {
-          color: #fff;
-          transform: translateX(8px);
-        }
+        /* ===== FOOTER ENRIQUECIDO ===== */
+        .footer-pjl { position: relative; overflow: hidden; background: radial-gradient(1200px 600px at 15% -10%, rgba(200,151,58,0.14), transparent 60%), linear-gradient(180deg, #141d33 0%, #1A2744 55%, #0f1527 100%); }
+
+        .footer-ornament { position: absolute; inset: 0; pointer-events: none; opacity: .5; }
+        .footer-ornament span { position: absolute; border-radius: 50%; filter: blur(60px); }
+        .footer-ornament span:nth-child(1) { width: 420px; height: 420px; left: -120px; top: -120px; background: radial-gradient(circle, rgba(200,151,58,.25), transparent 70%); animation: footDrift 14s ease-in-out infinite alternate; }
+        .footer-ornament span:nth-child(2) { width: 380px; height: 380px; right: -100px; bottom: -120px; background: radial-gradient(circle, rgba(46,94,74,.3), transparent 70%); animation: footDrift 18s ease-in-out infinite alternate-reverse; }
+        .footer-ornament span:nth-child(3) { width: 200px; height: 200px; left: 55%; top: 40%; background: radial-gradient(circle, rgba(200,151,58,.18), transparent 70%); animation: footDrift 22s ease-in-out infinite alternate; }
+        @keyframes footDrift { to { transform: translate(60px, 40px) scale(1.15); } }
+
+        .footer-topline { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 56px; }
+        .footer-topline span { height: 2px; width: 90px; background: linear-gradient(90deg, transparent, var(--gold)); }
+        .footer-topline span:last-child { background: linear-gradient(90deg, var(--gold), transparent); }
+        .footer-topline i { color: var(--gold); font-style: normal; animation: footCross 3s ease-in-out infinite; display: inline-block; }
+        @keyframes footCross { 0%,100%{ transform: rotate(0) scale(1); } 50%{ transform: rotate(180deg) scale(1.25); } }
+
+        .footer-grid { display: grid; grid-template-columns: 1.8fr 1fr 1fr 1.2fr 1.3fr; gap: 40px; margin-bottom: 70px; }
+        .footer-col { padding-top: 4px; }
+
+        .footer-title { color: var(--gold); margin: 0 0 22px; letter-spacing: 2px; font-size: 13px; text-transform: uppercase; position: relative; display: inline-flex; align-items: center; gap: 8px; }
+        .footer-title::after { content: ''; position: absolute; left: 0; bottom: -9px; width: 34px; height: 3px; border-radius: 3px; background: linear-gradient(90deg, var(--gold), transparent); animation: footLine 3s ease-in-out infinite; }
+        @keyframes footLine { 0%,100%{ width: 26px; opacity:.7; } 50%{ width: 44px; opacity:1; } }
+
+        /* Branding */
+        .footer-brand-row { display: flex; align-items: center; gap: 14px; }
+        .footer-logo-badge { width: 62px; height: 62px; border-radius: 50%; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(145deg, #fff, #efe3c4); border: 2px solid var(--gold); box-shadow: 0 8px 24px rgba(200,151,58,.35); flex-shrink: 0; transition: transform .4s cubic-bezier(.34,1.56,.64,1); }
+        .footer-brand-row:hover .footer-logo-badge { transform: rotate(6deg) scale(1.06); }
+        .footer-about { color: rgba(255,255,255,.62); font-size: 14px; line-height: 1.85; margin: 22px 0 26px; max-width: 300px; }
+
+        .footer-social-title { display: block; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.45); margin-bottom: 12px; }
+        .footer-social { display: flex; gap: 12px; }
+        .fs-badge { position: relative; width: 44px; height: 44px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 19px; color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); transition: transform .35s cubic-bezier(.34,1.56,.64,1), background .3s, box-shadow .3s, border-color .3s; }
+        .fs-badge:hover { transform: translateY(-5px) rotate(-6deg) scale(1.08); background: var(--gold); border-color: var(--gold); box-shadow: 0 10px 22px rgba(200,151,58,.45); }
+        .fs-badge::after { content: attr(data-label); position: absolute; bottom: -32px; left: 50%; transform: translateX(-50%) translateY(4px); background: var(--navy); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .5px; padding: 4px 9px; border-radius: 8px; white-space: nowrap; opacity: 0; pointer-events: none; transition: .25s; border: 1px solid rgba(200,151,58,.35); }
+        .fs-badge:hover::after { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* Links */
+        .footer-links { list-style: none; padding: 0; margin: 0; display: grid; gap: 13px; }
+        .footer-link-btn { background: none; border: none; color: rgba(255,255,255,.66); font-family: inherit; font-size: 14px; cursor: pointer; padding: 0; text-align: left; transition: .3s; display: inline-flex; align-items: center; gap: 8px; position: relative; }
+        .footer-link-btn::before { content: '›'; color: var(--gold); opacity: 0; transform: translateX(-6px); transition: .3s; }
+        .footer-link-btn:hover { color: #fff; transform: translateX(6px); }
+        .footer-link-btn:hover::before { opacity: 1; transform: translateX(0); }
+
+        /* Contacto */
+        .footer-contact { list-style: none; padding: 0; margin: 0; display: grid; gap: 15px; }
+        .fc-item { display: flex; gap: 12px; align-items: flex-start; transition: transform .3s; }
+        .fc-item:hover { transform: translateX(5px); }
+        .fc-item-mini .fc-val { color: rgba(255,255,255,.55); }
+        .fc-ico { flex: 0 0 34px; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 15px; background: rgba(200,151,58,.12); border: 1px solid rgba(200,151,58,.25); }
+        .fc-item:hover .fc-ico { background: rgba(200,151,58,.22); transform: rotate(-8deg) scale(1.08); }
+        .fc-label { margin: 0; font-size: 10px; letter-spacing: 1.5px; color: var(--gold); text-transform: uppercase; }
+        .fc-val { margin: 3px 0 0; font-size: 13.5px; color: rgba(255,255,255,.8); line-height: 1.45; }
+
+        /* Boletín */
+        .footer-news-note { color: rgba(255,255,255,.62); font-size: 13px; line-height: 1.6; margin: 0 0 16px; }
+        .footer-news-form { display: flex; flex-direction: column; gap: 10px; }
+        .footer-news-input { width: 100%; box-sizing: border-box; padding: 13px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.06); color: #fff; font-family: inherit; font-size: 14px; outline: none; transition: .3s; }
+        .footer-news-input::placeholder { color: rgba(255,255,255,.35); }
+        .footer-news-input:focus { border-color: var(--gold); background: rgba(255,255,255,.1); box-shadow: 0 0 0 3px rgba(200,151,58,.15); }
+        .footer-news-btn { position: relative; overflow: hidden; width: 100%; padding: 13px 16px; border-radius: 12px; border: none; cursor: pointer; font-family: var(--font-display); font-weight: 700; font-size: 15px; letter-spacing: .5px; color: var(--navy); background: linear-gradient(120deg, #f0d9a6, var(--gold) 55%, #e8c36a); transition: transform .3s cubic-bezier(.34,1.56,.64,1), box-shadow .3s; }
+        .footer-news-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(200,151,58,.4); }
+        .footer-news-btn::after { content: ''; position: absolute; top: 0; bottom: 0; left: -80%; width: 45%; background: linear-gradient(105deg, transparent, rgba(255,255,255,.6), transparent); transition: left .55s ease; }
+        .footer-news-btn:hover::after { left: 130%; }
+        .footer-news-ok { padding: 14px 16px; border-radius: 12px; background: rgba(46,204,113,.12); border: 1px solid rgba(46,204,113,.4); color: #7ee3a8; font-size: 13px; line-height: 1.5; animation: footOk .5s cubic-bezier(.34,1.56,.64,1); }
+        @keyframes footOk { 0%{ opacity:0; transform: scale(.9); } 100%{ opacity:1; transform: scale(1); } }
+
+        /* Bottom */
+        .footer-bottom { margin-top: 30px; padding: 28px 0 0; border-top: 1px solid rgba(255,255,255,.08); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+        .fb-copy { color: rgba(255,255,255,.5); font-size: 13px; }
+        .fb-faith { color: rgba(200,151,58,.9); font-size: 13px; font-style: italic; font-family: var(--font-display); letter-spacing: .5px; }
+
+        @media (max-width: 1100px) { .footer-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 768px) { .footer-grid { grid-template-columns: repeat(2, 1fr); gap: 34px; } .footer-bottom { flex-direction: column; text-align: center; } }
+        @media (max-width: 520px) { .footer-grid { grid-template-columns: 1fr; } }
+
         /* Custom Scrollbar for Modals */
-        .modal-scroll::-webkit-scrollbar {
-          width: 6px;
-        }
-        .modal-scroll::-webkit-scrollbar-track {
-          background: rgba(0,0,0,0.05);
-          border-radius: 10px;
-        }
-        .modal-scroll::-webkit-scrollbar-thumb {
-          background: var(--gold-pale);
-          border-radius: 10px;
-        }
-        .modal-scroll::-webkit-scrollbar-thumb:hover {
-          background: var(--gold);
+        .modal-scroll::-webkit-scrollbar { width: 6px; }
+        .modal-scroll::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 10px; }
+        .modal-scroll::-webkit-scrollbar-thumb { background: var(--gold-pale); border-radius: 10px; }
+        .modal-scroll::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+        @media (prefers-reduced-motion: reduce) {
+          .footer-ornament span, .footer-topline i, .footer-title::after, .fs-badge, .footer-news-btn::after, .footer-link-btn, .fc-item { animation: none !important; transition: none !important; }
         }
       `}} />
     </div>
