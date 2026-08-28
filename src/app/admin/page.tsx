@@ -1889,43 +1889,68 @@ function AdminContent() {
               <div className="admin-dashboard-main-grid" style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '20px', marginBottom: '20px' }}>
 
                 {/* VISITS BY SECTION — HORIZONTAL BARS */}
-                <div className="admin-analytics-card pop-in" style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: '16px', padding: '28px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', animationDelay: '0.2s' }}>
-                  <div className="admin-dashboard-card-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <div className="admin-analytics-card pop-in anal-visits-card" style={{ background: '#fff', border: '1px solid #e8e0d5', borderRadius: '16px', padding: '28px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', animationDelay: '0.2s' }}>
+                  <div className="admin-dashboard-card-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' }}>
                     <div>
-                      <h3 style={{ margin: 0, color: 'var(--navy)', fontSize: '16px', fontWeight: 700 }}>📊 Visitas por Sección</h3>
-                      <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#888' }}>Visitas e interacciones registradas automáticamente</p>
+                      <h3 style={{ margin: 0, color: 'var(--navy)', fontSize: '16px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span className="anal-sec-ico" style={{ width: '34px', height: '34px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, var(--navy), #2b3a63)', color: '#fff', fontSize: '16px' }}>📊</span>
+                        Visitas por Sección
+                      </h3>
+                      <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#888' }}>Rendimiento de cada sección del sitio</p>
                     </div>
-                    <div className="admin-dashboard-actions" style={{ display: 'flex', gap: '8px' }}>
-                      <button onClick={() => { const s = store.stats.get(); const csv = 'Sección,Visitas,Interacciones\n' + s.map(e => `"${e.label}",${e.visits},${e.interactions}`).join('\n'); const a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv); a.download = 'reporte_pjl.csv'; a.click(); showToast('CSV descargado ✔'); }} style={{ fontSize: '10px', padding: '5px 12px', background: 'var(--cream)', border: '1px solid var(--gold-pale)', borderRadius: '6px', cursor: 'pointer', color: 'var(--navy)', fontWeight: 600 }}>📥 CSV</button>
-                      <button onClick={resetStats} style={{ fontSize: '10px', padding: '5px 12px', background: '#fff0f0', border: '1px solid #fca5a5', borderRadius: '6px', cursor: 'pointer', color: '#b91c1c', fontWeight: 600 }}>🗑️ Reset</button>
-                      <span style={{ fontSize: '10px', background: '#d1fae5', color: '#065f46', padding: '5px 10px', borderRadius: '20px', fontWeight: 700 }}>● Auto-sync</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                      <span className="anal-total-chip" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 800, color: 'var(--navy)', background: 'linear-gradient(120deg, #f5e9cf, #fbf6ec)', border: '1px solid var(--gold-pale)', padding: '7px 14px', borderRadius: '30px' }}>
+                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--gold)', boxShadow: '0 0 0 3px rgba(200,151,58,.2)' }} />
+                        {liveVisits.toLocaleString('es-ES')} visitas
+                      </span>
+                      <div className="anal-actions" style={{ display: 'flex', gap: '6px' }}>
+                        <button onClick={() => { const s = store.stats.get(); const csv = 'Sección,Visitas,Interacciones,Desktop,Tablet,Móvil\n' + s.map(e => `"${e.label}",${e.visits},${e.interactions},${e.desktopVisits||0},${e.tabletVisits||0},${e.mobileVisits||0}`).join('\n'); const a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv); a.download = 'reporte_pjl.csv'; a.click(); showToast('CSV descargado ✔'); }} title="Exportar reporte" style={{ fontSize: '10px', padding: '5px 12px', background: 'var(--cream)', border: '1px solid var(--gold-pale)', borderRadius: '8px', cursor: 'pointer', color: 'var(--navy)', fontWeight: 700, transition: 'all .25s', boxShadow: '0 2px 6px rgba(0,0,0,.05)' }}>📥 CSV</button>
+                        <button onClick={resetStats} title="Reiniciar contadores" style={{ fontSize: '10px', padding: '5px 12px', background: '#fff0f0', border: '1px solid #fca5a5', borderRadius: '8px', cursor: 'pointer', color: '#b91c1c', fontWeight: 700, transition: 'all .25s', boxShadow: '0 2px 6px rgba(0,0,0,.05)' }}>🗑️ Reset</button>
+                        <span style={{ fontSize: '10px', background: '#d1fae5', color: '#065f46', padding: '5px 10px', borderRadius: '20px', fontWeight: 700, alignSelf: 'center' }}>● Auto-sync</span>
+                      </div>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {(Array.isArray(pageStats) ? pageStats : [])
                       .sort((a, b) => (b?.visits || 0) - (a?.visits || 0))
                       .slice(0, 8)
                       .map((stat, i) => {
                         if (!stat) return null;
-                        const pct = maxVisits > 0 ? Math.round(((stat.visits || 0) / maxVisits) * 100) : 0;
-                        const intPct = maxInteractions > 0 ? Math.round(((stat.interactions || 0) / maxInteractions) * 100) : 0;
+                        const visits = stat.visits || 0;
+                        const ints = stat.interactions || 0;
+                        const pct = maxVisits > 0 ? Math.round((visits / maxVisits) * 100) : 0;
+                        const share = liveVisits > 0 ? Math.round((visits / liveVisits) * 100) : 0;
+                        const intPct = maxInteractions > 0 ? Math.round((ints / maxInteractions) * 100) : 0;
+                        const icon = ({ inicio: '🏠', home: '🏠', noticia: '📰', agenda: '📅', zona: '🗺️', consejo: '👥', documento: '📁', contacto: '✉️', instituc: '🏛️', historia: '📜', estatuto: '📋', pregunt: '❓', nosotros: '🌿', misi: '🎯' } as Record<string, string>)[(stat.label || '').toLowerCase().replace(/\s/g, '')] || '📍';
+                        const rankColor = ['linear-gradient(135deg,#f6c954,#d9a220)', 'linear-gradient(135deg,#c9d4e0,#9fafc0)', 'linear-gradient(135deg,#e3a878,#c97f4d)'][i];
                         return (
-                          <div key={stat.page || i}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', alignItems: 'center' }}>
-                              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--navy)', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                {i === 0 && <span style={{ fontSize: '9px', background: 'var(--gold)', color: 'var(--navy)', padding: '1px 5px', borderRadius: '3px', fontWeight: 800 }}>TOP</span>}
-                                {stat.label}
-                              </span>
-                              <div style={{ display: 'flex', gap: '12px' }}>
-                                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--navy)' }}>{(stat.visits || 0).toLocaleString('es-ES')} <span style={{ fontWeight: 400, color: '#888' }}>vis.</span></span>
-                                <span style={{ fontSize: '11px', fontWeight: 700, color: '#10B981' }}>{(stat.interactions || 0).toLocaleString('es-ES')} <span style={{ fontWeight: 400, color: '#888' }}>int.</span></span>
+                          <div key={stat.page || i} className={`anal-row ${i === 0 ? 'is-top' : ''}`} style={{ '--rd': `${i * 0.06}s` } as React.CSSProperties}>
+                            <div className="anal-row-top">
+                              <div className="anal-row-left">
+                                <span className="anal-rank" style={i < 3 ? { background: rankColor, color: '#1A2744' } : undefined}>{i + 1}</span>
+                                <span className="anal-badge" aria-hidden="true">{icon}</span>
+                                <span className="anal-label">
+                                  {stat.label}
+                                  {share >= 20 && <em className="anal-hot">🔥 Popular</em>}
+                                  {i === 0 && <em className="anal-top-tag">TOP</em>}
+                                </span>
+                              </div>
+                              <div className="anal-counts">
+                                <span className="anal-count" title="Visitas"><b>{visits.toLocaleString('es-ES')}</b><em>vis.</em></span>
+                                <span className="anal-count green" title="Interacciones"><b>{ints.toLocaleString('es-ES')}</b><em>int.</em></span>
                               </div>
                             </div>
-                            <div style={{ height: '7px', background: '#f0ece4', borderRadius: '4px', overflow: 'hidden', marginBottom: '2px' }}>
-                              <div className="stat-bar-fill" style={{ height: '100%', width: `${pct}%`, background: i === 0 ? 'var(--gold)' : 'var(--navy)', borderRadius: '4px', transition: '1s ease', animationDelay: `${0.3 + i * 0.07}s` }} />
+                            <div className="anal-track">
+                              <div className="stat-bar-fill anal-fill anal-fill-main" style={{ width: `${pct}%`, animationDelay: `${0.3 + i * 0.07}s` }} />
                             </div>
-                            <div style={{ height: '4px', background: '#ecfdf5', borderRadius: '4px', overflow: 'hidden' }}>
-                              <div className="stat-bar-fill stat-bar-fill-green" style={{ height: '100%', width: `${intPct}%`, background: '#10B981', borderRadius: '4px', transition: '1s ease', animationDelay: `${0.45 + i * 0.07}s` }} />
+                            <div className="anal-foot">
+                              <span className="anal-share">{share}% del total</span>
+                              <span className="anal-devices">
+                                <i title="Desktop">{stat.desktopVisits || 0}</i>
+                                <i title="Tablet">{stat.tabletVisits || 0}</i>
+                                <i title="Móvil">{stat.mobileVisits || 0}</i>
+                              </span>
                             </div>
                           </div>
                         );
@@ -1936,9 +1961,28 @@ function AdminContent() {
                       </p>
                     )}
                   </div>
-                  <div style={{ marginTop: '16px', display: 'flex', gap: '16px', fontSize: '10px', color: '#888', paddingTop: '10px', borderTop: '1px solid #f0ece4' }}>
+
+                  {(() => {
+                    const sorted = (Array.isArray(pageStats) ? pageStats : []).sort((a, b) => (b?.visits || 0) - (a?.visits || 0));
+                    const top = sorted[0];
+                    const totInt = (Array.isArray(pageStats) ? pageStats : []).reduce((acc, s) => acc + (s?.interactions || 0), 0);
+                    const conv = liveVisits > 0 ? Math.round((totInt / liveVisits) * 100) : 0;
+                    const devDesk = (Array.isArray(pageStats) ? pageStats : []).reduce((a, s) => a + (s?.desktopVisits || 0), 0);
+                    const devMob = (Array.isArray(pageStats) ? pageStats : []).reduce((a, s) => a + (s?.mobileVisits || 0), 0);
+                    const devTab = (Array.isArray(pageStats) ? pageStats : []).reduce((a, s) => a + (s?.tabletVisits || 0), 0);
+                    return (
+                      <div className="anal-insights">
+                        <div className="ai-item"><span className="ai-ico">🥇</span><p><b>{top ? top.label : '—'}</b><em>Sección más visitada</em></p></div>
+                        <div className="ai-item"><span className="ai-ico">⚡</span><p><b>{conv}%</b><em>Tasa de interacción</em></p></div>
+                        <div className="ai-item"><span className="ai-ico">📱</span><p><b>{devMob.toLocaleString('es-ES')} · {devDesk.toLocaleString('es-ES')} · {devTab.toLocaleString('es-ES')}</b><em>Móvil · Escritorio · Tablet</em></p></div>
+                      </div>
+                    );
+                  })()}
+
+                  <div style={{ marginTop: '16px', display: 'flex', gap: '16px', fontSize: '10px', color: '#888', paddingTop: '10px', borderTop: '1px solid #f0ece4', flexWrap: 'wrap' }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '7px', background: 'var(--navy)', borderRadius: '2px', display: 'inline-block' }} /> Visitas</span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '4px', background: '#10B981', borderRadius: '2px', display: 'inline-block' }} /> Interacciones</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '10px', height: '7px', background: '#10B981', borderRadius: '2px', display: 'inline-block' }} /> Interacciones</span>
+                    <span className="anal-dev-legend">● Escritorio <span className="d-dot" /> Tablet <span className="d-dot" /> Móvil</span>
                   </div>
                 </div>
 

@@ -11021,3 +11021,139 @@ html.show-splash .splash-screen { visibility: visible; }
   .nav-item:hover .dropdown-council .dd-team { animation: none !important; transition: none !important; }
   .dd-zone::before, .dd-team::before { display: none; }
 }
+
+/* ==========================================================================
+  DASHBOARD — VISITAS POR SECCIÓN (UI/UX mejorado)
+   ========================================================================== */
+.anal-row {
+  background: linear-gradient(120deg, #fdfbf7, #fff);
+  border: 1px solid #efe6d6;
+  border-radius: 14px;
+  padding: 12px 14px;
+  opacity: 0;
+  animation: analRowIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--rd, 0s);
+  transition: transform 0.3s cubic-bezier(0.34, 1.45, 0.64, 1), box-shadow 0.3s, border-color 0.3s, background 0.3s;
+}
+@keyframes analRowIn {
+  0% { opacity: 0; transform: translateX(-14px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+.anal-row:hover {
+  transform: translateX(6px);
+  border-color: var(--gold-pale);
+  box-shadow: 0 10px 22px rgba(26, 39, 68, 0.08);
+  background: #fff;
+}
+.anal-row.is-top {
+  background: linear-gradient(120deg, rgba(200,151,58,0.09), #fff);
+  border-color: rgba(200,151,58,0.4);
+}
+.anal-row-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 9px; }
+.anal-row-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.anal-rank {
+  flex: 0 0 22px;
+  width: 22px; height: 22px;
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800; color: #8a8477;
+  background: #f2ede2;
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+.anal-row:hover .anal-rank { transform: scale(1.18) rotate(-8deg); }
+.anal-badge {
+  flex: 0 0 32px; width: 32px; height: 32px;
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+  background: #f6f1e6;
+  border: 1px solid #eee2c9;
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+.anal-row:hover .anal-badge { transform: scale(1.15) rotate(-6deg); }
+.anal-label {
+  font-size: 13px; font-weight: 700; color: var(--navy);
+  display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.anal-hot {
+  font-style: normal; font-size: 9px; font-weight: 800; color: #b45309;
+  background: rgba(245,158,11,0.14); padding: 2px 6px; border-radius: 20px;
+  animation: analPulse 1.6s ease-in-out infinite;
+}
+@keyframes analPulse { 0%,100%{ transform: scale(1); } 50%{ transform: scale(1.12); } }
+.anal-top-tag {
+  font-style: normal; font-size: 9px; font-weight: 800; color: var(--navy);
+  background: linear-gradient(120deg,#f0d9a6,var(--gold)); padding: 2px 7px; border-radius: 20px;
+}
+.anal-counts { display: flex; gap: 14px; flex-shrink: 0; }
+.anal-count { display: inline-flex; align-items: baseline; gap: 4px; font-size: 10px; }
+.anal-count b { font-size: 13px; font-weight: 800; color: var(--navy); }
+.anal-count.green b { color: #10B981; }
+.anal-count em { font-style: normal; color: #999; font-weight: 500; }
+
+.anal-track {
+  height: 7px; background: #f0ece4; border-radius: 4px; overflow: hidden; position: relative;
+}
+.anal-fill { height: 100%; border-radius: 4px; transform-origin: left center; }
+.anal-fill-main {
+  background: linear-gradient(90deg, rgba(200,151,58,.85), var(--gold) 60%, #eecb7a);
+  position: relative;
+}
+.anal-fill-main::after {
+  content: ''; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.6), transparent);
+  animation: analShine 2.6s ease-in-out infinite;
+}
+@keyframes analShine { 0%{ left: -60%; } 60%,100%{ left: 130%; } }
+
+.anal-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 5px; }
+.anal-share { font-size: 9.5px; font-weight: 700; color: var(--gold); letter-spacing: .3px; }
+.anal-devices { display: inline-flex; gap: 5px; }
+.anal-devices i {
+  font-style: normal; font-size: 9px; font-weight: 700; color: #8a8477;
+  background: #f4efe5; border: 1px solid #e9dfca; padding: 1px 6px; border-radius: 20px;
+  transition: all .25s;
+}
+.anal-devices i:hover { color: var(--navy); border-color: var(--gold); transform: translateY(-2px); }
+
+/* Insights bottom strip */
+.anal-insights {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--navy), #223056);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.anal-insights::before {
+  content: ''; position: absolute; top: -60%; right: -20%; width: 220px; height: 220px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(200,151,58,.3), transparent 70%);
+}
+.ai-item { display: flex; align-items: center; gap: 10px; position: relative; z-index: 1; }
+.ai-ico { font-size: 18px; flex-shrink: 0; animation: analFloat 3s ease-in-out infinite; }
+@keyframes analFloat { 0%,100%{ transform: translateY(0); } 50%{ transform: translateY(-4px); } }
+.ai-item p { margin: 0; display: flex; flex-direction: column; line-height: 1.2; }
+.ai-item b { font-size: 12.5px; font-weight: 800; color: #fff; }
+.ai-item em { font-style: normal; font-size: 9.5px; color: rgba(255,255,255,.65); }
+
+.anal-dev-legend { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
+.anal-dev-legend .d-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); display: inline-block; margin-left: 6px; }
+
+@media (max-width: 900px) {
+  .anal-insights { grid-template-columns: 1fr; }
+  .anal-row-top { flex-wrap: wrap; }
+  .anal-counts { margin-left: auto; }
+}
+@media (max-width: 520px) {
+  .anal-label { white-space: normal; }
+  .anal-counts { gap: 10px; }
+  .anal-actions { flex-wrap: wrap; justify-content: flex-end; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .anal-row, .anal-fill-main::after, .anal-hot, .ai-ico { animation: none !important; transition: none !important; }
+  .anal-row { opacity: 1; }
+}

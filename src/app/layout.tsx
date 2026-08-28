@@ -232,6 +232,9 @@ export default function RootLayout({
           </div>
         </div>
         <noscript><style>{"#splash-pjl{display:none!important}"}</style></noscript>
+        {/* Inyecta el logo oficial en el splash ANTES de la hidratación para
+            evitar que se vea el logo por defecto un instante. */}
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var r=localStorage.getItem('pjl_branding');if(!r)return;var b=JSON.parse(r);var u=b&&b.mainLogo;if(!u)return;var f=document.querySelector('.splash-logo-fallback');if(!f)return;var img=document.createElement('img');img.src=u;img.alt='Logotipo de la Pastoral Juvenil Luqueña';img.className='splash-logo-img';img.onload=function(){f.replaceWith(img)};img.onerror=function(){};if(img.complete&&img.naturalWidth>0)setTimeout(function(){if(f.isConnected)f.replaceWith(img)},0)}catch(e){}})();` }} />
         <ThemeLoader />
         {children}
         <Script
