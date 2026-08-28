@@ -6628,7 +6628,11 @@ html.show-splash .splash-screen { visibility: visible; }
   border-radius: inherit;
   background: linear-gradient(90deg, #a97b22, #e9c87c 55%, #fff3d6);
   transform-origin: left;
-  animation: barFill 1.15s cubic-bezier(0.3, 0.6, 0.4, 1) 2s both;
+  /* Llenado continuo a lo largo de TODA la intro (~5.5s) para que la barra
+     nunca quede estÃ¡tica al 100% antes de tiempo (eso se percibia como que
+     la animaciÃ³n "se cortaba" y luego saltaba de golpe). Completa justo
+     cuando se revela la pagina -> transicion natural y sin cortes. */
+  animation: barFill 5.5s linear 0.4s both;
 }
 @keyframes barFill {
   from { transform: scaleX(0); }
@@ -6640,7 +6644,7 @@ html.show-splash .splash-screen { visibility: visible; }
   background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.75) 50%, transparent 70%);
   background-size: 220% 100%;
   mix-blend-mode: overlay;
-  animation: barShine 1.2s linear 2s infinite;
+  animation: barShine 1.6s linear 0.4s infinite;
 }
 @keyframes barShine {
   from { background-position: 130% 0; }
@@ -11023,7 +11027,7 @@ html.show-splash .splash-screen { visibility: visible; }
 }
 
 /* ==========================================================================
-  DASHBOARD — VISITAS POR SECCIÓN (UI/UX mejorado)
+  DASHBOARD ï¿½ VISITAS POR SECCIï¿½N (UI/UX mejorado)
    ========================================================================== */
 .anal-row {
   background: linear-gradient(120deg, #fdfbf7, #fff);
