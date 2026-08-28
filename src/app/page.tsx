@@ -493,9 +493,7 @@ const [newsSearch, setNewsSearch] = useState('');
   const [liveNews, setLiveNews] = useState<PublicNewsItem[]>([]);
   const [liveFaq, setLiveFaq] = useState<FaqItem[]>([]);
   const [liveProfiles, setLiveProfiles] = useState<MemberProfile[]>([]);
-  const [branding, setBranding] = useState<Branding>(() =>
-    typeof window !== 'undefined' ? store.branding.get() : DEFAULT_BRANDING
-  );
+  const [branding, setBranding] = useState<Branding>(DEFAULT_BRANDING);
   const [liveHeroImages, setLiveHeroImages] = useState<HeroSlide[]>([]);
   const [heroIntervalSecs, setHeroIntervalSecs] = useState<number>(3);
   const [liveHeroIndex, setLiveHeroIndex] = useState(0);
