@@ -70,7 +70,12 @@ export default function RootLayout({
         <style
           dangerouslySetInnerHTML={{
             __html: [
-              '.top-nav .brand-logo-wrap,.top-nav .brand-text,.top-nav .nav-links .nav-item{opacity:0}',
+              /* La navbar es visible por defecto: antes dependia de
+                 'nav-entered' (opacity:0) que solo saltaba a los ~6s. Si el
+                 velo se perdia, quedaba el contenido visible SIN navbar hasta
+                 entonces. Ahora el navbar se ve siempre y 'nav-entered' solo
+                 añade su animación de entrada (nunca puede 'faltar'). */
+              '.top-nav .brand-logo-wrap,.top-nav .brand-text,.top-nav .nav-links .nav-item{opacity:1}',
               'html.show-splash:not(.pjl-reveal) body>*:not(#splash-pjl):not(script):not(style):not(noscript){visibility:hidden!important}',
               'html.pjl-reveal body>*:not(#splash-pjl):not(script):not(style):not(noscript){visibility:visible!important;animation:pjlPageIn .55s ease-out both}',
               '@keyframes pjlPageIn{from{opacity:0}to{opacity:1}}',

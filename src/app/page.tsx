@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars, @next/next/no-img-element, @typescript-eslint/ban-ts-comment, react-hooks/exhaustive-deps */
 'use client';
 
-import { useState, useEffect, Suspense, type CSSProperties } from 'react';
+import { useState, useEffect, useLayoutEffect, Suspense, type CSSProperties } from 'react';
 import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
@@ -536,9 +536,16 @@ const [newsSearch, setNewsSearch] = useState('');
   // admin, reinicia la coreografía y cierra con fundido. El contenido nace
   // oculto (CSS crítico del layout) y esta secuencia lo revela en orden:
   // primero la intro completa, después el menú principal.
-  useEffect(() => {
+  // Se usa useLayoutEffect (antes del pintado) y se REAPLICA show-splash:
+  // React/Next.js reescribe className en <html> durante la hidratación y
+  // borra la clase que añade el script inline del layout, lo que ocultaba
+  // la intro y dejaba el contenido visible SIN el navbar (opacity:0) hasta
+  // que saltaban los temporizadores. Reaplicarla aquí garantiza que el velo
+  // y el splash sobrevivan a la hidratación.
+  useLayoutEffect(() => {
     const splash = document.getElementById('splash-pjl');
     const root = document.documentElement;
+    root.classList.add('show-splash');
     const reduced = typeof window.matchMedia === 'function'
       && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     // Levanta el velo: el contenido vuelve a ser visible bajo el fundido.
