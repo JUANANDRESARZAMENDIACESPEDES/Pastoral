@@ -5040,7 +5040,7 @@ function AdminContent() {
               </div>
 
               {/* GRILLA DE MIEMBROS */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '25px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 400px), 1fr))', gap: '25px' }}>
                 {teamProfiles.map((p, idx) => (
                   <div key={p.id} className="pjl-card profile-member-card" style={{ animationDelay: `${idx * 80}ms` }}>
                     <button
