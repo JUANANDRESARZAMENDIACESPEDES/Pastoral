@@ -1079,3 +1079,79 @@ th {
     line-height: 1.55;
   }
 }
+
+/* ── ADMIN · Currículos (gestión de perfiles) ─ móvil ───────────────────
+   Hace que la tarjeta de miembro y todos sus textos se apilen y envuelvan
+   de forma cómoda (nunca letra por letra), sin desbordar la pantalla. */
+@media (max-width: 768px) {
+  .admin-content-area .profile-member-card {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 18px;
+  }
+
+  .admin-content-area .profile-member-card > * {
+    box-sizing: border-box;
+    max-width: 100%;
+  }
+
+  .admin-content-area .profile-member-card .profile-photo-wrap {
+    width: 124px;
+    margin: 0 auto;
+    flex: 0 0 auto;
+  }
+
+  .admin-content-area .profile-member-card .profile-head-row {
+    padding-right: 0;
+    min-width: 0;
+  }
+
+  .admin-content-area .profile-member-card input,
+  .admin-content-area .profile-member-card textarea,
+  .admin-content-area .profile-member-card .pjl-input {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+
+  .admin-content-area .profile-member-card .profile-name-input {
+    font-size: 1.2rem;
+  }
+
+  .admin-content-area .profile-member-card .profile-role-input {
+    min-width: 0;
+    width: 100%;
+  }
+
+  /* Caja de CV: se apila en columna sobre pantallas angostas */
+  .admin-content-area .profile-member-card .profile-cv-box {
+    flex-wrap: wrap;
+  }
+  .admin-content-area .profile-member-card .profile-cv-info {
+    min-width: 0;
+    flex: 1 1 140px;
+  }
+  .admin-content-area .profile-member-card .profile-cv-info strong,
+  .admin-content-area .profile-member-card .profile-cv-info small {
+    overflow-wrap: break-word;
+    word-break: normal;
+    white-space: normal;
+  }
+  .admin-content-area .profile-member-card .profile-cv-btn {
+    white-space: nowrap;
+  }
+
+  .admin-content-area .profile-member-card label,
+  .admin-content-area .profile-member-card button {
+    overflow-wrap: break-word;
+    word-break: normal;
+    white-space: normal;
+  }
+}
