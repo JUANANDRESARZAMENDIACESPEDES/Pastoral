@@ -4,13 +4,58 @@ import { useEffect } from 'react';
 import { store } from '@/lib/pjlStore';
 import { fetchStoreValue, subscribeStoreChanges } from '@/lib/supabaseStore';
 
+function hexToRgb(hex: string): [number, number, number] {
+  const h = (hex || '').replace('#', '');
+  if (h.length !== 6) return [26, 39, 68];
+  return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)) as [number, number, number];
+}
+function clamp255(n: number): number { return Math.max(0, Math.min(255, Math.round(n))); }
+function rgbToHex(r: number, g: number, b: number): string {
+  return '#' + [r, g, b].map(c => clamp255(c).toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+function mixColor(a: string, b: string, t: number): string {
+  const A = hexToRgb(a), B = hexToRgb(b);
+  return rgbToHex(A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t, A[2] + (B[2] - A[2]) * t);
+}
+function tint(hex: string, amount: number): string { return mixColor(hex, '#ffffff', amount); }
+function shade(hex: string, amount: number): string { return mixColor(hex, '#000000', amount); }
+function readableTextOn(hex: string): string {
+  const c = hexToRgb(hex);
+  const lum = 0.2126 * c[0] / 255 + 0.7152 * c[1] / 255 + 0.0722 * c[2] / 255;
+  return lum > 0.45 ? '#1c1a16' : '#ffffff';
+}
+
 export default function ThemeLoader() {
   useEffect(() => {
     const applyTheme = (themeOverride?: { gold: string; navy: string } | null) => {
       const theme = themeOverride || store.theme.get();
       if (theme) {
-        document.documentElement.style.setProperty('--gold', theme.gold);
-        document.documentElement.style.setProperty('--navy', theme.navy);
+        const navy = theme.navy || '#1A2744';
+        const gold = theme.gold || '#C8973A';
+        const root = document.documentElement.style;
+
+        /* Colores base */
+        root.setProperty('--gold', gold);
+        root.setProperty('--navy', navy);
+
+        /* Texto que se lee bien sobre cada superficie (auto-contraste) */
+        root.setProperty('--on-navy', readableTextOn(navy));
+        root.setProperty('--on-gold', readableTextOn(gold));
+        root.setProperty('--on-cream', '#1c1a16');
+
+        /* Paleta derivada automáticamente: sombras y tintes armoniosos */
+        root.setProperty('--navy-mid', mixColor(navy, '#ffffff', 0.12));
+        root.setProperty('--navy-light', mixColor(navy, '#ffffff', 0.22));
+        root.setProperty('--navy-dark', shade(navy, 0.18));
+        root.setProperty('--gold-light', tint(gold, 0.28));
+        root.setProperty('--gold-pale', tint(gold, 0.86));
+        root.setProperty('--gold-deep', shade(gold, 0.22));
+
+        /* Superficies neutrales derivadas del navy+gold para que todo sea cohesivo */
+        const cream = tint(mixColor(navy, gold, 0.08), 0.84);
+        root.setProperty('--cream', cream);
+        root.setProperty('--surface', tint(cream, 0.65));
+        root.setProperty('--white', tint(cream, 0.9));
       }
     };
 

@@ -250,6 +250,45 @@ function contrastRatio(a: string, b: string): number {
 const NAVY_POOL = ['#1A2744', '#1A3B2B', '#3B1A3A', '#441A1A', '#0F1F3D', '#2C3E50', '#23306B', '#14343B'];
 const GOLD_POOL = ['#C8973A', '#D4AF37', '#B8860B', '#DAA520', '#E6BE6A', '#A0783A', '#C9A227', '#D69E35'];
 
+/* ── Utilidades de color extendidas ─────────────────────────────────────── */
+function hexToRgb(hex: string): [number, number, number] {
+  const h = (hex || '').replace('#', '');
+  if (h.length !== 6) return [26, 39, 68];
+  return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)) as [number, number, number];
+}
+function clamp255(n: number): number { return Math.max(0, Math.min(255, Math.round(n))); }
+function rgbToHex(r: number, g: number, b: number): string {
+  return '#' + [r, g, b].map(c => clamp255(c).toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+/* Calcula el color de texto (claro u oscuro) que mejor se lee sobre un fondo. */
+function readableTextOn(hex: string): string {
+  const c = hexToRgb(hex);
+  const lum = 0.2126 * c[0] / 255 + 0.7152 * c[1] / 255 + 0.0722 * c[2] / 255;
+  return lum > 0.45 ? '#1c1a16' : '#ffffff';
+}
+/* Mezcla dos colores; t=0 -> a, t=1 -> b */
+function mixColor(a: string, b: string, t: number): string {
+  const A = hexToRgb(a), B = hexToRgb(b);
+  return rgbToHex(A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t, A[2] + (B[2] - A[2]) * t);
+}
+/* Aclara hacia blanco (tint) o oscurece hacia negro (shade). amount 0..1 */
+function tint(hex: string, amount: number): string { return mixColor(hex, '#ffffff', amount); }
+function shade(hex: string, amount: number): string { return mixColor(hex, '#000000', amount); }
+/* Genera una gama derivada de tonos a partir de un color base (paleta armónica). */
+function derivePalette(hex: string): string[] {
+  return [
+    shade(hex, 0.55), shade(hex, 0.3), hex, tint(hex, 0.25), tint(hex, 0.5), tint(hex, 0.75), tint(hex, 0.88)
+  ];
+}
+/* Saturación relativa (más/menos saturado) manteniendo luminosidad aproximada. */
+function saturate(hex: string, factor: number): string {
+  const [r, g, b] = hexToRgb(hex);
+  const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+  return rgbToHex(r + (gray - r) * factor, g + (gray - g) * factor, b + (gray - b) * factor);
+}
+/* Valida si un valor es un color hex de 6 dígitos */
+const isHex6 = (v: string) => /^#[0-9A-Fa-f]{6}$/.test(v);
+
 function useLS<T>(key: keyof typeof store, def: T) {
   const [val, setVal] = useState<T>(def);
 
@@ -684,7 +723,12 @@ function AdminContent() {
   const maxInteractions = Math.max(...validStats.map(s => s?.interactions || 0), 1);
   const [navyHex, setNavyHex] = useState(theme.navy);
   const [goldHex, setGoldHex] = useState(theme.gold);
-  const [savedPalettes, setSavedPalettes] = useState<{navy: string; gold: string}[]>([]);
+  const [savedPalettes, setSavedPalettes] = useState<{navy: string; gold: string; bg?: string; card?: string}[]>([]);
+  /* Colores adicionales y preferencias de vista previa (Apariencia) */
+  const [bgHex, setBgHex] = useState(tint(theme.navy, 0.86));           // fondo neutral de secciones
+  const [cardHex, setCardHex] = useState(tint(tint(theme.navy, 0.92), 0.55)); // superficie de tarjetas
+  const [previewMode, setPreviewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const [darkPreview, setDarkPreview] = useState(false);
 
   useEffect(() => {
     if (!currentUser || currentUser.id === 'master') return;
@@ -1521,9 +1565,20 @@ function AdminContent() {
     });
   };
 
-  const applyThemeColor = (navy: string, gold: string) => {
+  const applyThemeColor = (navy: string, gold: string, extra?: { bg?: string; card?: string }) => {
     setTheme({ navy, gold });
     window.dispatchEvent(new Event('pjl_theme_update'));
+    if (typeof window !== 'undefined' && document.documentElement) {
+      const root = document.documentElement.style;
+      root.setProperty('--on-navy', readableTextOn(navy));
+      root.setProperty('--on-gold', readableTextOn(gold));
+      root.setProperty('--navy-mid', mixColor(navy, '#ffffff', 0.12));
+      root.setProperty('--navy-light', mixColor(navy, '#ffffff', 0.22));
+      root.setProperty('--gold-light', tint(gold, 0.28));
+      root.setProperty('--gold-pale', tint(gold, 0.86));
+      if (extra?.bg) root.setProperty('--cream', extra.bg);
+      if (extra?.card) root.setProperty('--surface', extra.card);
+    }
   };
 
 
@@ -2377,7 +2432,11 @@ function AdminContent() {
 
           {/* APARIENCIA */}
           {mod === 'apariencia' && (() => {
-            const ratio = contrastRatio(navyHex, goldHex);
+            const ratio = contrastRatio(readableTextOn(navyHex) === '#ffffff' ? navyHex : tint(navyHex,0.2), goldHex);
+            const legNavy = contrastRatio(navyHex, readableTextOn(navyHex));          // contraste del texto sobre primario
+            const legGold = contrastRatio(goldHex, readableTextOn(goldHex));          // contraste del texto sobre secundario
+            const onNavy = readableTextOn(navyHex);
+            const onGold = readableTextOn(goldHex);
             const grade = ratio >= 7
               ? { t: 'AAA · Excelente', c: '#059669', bg: '#d1fae5' }
               : ratio >= 4.5
@@ -2385,18 +2444,28 @@ function AdminContent() {
                 : ratio >= 3
                   ? { t: 'Contraste aceptable', c: '#d97706', bg: '#fef3c7' }
                   : { t: 'Contraste bajo', c: '#dc2626', bg: '#fee2e2' };
-            return (
-            <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '22px' }}>
+            const navyDerived = derivePalette(navyHex);
+            const goldDerived = derivePalette(goldHex);
+            const mockBg = darkPreview ? shade(navyHex, 0.25) : navyHex;
 
-              {/* HEADER */}
+            const applyAll = (n: string, g: string, bg?: string, card?: string) => {
+              setNavyHex(n); setGoldHex(g);
+              if (bg) setBgHex(bg); if (card) setCardHex(card);
+              applyThemeColor(n, g, { bg, card });
+            };
+
+            return (
+            <div style={{ maxWidth: '1160px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '22px' }}>
+
+              {/* HEADER + MEDIDOR DE CONTRASTE */}
               <div className="ap-header pop-in">
                 <div>
                   <h3 className="serif" style={{ marginBottom: '6px' }}>🎨 Apariencia del Sitio</h3>
                   <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}>
-                    Presets litúrgicos, colores personalizados e iconos. Cada cambio se refleja al instante en todo el panel.
+                    Presets litúrgicos, colores, superficies, auto-contraste de letras y vista previa en vivo. Cada cambio se refleja al instante.
                   </p>
                 </div>
-                <div className="ap-contrast-badge" style={{ color: grade.c, background: grade.bg }} title={`Relación de contraste: ${ratio.toFixed(2)}:1`}>
+                <div className="ap-contrast-badge" style={{ color: grade.c, background: grade.bg }} title={`Contraste de texto sobre primario: ${legNavy.toFixed(2)}:1 · sobre secundario: ${legGold.toFixed(2)}:1`}>
                   <span className="ap-contrast-ratio">{ratio.toFixed(1)}</span>
                   <span>{grade.t}</span>
                 </div>
@@ -2404,7 +2473,7 @@ function AdminContent() {
 
               <div className="ap-grid">
 
-                {/* PRESETS LITÚRGICOS */}
+                {/* PRESETS LITÚRGICOS + ARMÓNICAS + PALETAS GUARDADAS */}
                 <div className="ap-card pop-in" style={{ animationDelay: '0.08s' }}>
                   <label className="premium-label" style={{ display: 'block', marginBottom: '14px' }}>PRESETS LITÚRGICOS</label>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
@@ -2419,9 +2488,7 @@ function AdminContent() {
                         className="liturgical-preset-btn ap-preset-btn pop-in"
                         style={{ animationDelay: `${0.12 + pi * 0.06}s` }}
                         onClick={() => {
-                          applyThemeColor(preset.navy, preset.gold);
-                          setNavyHex(preset.navy);
-                          setGoldHex(preset.gold);
+                          applyAll(preset.navy, preset.gold);
                           showToast(`Temporada: ${preset.label} aplicada ✔`);
                         }}
                       >
@@ -2435,18 +2502,49 @@ function AdminContent() {
                     ))}
                   </div>
 
+                  {/* ARMÓNICAS ALEATORIAS */}
+                  <div style={{ borderTop: '1px solid var(--gold-pale)', marginTop: '18px', paddingTop: '16px' }}>
+                    <div style={{ display: 'flex', verticalAlign: 'middle', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
+                      <label className="premium-label" style={{ display: 'block' }}>COMBINACIONES ARMÓNICAS</label>
+                      <button
+                        className="btn-premium btn-premium-outline"
+                        style={{ fontSize: '11px', padding: '6px 14px' }}
+                        onClick={() => {
+                          const base = GOLD_POOL[Math.floor(Math.random() * GOLD_POOL.length)];
+                          const variant = saturate(base, (Math.random() * 0.6 + 0.2) * (Math.random() > 0.5 ? 1 : -1));
+                          const darker = shade(variant, 0.35 + Math.random() * 0.35);
+                          applyAll(darker, variant);
+                          showToast('Combinación armónica generada 🎨');
+                        }}
+                      >🎨 Combinación armónica</button>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      {goldDerived.map((c, i) => (
+                        <button key={i} className="ap-shade-swatch" title={c} style={{ background: c }}
+                          onClick={() => { applyAll(navyHex, c); if (navigator.clipboard) navigator.clipboard.writeText(c).then(() => showToast(`${c} copiado ✔`)); }} />
+                      ))}
+                      {navyDerived.map((c, i) => (
+                        <button key={'n' + i} className="ap-shade-swatch" title={c} style={{ background: c }}
+                          onClick={() => { applyAll(c, goldHex); if (navigator.clipboard) navigator.clipboard.writeText(c).then(() => showToast(`${c} copiado ✔`)); }} />
+                      ))}
+                    </div>
+                    <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '8px 0 0' }}>
+                      Gama derivada de tu secundario (izquierda → derecha, oscuro a claro) y de tu primario. Click en un tono para probarlo.
+                    </p>
+                  </div>
+
                   {/* PALETAS GUARDADAS */}
                   <div style={{ borderTop: '1px solid var(--gold-pale)', marginTop: '22px', paddingTop: '20px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', gap: '10px', flexWrap: 'wrap' }}>
-                      <label className="premium-label" style={{ display: 'block' }}>PALETAS GUARDADAS (MÁX. 5)</label>
+                      <label className="premium-label" style={{ display: 'block' }}>PALETAS GUARDADAS (MÁX. 6)</label>
                       <button
                         className="btn-premium btn-premium-gold"
                         style={{ fontSize: '11px', padding: '6px 14px' }}
                         onClick={() => {
-                          const entry = { navy: navyHex, gold: goldHex };
+                          const entry = { navy: navyHex, gold: goldHex, bg: bgHex, card: cardHex };
                           const already = savedPalettes.some(p => p.navy === entry.navy && p.gold === entry.gold);
                           if (already) { showToast('Esta paleta ya fue guardada'); return; }
-                          const updated = [entry, ...savedPalettes].slice(0, 5);
+                          const updated = [entry, ...savedPalettes].slice(0, 6);
                           setSavedPalettes(updated);
                           localStorage.setItem('pjl_saved_palettes', JSON.stringify(updated));
                           showToast('Paleta guardada ✔');
@@ -2462,10 +2560,11 @@ function AdminContent() {
                             <button
                               title={`${p.navy} / ${p.gold}`}
                               className="ap-swatch-btn"
-                              onClick={() => { setNavyHex(p.navy); setGoldHex(p.gold); applyThemeColor(p.navy, p.gold); showToast('Paleta aplicada ✔'); }}
+                              onClick={() => { applyAll(p.navy, p.gold, p.bg, p.card); showToast('Paleta aplicada ✔'); }}
                             >
                               <i style={{ background: p.navy }} />
                               <i style={{ background: p.gold }} />
+                              {p.card && <i style={{ background: p.card, width: 14, height: 14 }} />}
                             </button>
                             <button
                               onClick={() => { const upd = savedPalettes.filter((_, idx) => idx !== i); setSavedPalettes(upd); localStorage.setItem('pjl_saved_palettes', JSON.stringify(upd)); }}
@@ -2478,32 +2577,74 @@ function AdminContent() {
                   </div>
                 </div>
 
-                {/* COLUMNA DERECHA: MOCKUP EN VIVO + ACCIONES */}
+                {/* COLUMNA DERECHA: VISTA PREVIA + ACCIONES */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
 
-                  {/* VISTA PREVIA EN VIVO */}
+                  {/* VISTA PREVIA EN VIVO (con selector responsive + modo oscuro) */}
                   <div className="ap-card pop-in" style={{ animationDelay: '0.16s' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', gap: '8px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', gap: '10px', flexWrap: 'wrap' }}>
                       <label className="premium-label" style={{ display: 'block' }}>VISTA PREVIA EN VIVO</label>
-                      <span style={{ fontSize: '10px', color: '#999' }}>Se actualiza al instante ✨</span>
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                        {(['desktop', 'tablet', 'mobile'] as const).map(m => (
+                          <button key={m} className={`ap-dev-btn ${previewMode === m ? 'active' : ''}`}
+                            onClick={() => setPreviewMode(m)}
+                            title={m === 'desktop' ? 'Escritorio' : m === 'tablet' ? 'Tablet' : 'Móvil'}>
+                            {m === 'desktop' ? '🖥️' : m === 'tablet' ? '💻' : '📱'}
+                          </button>
+                        ))}
+                        <button className={`ap-dev-btn ${darkPreview ? 'active' : ''}`} onClick={() => setDarkPreview(!darkPreview)} title="Alternar modo oscuro">🌙</button>
+                      </div>
                     </div>
-                    <div className="ap-mockup" style={{ background: navyHex }}>
-                      <div className="ap-mockup-nav">
-                        <span className="ap-mockup-logo" style={{ background: goldHex }}>✝</span>
-                        <span className="ap-mockup-title">PJL LUQUE</span>
-                        <span className="ap-mockup-links">
-                          <i style={{ background: goldHex }} />
-                          <i style={{ background: goldHex, opacity: 0.65 }} />
-                          <i style={{ background: goldHex, opacity: 0.35 }} />
-                        </span>
+                    <div style={{ display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
+                      <div
+                        className={`ap-mockup ap-mockup-${previewMode}`}
+                        style={{
+                          background: mockBg,
+                          maxWidth: previewMode === 'mobile' ? 220 : previewMode === 'tablet' ? 380 : 'none',
+                          width: previewMode === 'mobile' ? 220 : previewMode === 'tablet' ? 380 : '100%',
+                        }}
+                      >
+                        <div className="ap-mockup-nav">
+                          <span className="ap-mockup-logo" style={{ background: goldHex, color: onGold }}>✝</span>
+                          <span className="ap-mockup-title" style={{ color: onNavy }}>PJL LUQUE</span>
+                          {previewMode !== 'mobile' && (
+                            <span className="ap-mockup-links">
+                              <i style={{ background: goldHex }} />
+                              <i style={{ background: goldHex, opacity: 0.65 }} />
+                              <i style={{ background: goldHex, opacity: 0.35 }} />
+                            </span>
+                          )}
+                        </div>
+                        <div className="ap-mockup-body" style={{ background: bgHex }}>
+                          <div className="ap-mockup-hero">
+                            <span className="ap-mockup-line" style={{ width: '68%', background: readableTextOn(bgHex), opacity: 0.92 }} />
+                            <span className="ap-mockup-line" style={{ width: '46%', background: goldHex }} />
+                            <span className="ap-mockup-line thin" style={{ width: '82%', background: readableTextOn(bgHex), opacity: 0.28 }} />
+                            <span className="ap-mockup-btn" style={{ background: goldHex, color: onGold }}>Explorar</span>
+                            <span className="ap-mockup-btn ghost" style={{ borderColor: goldHex, color: readableTextOn(bgHex) }}>Leer más</span>
+                          </div>
+                          <div className="ap-mockup-cards">
+                            {[0, 1].map(i => (
+                              <div key={i} className="ap-mockup-card" style={{ background: cardHex, borderColor: tint(goldHex, 0.6) }}>
+                                <span className="ap-mockup-card-top" style={{ background: goldHex }} />
+                                <span className="ap-mockup-card-line" style={{ background: readableTextOn(cardHex), opacity: 0.8 }} />
+                                <span className="ap-mockup-card-line thin" style={{ background: readableTextOn(cardHex), opacity: 0.4 }} />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
-                      <div className="ap-mockup-hero">
-                        <span className="ap-mockup-line" style={{ width: '68%', background: 'rgba(255,255,255,0.92)' }} />
-                        <span className="ap-mockup-line" style={{ width: '46%', background: goldHex }} />
-                        <span className="ap-mockup-line thin" style={{ width: '82%', background: 'rgba(255,255,255,0.28)' }} />
-                        <span className="ap-mockup-btn" style={{ background: goldHex, color: navyHex }}>Explorar</span>
+                    </div>
+                    {/* TICKS DE LEGIBILIDAD */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '16px' }}>
+                      <div className="ap-leg-box" style={{ background: navyHex, color: onNavy }}>
+                        <span className="ap-leg-label">Texto sobre primario</span>
+                        <span className="ap-leg-sample">Aa Bb 123 · {legNavy.toFixed(1)}:1</span>
                       </div>
-                      <div className="ap-mockup-footer" style={{ background: goldHex }} />
+                      <div className="ap-leg-box" style={{ background: goldHex, color: onGold }}>
+                        <span className="ap-leg-label">Texto sobre secundario</span>
+                        <span className="ap-leg-sample">Aa Bb 123 · {legGold.toFixed(1)}:1</span>
+                      </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', marginTop: '14px', flexWrap: 'wrap' }}>
                       <button className="ap-hex-chip" onClick={() => { if (navigator.clipboard) navigator.clipboard.writeText(navyHex).then(() => showToast('Hex copiado ✔')); }} title="Click para copiar">
@@ -2512,10 +2653,13 @@ function AdminContent() {
                       <button className="ap-hex-chip" onClick={() => { if (navigator.clipboard) navigator.clipboard.writeText(goldHex).then(() => showToast('Hex copiado ✔')); }} title="Click para copiar">
                         <i style={{ background: goldHex }} /> {goldHex.toUpperCase()}
                       </button>
+                      <button className="ap-hex-chip" onClick={() => { if (navigator.clipboard) navigator.clipboard.writeText(bgHex).then(() => showToast('Hex copiado ✔')); }} title="Click para copiar">
+                        <i style={{ background: bgHex }} /> {bgHex.toUpperCase()}
+                      </button>
                     </div>
                   </div>
 
-                  {/* ACCIONES */}
+                  {/* ACCIONES RÁPIDAS */}
                   <div className="ap-card pop-in" style={{ animationDelay: '0.24s' }}>
                     <label className="premium-label" style={{ display: 'block', marginBottom: '14px' }}>ACCIONES RÁPIDAS</label>
                     <div style={{ display: 'grid', gap: '10px' }}>
@@ -2524,9 +2668,7 @@ function AdminContent() {
                         onClick={() => {
                           const n = NAVY_POOL[Math.floor(Math.random() * NAVY_POOL.length)];
                           const g = GOLD_POOL[Math.floor(Math.random() * GOLD_POOL.length)];
-                          applyThemeColor(n, g);
-                          setNavyHex(n);
-                          setGoldHex(g);
+                          applyAll(n, g);
                           showToast('Paleta aleatoria generada 🎲');
                         }}
                       ><span className="quick-action-icon">🎲</span> Sorpréndeme: paleta aleatoria <span className="quick-action-arrow">→</span></button>
@@ -2534,15 +2676,45 @@ function AdminContent() {
                         className="btn-premium btn-premium-outline quick-action-btn"
                         onClick={() => {
                           const def = { gold: '#C8973A', navy: '#1A2744' };
-                          applyThemeColor(def.navy, def.gold);
-                          setNavyHex(def.navy);
-                          setGoldHex(def.gold);
+                          applyAll(def.navy, def.gold);
                           showToast('Colores restaurados al original ✔');
                         }}
                       ><span className="quick-action-icon">↺</span> Restaurar originales <span className="quick-action-arrow">→</span></button>
-                      <button className="btn-premium btn-premium-outline quick-action-btn" onClick={() => showToast('Paleta de colores guardada ✔')}>
-                        <span className="quick-action-icon">💾</span> Guardar apariencia <span className="quick-action-arrow">→</span>
-                      </button>
+                      <button
+                        className="btn-premium btn-premium-outline quick-action-btn"
+                        onClick={() => {
+                          const data = JSON.stringify({ navy: navyHex, gold: goldHex, bg: bgHex, card: cardHex }, null, 2);
+                          try {
+                            navigator.clipboard.writeText('PJL_PALETTE__' + btoa(unescape(encodeURIComponent(data)))).then(() =>
+                              showToast('Paleta copiada al portapapeles 📋'));
+                          } catch { showToast('No se pudo copiar la paleta'); }
+                        }}
+                      ><span className="quick-action-icon">📋</span> Exportar paleta (JSON) <span className="quick-action-arrow">→</span></button>
+                      <label className="btn-premium btn-premium-outline quick-action-btn" style={{ cursor: 'pointer', textAlign: 'left' }}>
+                        <span className="quick-action-icon">📥</span> Importar paleta <span className="quick-action-arrow">→</span>
+                        <input
+                          type="file"
+                          style={{ display: 'none' }}
+                          accept="application/json,.txt"
+                          onChange={async (e) => {
+                            const f = e.target.files?.[0];
+                            if (!f) return;
+                            const text = await f.text();
+                            try {
+                              let raw = text.trim();
+                              if (raw.startsWith('PJL_PALETTE__')) raw = decodeURIComponent(escape(atob(raw.slice('PJL_PALETTE__'.length))));
+                              const parsed = JSON.parse(raw);
+                              const n = isHex6(parsed.navy) ? parsed.navy : navyHex;
+                              const g = isHex6(parsed.gold) ? parsed.gold : goldHex;
+                              const bg = isHex6(parsed.bg) ? parsed.bg : bgHex;
+                              const card = isHex6(parsed.card) ? parsed.card : cardHex;
+                              applyAll(n, g, bg, card);
+                              showToast('Paleta importada ✔');
+                            } catch { showToast('Formato de paleta no válido'); }
+                            e.target.value = '';
+                          }}
+                        />
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -2550,12 +2722,15 @@ function AdminContent() {
 
               {/* PERSONALIZACIÓN MANUAL */}
               <h4 className="serif" style={{ fontSize: '1.25rem', margin: '6px 0 4px' }}>Personalización Manual</h4>
-              <p style={{ color: 'var(--text-muted)', fontSize: '12.5px', marginBottom: '18px' }}>Ajustá cada color con el selector, el código hex o la intensidad. Click en un mini-swatch para copiar el código.</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '12.5px', marginBottom: '18px' }}>Ajustá cada color con el selector, el código hex o la intensidad. Las letras se eligen solas (blanco u oscuro) según lo que mejor se lea sobre cada color.</p>
               <div className="ap-grid">
 
                 {/* NAVY */}
                 <div className="form-group ap-color-card pop-in" style={{ animationDelay: '0.3s' }}>
-                  <label className="premium-label" style={{ display: 'block', marginBottom: '10px' }}>🎨 Color Primario (Fondo, Footer, Encabezados)</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', gap: '8px', flexWrap: 'wrap' }}>
+                    <label className="premium-label" style={{ display: 'block' }}>🎨 Color Primario (Fondo, Footer, Encabezados)</label>
+                    <span className="ap-leg-chip" style={{ color: onNavy, background: navyHex }}>Aa · {legNavy.toFixed(1)}:1</span>
+                  </div>
                   <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
                     <input
                       type="color"
@@ -2575,9 +2750,7 @@ function AdminContent() {
                         onChange={e => {
                           const v = e.target.value;
                           setNavyHex(v);
-                          if (/^#[0-9A-Fa-f]{6}$/.test(v)) {
-                            applyThemeColor(v, goldHex);
-                          }
+                          if (isHex6(v)) { applyThemeColor(v, goldHex); }
                         }}
                         placeholder="#1A2744"
                         style={{ fontFamily: 'monospace', letterSpacing: '1px' }}
@@ -2588,25 +2761,16 @@ function AdminContent() {
                             style={{ width: '22px', height: '22px', borderRadius: '4px', background: c, border: navyHex === c ? '2px solid var(--gold)' : '1px solid #ccc', cursor: 'pointer' }} />
                         ))}
                       </div>
-                      <div style={{ marginTop: '8px' }}>
-                        <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Intensidad</label>
-                        <input type="range" min={0} max={100} value={parseInt(navyHex.slice(1, 3), 16)} style={{ width: '100%', accentColor: 'var(--gold)' }}
-                          onChange={e => {
-                            const bright = Math.round(parseInt(e.target.value));
-                            const hex = bright.toString(16).padStart(2, '0');
-                            const newColor = `#${hex}${navyHex.slice(3)}`;
-                            setNavyHex(newColor);
-                            applyThemeColor(newColor, goldHex);
-                          }}
-                        />
-                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* GOLD */}
                 <div className="form-group ap-color-card pop-in" style={{ animationDelay: '0.38s' }}>
-                  <label className="premium-label" style={{ display: 'block', marginBottom: '10px' }}>✨ Color Secundario (Bordes, Botones, Detalles)</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', gap: '8px', flexWrap: 'wrap' }}>
+                    <label className="premium-label" style={{ display: 'block' }}>✨ Color Secundario (Bordes, Botones, Detalles)</label>
+                    <span className="ap-leg-chip" style={{ color: onGold, background: goldHex }}>Aa · {legGold.toFixed(1)}:1</span>
+                  </div>
                   <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
                     <input
                       type="color"
@@ -2626,9 +2790,7 @@ function AdminContent() {
                         onChange={e => {
                           const v = e.target.value;
                           setGoldHex(v);
-                          if (/^#[0-9A-Fa-f]{6}$/.test(v)) {
-                            applyThemeColor(navyHex, v);
-                          }
+                          if (isHex6(v)) { applyThemeColor(navyHex, v); }
                         }}
                         placeholder="#C8973A"
                         style={{ fontFamily: 'monospace', letterSpacing: '1px' }}
@@ -2639,25 +2801,101 @@ function AdminContent() {
                             style={{ width: '22px', height: '22px', borderRadius: '4px', background: c, border: goldHex === c ? '2px solid var(--navy)' : '1px solid #ccc', cursor: 'pointer' }} />
                         ))}
                       </div>
-                      <div style={{ marginTop: '8px' }}>
-                        <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Intensidad</label>
-                        <input type="range" min={0} max={255} value={parseInt(goldHex.slice(1, 3), 16)} style={{ width: '100%', accentColor: 'var(--gold)' }}
-                          onChange={e => {
-                            const bright = Math.round(parseInt(e.target.value));
-                            const hex = bright.toString(16).padStart(2, '0');
-                            const newColor = `#${hex}${goldHex.slice(3)}`;
-                            setGoldHex(newColor);
-                            applyThemeColor(navyHex, newColor);
-                          }}
-                        />
+                    </div>
+                  </div>
+                </div>
+
+                {/* FONDO NEUTRAL */}
+                <div className="form-group ap-color-card pop-in" style={{ animationDelay: '0.46s' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', gap: '8px', flexWrap: 'wrap' }}>
+                    <label className="premium-label" style={{ display: 'block' }}>🧱 Color de Fondo (secciones neutras)</label>
+                    <span className="ap-leg-chip" style={{ color: readableTextOn(bgHex), background: bgHex }}>Aa · {contrastRatio(bgHex, readableTextOn(bgHex)).toFixed(1)}:1</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                    <input
+                      type="color"
+                      value={bgHex}
+                      onChange={e => { setBgHex(e.target.value); applyThemeColor(navyHex, goldHex, { bg: e.target.value, card: cardHex }); }}
+                      style={{ width: '56px', height: '56px', cursor: 'pointer', border: '2px solid var(--gold-pale)', borderRadius: '10px', padding: '2px' }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <input type="text" className="pjl-input" value={bgHex} maxLength={7}
+                        onChange={e => { const v = e.target.value; setBgHex(v); if (isHex6(v)) applyThemeColor(navyHex, goldHex, { bg: v, card: cardHex }); }}
+                        style={{ fontFamily: 'monospace', letterSpacing: '1px' }} />
+                      <div style={{ marginTop: '8px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        {['#F7F0E3', '#FDFAF5', '#EEF2F7', '#F3F6EE', '#FAF3EA'].map(c => (
+                          <button key={c} className="ap-mini-swatch" title={c} onClick={() => { setBgHex(c); applyThemeColor(navyHex, goldHex, { bg: c, card: cardHex }); }}
+                            style={{ width: '22px', height: '22px', borderRadius: '4px', background: c, border: bgHex === c ? '2px solid var(--gold)' : '1px solid #ccc', cursor: 'pointer' }} />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* SUPERFICIE DE TARJETAS */}
+                <div className="form-group ap-color-card pop-in" style={{ animationDelay: '0.54s' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', gap: '8px', flexWrap: 'wrap' }}>
+                    <label className="premium-label" style={{ display: 'block' }}>📄 Superficie de Tarjetas</label>
+                    <span className="ap-leg-chip" style={{ color: readableTextOn(cardHex), background: cardHex }}>Aa · {contrastRatio(cardHex, readableTextOn(cardHex)).toFixed(1)}:1</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                    <input
+                      type="color"
+                      value={cardHex}
+                      onChange={e => { setCardHex(e.target.value); applyThemeColor(navyHex, goldHex, { bg: bgHex, card: e.target.value }); }}
+                      style={{ width: '56px', height: '56px', cursor: 'pointer', border: '2px solid var(--gold-pale)', borderRadius: '10px', padding: '2px' }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <input type="text" className="pjl-input" value={cardHex} maxLength={7}
+                        onChange={e => { const v = e.target.value; setCardHex(v); if (isHex6(v)) applyThemeColor(navyHex, goldHex, { bg: bgHex, card: v }); }}
+                        style={{ fontFamily: 'monospace', letterSpacing: '1px' }} />
+                      <div style={{ marginTop: '8px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        {['#FFFFFF', '#FBF7EF', '#F1F4F9', '#F4F6EF', '#FFF9F0'].map(c => (
+                          <button key={c} className="ap-mini-swatch" title={c} onClick={() => { setCardHex(c); applyThemeColor(navyHex, goldHex, { bg: bgHex, card: c }); }}
+                            style={{ width: '22px', height: '22px', borderRadius: '4px', background: c, border: cardHex === c ? '2px solid var(--gold)' : '1px solid #ccc', cursor: 'pointer' }} />
+                        ))}
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
 
+              {/* PALETA DERIVADA (AUTOGENERADA) */}
+              <div className="ap-card pop-in" style={{ animationDelay: '0.6s' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '14px', flexWrap: 'wrap', marginBottom: '14px' }}>
+                  <div>
+                    <label className="premium-label" style={{ display: 'block', marginBottom: '6px' }}>🌈 PALETA DERIVADA AUTOMÁTICA</label>
+                    <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0, maxWidth: '620px' }}>
+                      Los tonos de hover, bordes, marcos y sombras se calculan solos a partir de tus dos colores, así todo el sitio queda armónico sin configurar nada más.
+                    </p>
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px' }}>
+                  <div>
+                    <span className="premium-label" style={{ fontSize: '10px' }}>PRIMARIO</span>
+                    <div className="ap-deriv-row">
+                      {navyDerived.map((c, i) => (
+                        <div key={i} className="ap-deriv-cell" style={{ background: c }} title={`${c}`}>
+                          <span style={{ color: readableTextOn(c) }}>{i === 3 ? navyHex.toUpperCase() : ''}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="premium-label" style={{ fontSize: '10px' }}>SECUNDARIO</span>
+                    <div className="ap-deriv-row">
+                      {goldDerived.map((c, i) => (
+                        <div key={i} className="ap-deriv-cell" style={{ background: c }} title={`${c}`}>
+                          <span style={{ color: readableTextOn(c) }}>{i === 3 ? goldHex.toUpperCase() : ''}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* ICONOS DEL PANEL */}
-              <div className="ap-card pop-in" style={{ animationDelay: '0.46s' }}>
+              <div className="ap-card pop-in" style={{ animationDelay: '0.68s' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '14px', flexWrap: 'wrap', marginBottom: '18px' }}>
                   <div>
                     <label className="premium-label" style={{ display: 'block', marginBottom: '6px' }}>🧩 ICONOS DEL PANEL ADMIN</label>
