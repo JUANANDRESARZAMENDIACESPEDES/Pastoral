@@ -69,7 +69,7 @@ span,
 a,
 td,
 th {
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   word-break: normal;
 }
 
@@ -969,5 +969,32 @@ th {
   .admin-content-area table {
     display: block;
     width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
+}
+
+/* ── Corrección: evitar que textos/pills se apilen letra por letra ────────
+   El culpable era `overflow-wrap: anywhere` combinado con contenedores muy
+   angostos. Lo reemplazamos por break-word y protegemos las etiquetas cortas
+   del panel para que se mantengan en una sola línea. */
+.admin-content-area .na-status,
+.admin-content-area .na-cat,
+.admin-content-area .act-status,
+.admin-content-area .act-catchip,
+.admin-content-area .act-inscchip,
+.admin-content-area .act-offchip,
+.admin-content-area .act-catpill,
+.admin-content-area .badge-active,
+.admin-content-area .badge-nucleation,
+.admin-content-area .anal-total-chip,
+.admin-content-area .login-title {
+  white-space: nowrap;
+}
+
+.admin-content-area .pjl-table th,
+.admin-content-area .pjl-table td {
+  overflow-wrap: break-word;
+  word-break: normal;
 }

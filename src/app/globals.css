@@ -2212,7 +2212,8 @@ input, textarea { cursor: text; }
     text-align: center;
     justify-content: center;
     white-space: normal;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
+    word-break: break-word;
   }
   .admin-donut-layout {
     flex-direction: column;
@@ -3963,14 +3964,15 @@ input:checked + .pjl-slider:before {
     min-width: 0;
     max-width: 100%;
     white-space: normal;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
+    word-break: break-word;
   }
 
   .section-head h3,
   .hero-pjl h2,
   .zone-hero h2,
   .login-title {
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
     word-break: normal;
   }
 
@@ -4093,7 +4095,7 @@ input:checked + .pjl-slider:before {
   .admin-content-area .pjl-table th,
   .admin-content-area .pjl-table td {
     white-space: normal;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
     word-break: normal;
   }
 
@@ -4115,7 +4117,8 @@ input:checked + .pjl-slider:before {
   .admin-content-area button {
     max-width: 100%;
     white-space: normal;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
+    word-break: break-word;
   }
 }
 
