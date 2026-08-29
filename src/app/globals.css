@@ -8581,7 +8581,7 @@ html.show-splash .splash-screen { visibility: visible; }
    ============================================================ */
 .splash-sketch {
   position: absolute;
-  width: min(44vw, 430px);
+  width: min(30vw, 290px);
   aspect-ratio: 100 / 125;
   pointer-events: none;
   opacity: 0;
@@ -8594,8 +8594,8 @@ html.show-splash .splash-screen { visibility: visible; }
   inset: -12%;
   background: radial-gradient(ellipse at center, rgba(200, 151, 58, 0.16), transparent 65%);
 }
-.sk-a { left: 3%; top: 50%; transform: translateY(-50%) rotate(-4deg); }
-.sk-b { right: 3%; top: 48%; transform: translateY(-48%) rotate(4deg); }
+.sk-a { left: 4%; top: 16%; transform: rotate(-6deg); }
+.sk-b { right: 4%; bottom: 8%; transform: rotate(6deg); }
 
 .sk-p {
   fill: none;
@@ -8658,9 +8658,9 @@ html.show-splash .splash-screen { visibility: visible; }
 /* Movil: mas grandes en proporcion, hacia esquinas, translucidos */
 @media (max-width: 760px) {
   .splash-screen.art-on .splash-sketch { opacity: 0.6; }
-  .splash-sketch { width: 60vw; }
-  .sk-a { left: -14vw; top: 22%; transform: rotate(-6deg); }
-  .sk-b { right: -15vw; top: auto; bottom: 4%; transform: rotate(5deg); }
+  .splash-sketch { width: 56vw; }
+  .sk-a { left: -16vw; top: 14%; transform: rotate(-6deg); }
+  .sk-b { right: -16vw; top: auto; bottom: 3%; transform: rotate(6deg); }
 }
 
 /* ============================================================
