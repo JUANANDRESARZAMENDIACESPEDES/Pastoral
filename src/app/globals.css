@@ -10951,6 +10951,7 @@ html.show-splash .splash-screen { visibility: visible; }
    ========================================================================== */
 .dropdown-zones { min-width: 300px; }
 .dropdown-council { min-width: 316px; }
+.dropdown-about { min-width: 330px; }
 
 .dd-head {
   font-family: var(--font-display, 'Cormorant Garamond', serif);
@@ -10991,7 +10992,9 @@ html.show-splash .splash-screen { visibility: visible; }
 .nav-item:hover .dropdown-zones .dd-zone,
 .nav-item:focus-within .dropdown-zones .dd-zone,
 .nav-item:hover .dropdown-council .dd-team,
-.nav-item:focus-within .dropdown-council .dd-team {
+.nav-item:focus-within .dropdown-council .dd-team,
+.nav-item:hover .dropdown-about .dd-about,
+.nav-item:focus-within .dropdown-about .dd-about {
   animation: ddItemIn 0.45s cubic-bezier(0.34, 1.45, 0.64, 1) both;
   animation-delay: var(--ad, 0s);
 }

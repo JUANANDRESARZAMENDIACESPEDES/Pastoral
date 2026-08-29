@@ -1000,10 +1000,22 @@ window.setTimeout(() => {
                 <span className="nav-txt">Nosotros</span>
                 <span className="nav-caret" aria-hidden="true">▾</span>
               </button>
-              <div className="dropdown-pjl dropdown-pjl-featured">
-                <button type="button" onClick={() => navigate('estatuto')} className="dropdown-link">Estatuto</button>
-                <button type="button" onClick={() => navigate('historia')} className="dropdown-link">Nuestra Historia</button>
-                <button type="button" onClick={() => navigate('institucional')} className="dropdown-link">Institucional</button>
+              <div className="dropdown-pjl dropdown-pjl-featured dropdown-about">
+                <div className="dd-head">📖 Nosotros</div>
+                {[
+                  { id: 'estatuto',      icon: '📜', tag: '#C8973A', t: 'Estatuto',        d: 'El marco y los principios que nos guían' },
+                  { id: 'historia',      icon: '🏛️', tag: '#2563EB', t: 'Nuestra Historia', d: 'El camino de fe que nos trajo hasta hoy' },
+                  { id: 'institucional', icon: '🕊️', tag: '#059669', t: 'Institucional',   d: 'Misión, visión y nuestra estructura' },
+                ].map((it, i) => (
+                  <button type="button" key={it.id} style={{ '--ad': `${i * 0.05}s`, '--tg': it.tag } as CSSProperties}
+                    onClick={() => navigate(it.id)} className="dd-team dd-about">
+                    <span className="dd-team-ico">{it.icon}</span>
+                    <span className="dd-team-body">
+                      <strong>{it.t}</strong>
+                      <em>{it.d}</em>
+                    </span>
+                  </button>
+                ))}
               </div>
             </li>
             <li className={`nav-item ${activeSection === 'consejo' ? 'nav-item-active' : ''}`}>
@@ -1123,16 +1135,19 @@ window.setTimeout(() => {
                 <span className={`drawer-caret ${mobileSubmenuOpen['nosotros'] ? 'open' : ''}`}>▾</span>
               </button>
               {mobileSubmenuOpen['nosotros'] && (
-                <ul className="drawer-sublinks">
-                  <li>
-                    <Link href="/?page=estatuto" onClick={(e) => { navigate('estatuto', e); setIsMobileMenuOpen(false); }} className="drawer-sublink">Estatuto</Link>
-                  </li>
-                  <li>
-                    <Link href="/?page=historia" onClick={(e) => { navigate('historia', e); setIsMobileMenuOpen(false); }} className="drawer-sublink">Nuestra Historia</Link>
-                  </li>
-                  <li>
-                    <Link href="/?page=institucional" onClick={(e) => { navigate('institucional', e); setIsMobileMenuOpen(false); }} className="drawer-sublink">Institucional</Link>
-                  </li>
+                <ul className="drawer-sublinks drawer-sublinks-rich">
+                  {[
+                    { id: 'estatuto',      icon: '📜', tag: '#C8973A', t: 'Estatuto',          d: 'El marco y los principios que nos guían' },
+                    { id: 'historia',      icon: '🏛️', tag: '#2563EB', t: 'Nuestra Historia',   d: 'El camino de fe que nos trajo hasta hoy' },
+                    { id: 'institucional', icon: '🕊️', tag: '#059669', t: 'Institucional',     d: 'Misión, visión y nuestra estructura' },
+                  ].map((it) => (
+                    <li key={it.id}>
+                      <Link href={`/?page=${it.id}`} onClick={(e) => { navigate(it.id, e); setIsMobileMenuOpen(false); }} className="drawer-sublink drawer-sublink-rich">
+                        <span className="dd-team-ico" style={{ '--tg': it.tag } as CSSProperties}>{it.icon}</span>
+                        <span className="dd-team-body"><strong>{it.t}</strong><em>{it.d}</em></span>
+                      </Link>
+                    </li>
+                  ))}
                 </ul>
               )}
             </li>
