@@ -998,3 +998,84 @@ th {
   overflow-wrap: break-word;
   word-break: normal;
 }
+
+/* ── Currículos / Consejo — móvil: letras correctas y UI mejorada ───────
+   Garantiza que la cuadrícula y las tarjetas de integrantes puedan encogerse
+   sin desbordar (min-width: 0) y que ningún texto del interior se apile letra
+   por letra en pantallas angostas. Además rebalancea foto/padding para que la
+   tarjeta se lea cómoda en el teléfono. */
+@media (max-width: 768px) {
+  .zone-grid,
+  .zone-grid > .profile-card {
+    min-width: 0;
+  }
+
+  .zone-grid > .profile-card {
+    height: auto;
+  }
+
+  .profile-card-top {
+    height: 205px;
+  }
+
+  .profile-card-bottom {
+    padding: 22px 18px 24px;
+  }
+
+  .profile-card-bottom h4,
+  .profile-card-role,
+  .profile-card-bio,
+  .profile-quote,
+  .profile-card .btn-cv-pjl,
+  .profile-card .pc-more {
+    overflow-wrap: break-word;
+    word-break: normal;
+    white-space: normal;
+  }
+
+  .profile-card-bottom h4 {
+    font-size: 20px;
+  }
+
+  .profile-card-role {
+    display: inline-flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+    max-width: 100%;
+    padding: 7px 14px;
+    text-align: center;
+  }
+
+  .profile-card .btn-cv-pjl {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+}
+
+/* Cinta de pestañas del Consejo en pantallas muy angostas: cada pestaña se
+   muestra en su propia línea sin romper su etiqueta en vertical. */
+@media (max-width: 480px) {
+  .council-tabs {
+    border-radius: 22px;
+    width: 100%;
+  }
+  .council-tab {
+    flex: 1 1 auto;
+    min-width: min(100%, 160px);
+    justify-content: center;
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+  .council-tab .ct-txt {
+    white-space: normal;
+    overflow-wrap: break-word;
+  }
+  .council-tab-desc {
+    font-size: 13.5px;
+    line-height: 1.55;
+  }
+}
