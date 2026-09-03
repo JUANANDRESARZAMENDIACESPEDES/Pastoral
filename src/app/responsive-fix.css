@@ -325,7 +325,7 @@ th {
 
   [style*="gridTemplateColumns"],
   [style*="grid-template-columns"],
-  [class*="grid"] {
+  [class*="grid"]:not(.ag-grid):not(.acal-grid):not(.calendar-grid) {
     grid-template-columns: 1fr !important;
     min-width: 0 !important;
     max-width: 100% !important;
