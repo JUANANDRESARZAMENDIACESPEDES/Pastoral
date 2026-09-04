@@ -7,7 +7,7 @@
    cuando el admin cambia el logo desde el panel.
    ============================================================ */
 
-const VERSION = 'pjl-v3';
+const VERSION = 'pjl-v4';
 const SHELL_CACHE = 'pjl-shell';
 const CUSTOM_ICONS_CACHE = 'pjl-custom-icons';
 
@@ -24,12 +24,17 @@ const CORE_ASSETS = [
 
 const ICON_URLS = ['/android-chrome-192.png', '/android-chrome-512.png'];
 
+/* Instalación: cachea la shell y avisa de la actualización.
+   NO se llama a self.skipWaiting() aquí a propósito: cuando ya existe un
+   service worker activo, el nuevo queda en estado "waiting" y el
+   componente UpdatePrompt muestra el aviso "nueva actualización".
+   Solo cuando el usuario confirma (mensaje SKIP_WAITING) el nuevo SW toma
+   el control y recarga la página con la versión actualizada. */
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
       .open(SHELL_CACHE)
       .then((cache) => cache.addAll(CORE_ASSETS))
-      .then(() => self.skipWaiting())
       .catch((err) => console.warn('[SW] Shell cache incomplete', err))
   );
 });
@@ -50,6 +55,10 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+    return;
+  }
   if (event.data && event.data.type === 'UPDATE_PWA_ICONS') {
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
       clients.forEach((client) => {

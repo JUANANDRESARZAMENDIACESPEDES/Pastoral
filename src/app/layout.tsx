@@ -4,6 +4,7 @@ import { Fraunces, Manrope, Libre_Baskerville } from "next/font/google";
 import ThemeLoader from "../components/ThemeLoader";
 import PwaInstallPrompt from "../components/PwaInstallPrompt";
 import PwaIconSync from "../components/PwaIconSync";
+import UpdatePrompt from "../components/UpdatePrompt";
 import "./globals.css";
 import "./responsive-fix.css";
 
@@ -80,12 +81,13 @@ export default function RootLayout({
         <style
           dangerouslySetInnerHTML={{
             __html: [
-              /* La navbar es visible por defecto: antes dependia de
-                 'nav-entered' (opacity:0) que solo saltaba a los ~6s. Si el
-                 velo se perdia, quedaba el contenido visible SIN navbar hasta
-                 entonces. Ahora el navbar se ve siempre y 'nav-entered' solo
-                 añade su animación de entrada (nunca puede 'faltar'). */
-              '.top-nav .brand-logo-wrap,.top-nav .brand-text,.top-nav .nav-links .nav-item{opacity:1}',
+              /* El navbar nace oculto (opacity:0 en globals.css) y SOLO se
+                 revela cuando 'nav-entered' dispara su animación escalonada.
+                 El velo del splash lo mantiene oculto hasta entonces, y el
+                 useLayoutEffect de page.tsx siempre añade 'nav-entered', por
+                 lo que no existe ventana sin menú: un único fundido de entrada.
+                 Nada de sobreescribir opacity a 1 aquí (causaba doble refresco:
+                 flash visible -> re-animación desde 0). */
               'html.show-splash:not(.pjl-reveal) body>*:not(#splash-pjl):not(script):not(style):not(noscript){visibility:hidden!important}',
               'html.pjl-reveal body>*:not(#splash-pjl):not(script):not(style):not(noscript){visibility:visible!important;animation:pjlPageIn .55s ease-out both}',
               '@keyframes pjlPageIn{from{opacity:0}to{opacity:1}}',
@@ -202,6 +204,7 @@ export default function RootLayout({
           }}
         />
         <PwaInstallPrompt />
+        <UpdatePrompt />
         {children}
         <Script
           src="https://www.vaticannews.va/etc/designs/vaticannews/widget/widget.js"
