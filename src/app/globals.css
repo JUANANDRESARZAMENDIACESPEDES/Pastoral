@@ -135,6 +135,15 @@ button { font-family: inherit; border: none; background: none; cursor: pointer; 
   transform: translateY(0);
 }
 
+/* Tras la primera carga, las navegaciones entre secciones (SPA) deben
+   mostrar el contenido al instante: las clases de entrada .reveal ya no
+   deben animar de nuevo cada vez que entra a una sección. */
+html.pjl-nav-entered .reveal {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
 .glass-panel {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(12px);

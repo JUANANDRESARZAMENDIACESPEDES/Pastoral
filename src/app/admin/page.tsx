@@ -3077,7 +3077,7 @@ function AdminContent() {
               : supabaseStatus
                 ? 'Sin nube · los cambios quedan solo en este dispositivo'
                 : 'Verificando sincronización…';
-            const activosCount = [branding.mainLogo, branding.whiteLogo, branding.favLogo, branding.zona1Logo, branding.zona2Logo, branding.zona3Logo, branding.zona4Logo].filter(Boolean).length;
+            const activosCount = [branding.mainLogo, branding.androidLogo, branding.whiteLogo, branding.favLogo, branding.zona1Logo, branding.zona2Logo, branding.zona3Logo, branding.zona4Logo].filter(Boolean).length;
             return (
             <div className="animate-reveal pjl-card identity-shell">
 
@@ -3113,7 +3113,7 @@ function AdminContent() {
                     <span className="identity-stat-icon">🖼️</span>
                     <div>
                       <div className="identity-stat-label">ACTIVOS VISUALES</div>
-                      <div className="identity-stat-value">{activosCount} <small>de 7</small></div>
+                      <div className="identity-stat-value">{activosCount} <small>de 8</small></div>
                     </div>
                   </div>
                   <div className="identity-stat-box is-cream">
@@ -3141,6 +3141,24 @@ function AdminContent() {
                       CAMBIAR LOGO
                       <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, (url) => { setBranding({...branding, mainLogo: url}); showToast('Logo principal actualizado ✔'); })} />
                     </label>
+                  </div>
+                </div>
+
+                <div className="identity-logo-row identity-rise" style={{ animationDelay: '40ms', border: '1px solid var(--gold-pale)', borderRadius: '16px', background: 'linear-gradient(145deg, #fffdf8 0%, #fbf6ea 100%)' }}>
+                  <div className="identity-logo-preview" style={{ background: 'var(--navy)', padding: '14px', borderRadius: '14px' }}>
+                    {branding.androidLogo ? <img src={branding.androidLogo} alt="Logo app Android" style={{ objectFit: 'contain', maxWidth: '100%', maxHeight: '100%' }} /> : <span style={{ fontSize: '26px' }}>🤖</span>}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p className="premium-label" style={{ marginBottom: '4px' }}>LOGO APP ANDROID (ÍCONO)</p>
+                    <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '0 0 10px' }}>Ícono que se ve en la pantalla y en el teléfono cuando la app se instala. Si no lo subís, se usa el logo principal automáticamente.</p>
+                    <label className="btn-premium btn-premium-gold" style={{ padding: '9px 18px', fontSize: '11px' }}>
+                      SUBIR LOGO
+                      <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, (url) => { setBranding({...branding, androidLogo: url}); showToast('Logo Android actualizado ✔'); })} />
+                    </label>
+                    <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '10px 0 0', lineHeight: 1.6 }}>
+                      <strong style={{ color: 'var(--navy)' }}>Tamaño recomendado: 512×512 px (PNG).</strong><br />
+                      Debe ser un <strong>cuadrado perfecto</strong> con fondo sólido (el navy del sitio o un color propio) y el símbolo ocupando el <strong>centro (66% del lienzo)</strong>, sin llegar al borde. Android recorta los íconos con máscara redondeada; si el símbolo toca el borde se verá cortado en el teléfono.
+                    </p>
                   </div>
                 </div>
 

@@ -128,6 +128,7 @@ export interface ActiveSections { zonas: boolean; consejo: boolean; agenda: bool
 export interface Branding { 
   [key: string]: string | boolean | number | [number, number][] | undefined;
   mainLogo: string;
+  androidLogo: string;
   adminIconDashboard: string;
   adminIconIdentidad: string;
   adminIconCarrusel: string;
@@ -337,6 +338,7 @@ export const DEFAULT_GALLERY: GalleryItem[] = [];
 
 export const DEFAULT_BRANDING: Branding = { 
   mainLogo: '/pjl-logo.svg', 
+  androidLogo: '',
   adminIconDashboard: '📊',
   adminIconIdentidad: '🎨',
   adminIconCarrusel: '🖼️',

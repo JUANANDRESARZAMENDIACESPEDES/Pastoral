@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars, @next/next/no-img-element, @typescript-eslint/ban-ts-comment, react-hooks/exhaustive-deps */
 'use client';
 
-import { useState, useEffect, useLayoutEffect, Suspense, type CSSProperties } from 'react';
+import { useState, useEffect, useRef, useLayoutEffect, Suspense, type CSSProperties } from 'react';
 import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
@@ -706,8 +706,19 @@ window.setTimeout(() => {
   }, [liveHeroImages.length, heroIntervalSecs]);
 
   // --- INTERSECTION OBSERVER FOR EXQUISITE SCROLL ANIMATIONS ---
-  useEffect(() => {
+  // La cascada de entrada .reveal SOLO debe reproducirse en la primera
+  // carga/recarga de la página. En navegaciones internas (cambio de
+  // sección vía ?page=) el contenido debe aparecer al instante: al navegar
+  // a una sección distinta se marca <html>.pjl-nav-entered y el CSS fuerza
+  // .reveal a opacity 1 sin transición, evitando que la intro se repita.
+  const initialPageRef = useRef(currentPage);
+  useLayoutEffect(() => {
     if (typeof window === 'undefined' || typeof IntersectionObserver === 'undefined') return;
+    const root = document.documentElement;
+    if (currentPage !== initialPageRef.current) {
+      root.classList.add('pjl-nav-entered');
+      return;
+    }
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
