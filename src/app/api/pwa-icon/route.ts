@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import sharp from 'sharp';
+import { readFile } from 'node:fs/promises';
+import { join, normalize } from 'node:path';
 import { getSupabaseRouteConfig } from '@/lib/supabaseRoute';
 
 export const runtime = 'nodejs';
@@ -13,15 +15,22 @@ async function loadLogoBuffer(url: string): Promise<Buffer | null> {
     if (url.startsWith('data:')) {
       const comma = url.indexOf(',');
       if (comma < 0) return null;
-      const [, b64] = [url.slice(0, comma), url.slice(comma + 1)];
-      const base64 = b64.replace(/\s/g, '');
-      return Buffer.from(base64, 'base64');
+      const b64 = url.slice(comma + 1).replace(/\s/g, '');
+      return Buffer.from(b64, 'base64');
     }
-    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
       const res = await fetch(url);
       if (!res.ok) return null;
-      const buf = Buffer.from(await res.arrayBuffer());
-      return buf;
+      return Buffer.from(await res.arrayBuffer());
+    }
+    if (url.startsWith('/')) {
+      // Ruta relativa => archivo estático dentro de /public. No podemos usar
+      // fetch con URL relativa en el servidor (sin host), así que lo leemos
+      // del disco. Se normaliza y se impide el escapado fuera de /public.
+      const safePath = normalize(url).replace(/^(\.\.[/\\])+/, '');
+      const filePath = join(process.cwd(), 'public', safePath);
+      if (!filePath.startsWith(join(process.cwd(), 'public'))) return null;
+      return await readFile(filePath);
     }
     return null;
   } catch {

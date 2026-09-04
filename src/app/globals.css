@@ -11269,7 +11269,7 @@ html.show-splash .splash-screen { visibility: visible; }
   .anal-row { opacity: 1; }
 }
 
-/* ---------- AVISO DE NUEVA ACTUALIZACIÓN (PWA) ---------- */
+/* ---------- AVISO DE NUEVA ACTUALIZACIï¿½N (PWA) ---------- */
 .pjl-update-banner {
   position: fixed;
   z-index: 2147483000;
@@ -11325,7 +11325,7 @@ html.show-splash .splash-screen { visibility: visible; }
   .pjl-update-banner { animation: none; }
 }
 
-/* ---------- BOTÓN "DESCARGAR APP" (navbar + drawer) ---------- */
+/* ---------- BOTï¿½N "DESCARGAR APP" (navbar + drawer) ---------- */
 .nav-download-item { margin-left: 6px; }
 .nav-download-btn {
   background: linear-gradient(135deg, #e0b866 0%, #c8973a 55%, #b07d26 100%) !important;
@@ -11350,7 +11350,7 @@ html.show-splash .splash-screen { visibility: visible; }
   .nav-download-btn { animation: none; }
 }
 
-/* Variante del drawer móvil */
+/* Variante del drawer mï¿½vil */
 .drawer-btn-download {
   margin: 6px 12px 10px;
   width: auto !important;
@@ -11367,4 +11367,194 @@ html.show-splash .splash-screen { visibility: visible; }
 .drawer-btn-download:focus {
   transform: translateY(-2px);
   box-shadow: 0 14px 30px rgba(200, 151, 58, 0.5) !important;
+}
+
+
+/* ============================================================
+   NOTIFICACIONES PUSH ï¿½ campana + modal
+   ============================================================ */
+.nav-bell {
+  position: relative;
+}
+.nav-bell.is-loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+.nav-bell-on .nav-ico {
+  animation: bellRing 1.2s ease-in-out;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .nav-bell:hover .nav-ico {
+    animation: bellRing 0.8s ease-in-out;
+  }
+}
+
+.push-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483002;
+  background: rgba(10, 16, 30, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: pushFadeIn 0.25s ease both;
+}
+@keyframes pushFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.push-modal {
+  position: relative;
+  background: linear-gradient(160deg, #1A2744 0%, #22345c 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 26px 22px 20px;
+  max-width: 380px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 24px 60px rgba(10, 16, 30, 0.6);
+  animation: pushModalIn 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+@keyframes pushModalIn {
+  from { transform: translateY(18px) scale(0.96); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+.push-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 17px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+.push-modal-close:hover {
+  color: #fff;
+}
+.push-modal-ico {
+  font-size: 42px;
+  display: block;
+  margin-bottom: 10px;
+}
+.push-modal h4 {
+  margin: 0 0 8px;
+  font-size: 17px;
+  font-weight: 800;
+  color: #fff;
+}
+.push-modal p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.85);
+}
+.push-modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+.push-modal-btn {
+  flex: 1;
+  padding: 12px 10px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 800;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.push-modal-btn:disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+.push-modal-btn:hover {
+  transform: translateY(-1px);
+}
+.push-modal-btn-primary {
+  margin-top: 18px;
+  width: 100%;
+  background: linear-gradient(135deg, #C8973A, #e2b45a);
+  color: #1A2744;
+}
+.push-modal-btn-ok {
+  margin-top: 18px;
+  width: 100%;
+  background: linear-gradient(135deg, #C8973A, #e2b45a);
+  color: #1A2744;
+}
+.push-modal-btn-ghost {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #fff;
+}
+.push-modal-error {
+  margin-top: 12px !important;
+  font-size: 12px !important;
+  color: #ffdba8 !important;
+}
+.drawer-btn.nav-bell-on {
+  color: var(--gold, #C8973A);
+}
+
+
+/* Campanilla: leve sacudida */
+@keyframes bellRing {
+  0%, 100% { transform: rotate(0); }
+  10% { transform: rotate(12deg); }
+  20% { transform: rotate(-10deg); }
+  30% { transform: rotate(8deg); }
+  40% { transform: rotate(-6deg); }
+  50% { transform: rotate(4deg); }
+  60% { transform: rotate(-2deg); }
+  70% { transform: rotate(0); }
+}
+
+
+/* Panel push (configuración) */
+.cf-keybox {
+  display: grid;
+  gap: 6px;
+}
+.cf-keybox .pjl-input {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px;
+}
+
+
+/* ============================================================
+   BOTON COMPARTIR (Web Share API)
+   ============================================================ */
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(26, 39, 68, 0.2);
+  background: rgba(26, 39, 68, 0.05);
+  color: var(--navy, #1A2744);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  line-height: 1;
+}
+.share-btn:hover {
+  background: rgba(200, 151, 58, 0.18);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px -6px rgba(200, 151, 58, 0.5);
+}
+.news-share-btn {
+  border-color: var(--navy, #1A2744);
+}
+.nc-toolbar {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }

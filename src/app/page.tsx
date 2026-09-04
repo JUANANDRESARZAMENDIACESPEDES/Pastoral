@@ -14,6 +14,8 @@ import { fetchStoreValue } from '@/lib/supabaseStore';
 import Link from 'next/link';
 import Script from 'next/script';
 import NavDownloadButton from '@/components/NavDownloadButton';
+import NotificationBell from '@/components/NotificationBell';
+import ShareButton from '@/components/ShareButton';
 
 type PublicNewsItem = Omit<NewsItem, 'id'> & {
   id: number | string;
@@ -1107,6 +1109,7 @@ window.setTimeout(() => {
               </div>
             </li>
 
+            <NotificationBell />
             <NavDownloadButton />
           </ul>
         </div>
@@ -1233,6 +1236,7 @@ window.setTimeout(() => {
               )}
             </li>
 
+            <NotificationBell variant="mobile" />
             <NavDownloadButton variant="mobile" />
           </ul>
         </div>
@@ -1659,6 +1663,15 @@ window.setTimeout(() => {
                         <h4>{n.title}</h4>
                         <p>{(n.subtitle || n.body).substring(0, 150)}...</p>
                         <Link href="/" onClick={(e) => { e.stopPropagation(); navigate('noticias', e); }}>Leer artículo completo <span style={{ fontSize: '16px' }}>➞</span></Link>
+                        <div style={{ marginTop: '12px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                          <ShareButton
+                            title={n.title}
+                            text={n.subtitle || (n.body || '').substring(0, 120)}
+                            url={typeof window !== 'undefined' ? `${window.location.origin}/?page=noticias` : '/'}
+                            label="Compartir"
+                            className="news-share-btn"
+                          />
+                        </div>
                       </div>
                     ))}
                     {liveNews.length === 0 && (
@@ -2734,6 +2747,14 @@ window.setTimeout(() => {
                           ))}
                         </div>
                       )}
+                      <div className="nc-toolbar">
+                        <ShareButton
+                          title={n.title}
+                          text={n.subtitle || (n.body || '').substring(0, 120)}
+                          url={typeof window !== 'undefined' ? `${window.location.origin}/?page=noticias` : '/'}
+                          label="Compartir"
+                        />
+                      </div>
                       <span className="nc-more">Leer más <i>→</i></span>
                     </article>
                   );

@@ -783,7 +783,115 @@ function AdminContent() {
   const [aiKeyStatus, setAiKeyStatus] = useState<'idle' | 'validating' | 'valid' | 'invalid'>('idle');
 
   // --- CONFIGURACION DEL SITIO ---
-  const [cfgTab, setCfgTab] = useState<'general' | 'social' | 'integraciones' | 'visibilidad' | 'mantenimiento'>('general');
+  const [cfgTab, setCfgTab] = useState<'general' | 'social' | 'integraciones' | 'visibilidad' | 'mantenimiento' | 'push'>('general');
+
+  // --- NOTIFICACIONES PUSH ---
+  const [pushConfig, setPushConfig] = useState<{ configured: boolean; publicKey: string; count: number } | null>(null);
+  const [pushVapidKeys, setPushVapidKeys] = useState<{ publicKey: string; privateKey: string; subject: string }>({ publicKey: '', privateKey: '', subject: 'mailto:pastoral@luque.edu.py' });
+  const [pushMsg, setPushMsg] = useState<{ title: string; body: string; url: string }>({ title: '', body: '', url: '/' });
+  const [pushStatus, setPushStatus] = useState<{ type: 'ok' | 'err' | 'info'; text: string } | null>(null);
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushAdminToken, setPushAdminToken] = useState('');
+
+  const authHeaders = () => {
+    const h: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (pushAdminToken) h['Authorization'] = `Bearer ${pushAdminToken}`;
+    return h;
+  };
+
+  const genAdminToken = async () => {
+    // Genera un token corto aleatorio y lo guarda en pjl_store (por seguridad sencilla).
+    const tok = Array.from({ length: 3 }, () => Math.random().toString(36).slice(2, 10)).join('-');
+    try {
+      const res = await fetch('/api/push/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: tok, secret: btoa(`${currentUser?.email}|${currentUser?.role}`) }),
+      });
+      const json = await res.json();
+      if (json?.success) {
+        setPushAdminToken(tok);
+        setPushStatus({ type: 'ok', text: 'Token de autorización generado.' });
+      } else {
+        setPushStatus({ type: 'err', text: json?.error || 'No se pudo generar el token.' });
+      }
+    } catch {
+      setPushStatus({ type: 'err', text: 'Error de red al generar el token.' });
+    }
+  };
+
+  const loadPushConfig = async () => {
+    if (!pushAdminToken) return;
+    try {
+      const [v, s] = await Promise.all([
+        fetch('/api/push/vapid', { headers: authHeaders() }),
+        fetch('/api/push/send', { headers: authHeaders() }),
+      ]);
+      const vj = await v.json();
+      const sj = await s.json();
+      setPushConfig({
+        configured: !!vj?.config,
+        publicKey: vj?.config?.publicKey || '',
+        count: sj?.count || 0,
+      });
+    } catch {
+      setPushStatus({ type: 'err', text: 'No se pudo leer la configuración push.' });
+    }
+  };
+
+  const saveVapid = async (action: 'generate' | 'save') => {
+    setPushBusy(true);
+    setPushStatus(null);
+    try {
+      const res = await fetch('/api/push/vapid', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify(
+          action === 'generate'
+            ? { action: 'generate', subject: pushVapidKeys.subject }
+            : pushVapidKeys
+        ),
+      });
+      const json = await res.json();
+      if (json?.success) {
+        setPushStatus({ type: 'ok', text: 'Claves VAPID guardadas correctamente.' });
+        await loadPushConfig();
+      } else {
+        setPushStatus({ type: 'err', text: json?.error || 'Error al guardar las claves.' });
+      }
+    } catch {
+      setPushStatus({ type: 'err', text: 'Error de red al guardar las claves.' });
+    } finally {
+      setPushBusy(false);
+    }
+  };
+
+  const sendPush = async () => {
+    if (!pushMsg.title.trim() || !pushMsg.body.trim()) {
+      setPushStatus({ type: 'err', text: 'Completá el título y el mensaje.' });
+      return;
+    }
+    setPushBusy(true);
+    setPushStatus(null);
+    try {
+      const res = await fetch('/api/push/send', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ title: pushMsg.title, body: pushMsg.body, url: pushMsg.url || '/' }),
+      });
+      const json = await res.json();
+      if (json?.success) {
+        setPushStatus({ type: 'ok', text: `Aviso enviado a ${json.sent} dispositivo(s)${json.removed ? ` (${json.removed} removidos por inválidos)` : ''}.` });
+        await loadPushConfig();
+      } else {
+        setPushStatus({ type: 'err', text: json?.error || 'No se pudo enviar el aviso.' });
+      }
+    } catch {
+      setPushStatus({ type: 'err', text: 'Error de red al enviar.' });
+    } finally {
+      setPushBusy(false);
+    }
+  };
 
   // --- ACTIVIDADES: CALENDARIO Y FILTRO POR DIA ---
   const [actSelDate, setActSelDate] = useState<string>('all');
@@ -5292,6 +5400,7 @@ function AdminContent() {
               { id: 'integraciones', icon: '🔌', label: 'Integraciones' },
               { id: 'visibilidad', icon: '👁️', label: 'Visibilidad' },
               { id: 'mantenimiento', icon: '🛠️', label: 'Mantenimiento' },
+              { id: 'push', icon: '🔔', label: 'Notificaciones Push' },
             ] as const;
             const SOCIAL_META: Record<string, { icon: string; label: string; ph: string }> = {
               facebook: { icon: '📘', label: 'Facebook', ph: 'https://facebook.com/tu-pagina' },
@@ -5685,6 +5794,144 @@ function AdminContent() {
                       <button className="btn-premium btn-premium-outline" style={{ borderColor: '#ef4444', color: '#ef4444' }} onClick={resetStats}>REINICIAR ESTADÍSTICAS</button>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {cfgTab === 'push' && (
+                <div className="cf-grid cf-in">
+                  <div className="cf-card">
+                    <h4 className="cf-h">🔐 Autorización del panel</h4>
+                    <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                      Para evitar que cualquiera envíe avisos, generá un token de autorización. Se guarda en Supabase y
+                      se usa para firmar los envíos y la configuración de claves.
+                    </p>
+                    {pushAdminToken ? (
+                      <div className="cf-mcard" style={{ background: '#f0f4e8', borderColor: '#7bb661' }}>
+                        <b>Token activo</b>
+                        <code style={{ display: 'block', fontSize: '12px', wordBreak: 'break-all', marginTop: '6px' }}>
+                          {pushAdminToken}
+                        </code>
+                        <p style={{ marginTop: '8px' }}>
+                          {pushConfig?.count != null
+                            ? `💡 ${pushConfig.count} dispositivo(s) suscripto(s) a los avisos.`
+                            : 'Podés generar uno nuevo si perdiste el control anterior.'}
+                        </p>
+                      </div>
+                    ) : (
+                      <button
+                        className="btn-premium btn-premium-gold"
+                        style={{ width: '100%' }}
+                        onClick={() => { genAdminToken().then(() => loadPushConfig()); }}
+                      >
+                        🔑 GENERAR TOKEN DE AUTORIZACIÓN
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="cf-card">
+                    <h4 className="cf-h">🔑 Claves VAPID (Web Push)</h4>
+                    <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                      Android las necesita para suscribir los teléfonos. Generalas una sola vez; si las regenerás, los
+                      teléfonos ya suscriptos dejarán de recibir avisos.
+                    </p>
+                    <div style={{ display: 'grid', gap: '12px' }}>
+                      <label className="premium-label">CORREO/SITIO (subject)</label>
+                      <input
+                        className="pjl-input"
+                        value={pushVapidKeys.subject}
+                        onChange={e => setPushVapidKeys({ ...pushVapidKeys, subject: e.target.value })}
+                        placeholder="mailto:pastoral@luque.edu.py"
+                      />
+                      <div className="cf-keybox">
+                        <label className="premium-label">CLAVE PÚBLICA</label>
+                        <textarea
+                          className="pjl-input"
+                          rows={2}
+                          value={pushVapidKeys.publicKey}
+                          onChange={e => setPushVapidKeys({ ...pushVapidKeys, publicKey: e.target.value.trim() })}
+                          placeholder="Pegá la clave pública (si la tenés)"
+                        />
+                      </div>
+                      <div className="cf-keybox">
+                        <label className="premium-label">CLAVE PRIVADA</label>
+                        <textarea
+                          className="pjl-input"
+                          rows={2}
+                          value={pushVapidKeys.privateKey}
+                          onChange={e => setPushVapidKeys({ ...pushVapidKeys, privateKey: e.target.value.trim() })}
+                          placeholder="Pegá la clave privada (la guardamos en servidor)"
+                        />
+                      </div>
+                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                        <button className="btn-premium btn-premium-gold" disabled={pushBusy || !pushAdminToken} onClick={() => saveVapid('generate')}>
+                          {pushBusy ? '…' : '⚡ GENERAR CLAVES'}
+                        </button>
+                        <button
+                          className="btn-premium btn-premium-outline"
+                          disabled={pushBusy || !pushAdminToken || !pushVapidKeys.publicKey || !pushVapidKeys.privateKey}
+                          onClick={() => saveVapid('save')}
+                        >
+                          💾 GUARDAR CLAVES
+                        </button>
+                      </div>
+                      {pushConfig?.publicKey && (
+                        <p style={{ fontSize: '11px', color: 'var(--gold)', wordBreak: 'break-all' }}>
+                          ✅ Clave pública activa: {pushConfig.publicKey.slice(0, 60)}… 
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="cf-card" style={{ gridColumn: '1 / -1' }}>
+                    <h4 className="cf-h">📣 Enviar aviso de último momento</h4>
+                    <div style={{ display: 'grid', gap: '12px' }}>
+                      <label className="premium-label">TÍTULO</label>
+                      <input
+                        className="pjl-input"
+                        value={pushMsg.title}
+                        onChange={e => setPushMsg({ ...pushMsg, title: e.target.value })}
+                        placeholder="Ej: La misa de hoy cambia de horario"
+                      />
+                      <label className="premium-label">MENSAJE</label>
+                      <textarea
+                        className="pjl-input"
+                        rows={3}
+                        value={pushMsg.body}
+                        onChange={e => setPushMsg({ ...pushMsg, body: e.target.value })}
+                        placeholder="Ej: La misa de las 19:00 pasa a las 18:00. ¡Llegá antes!"
+                      />
+                      <label className="premium-label">ENLACE (al tocar la notificación)</label>
+                      <input
+                        className="pjl-input"
+                        value={pushMsg.url}
+                        onChange={e => setPushMsg({ ...pushMsg, url: e.target.value })}
+                        placeholder="/  o  /?page=noticias"
+                      />
+                      <button
+                        className="btn-premium btn-premium-gold"
+                        style={{ width: '100%' }}
+                        disabled={pushBusy || !pushAdminToken}
+                        onClick={sendPush}
+                      >
+                        {pushBusy ? 'ENVIANDO…' : `🚀 ENVIAR A ${pushConfig?.count ?? 0} DISPOSITIVOS`}
+                      </button>
+                    </div>
+                  </div>
+
+                  {pushStatus && (
+                    <div
+                      className="cf-mcard"
+                      style={{
+                        gridColumn: '1 / -1',
+                        background: pushStatus.type === 'err' ? '#fdeaea' : '#eef7ee',
+                        borderColor: pushStatus.type === 'err' ? '#ef4444' : '#7bb661',
+                      }}
+                    >
+                      <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: pushStatus.type === 'err' ? '#b91c1c' : '#166534' }}>
+                        {pushStatus.type === 'ok' ? '✔ ' : pushStatus.type === 'err' ? '✖ ' : ''}{pushStatus.text}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

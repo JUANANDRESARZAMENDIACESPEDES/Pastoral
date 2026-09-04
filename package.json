@@ -20,12 +20,14 @@
     "react-dom": "^19.0.0",
     "react-leaflet": "^5.0.0",
     "sharp": "^0.33.5",
+    "web-push": "^3.6.7",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^20.17.16",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/web-push": "^3.6.4",
     "eslint": "^9",
     "eslint-config-next": "^15.1.11",
     "typescript": "^5",
