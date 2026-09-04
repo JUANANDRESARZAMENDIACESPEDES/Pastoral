@@ -573,11 +573,12 @@ const [newsSearch, setNewsSearch] = useState('');
         fallbackNode.replaceWith(img);
       }
     }
-    splash.querySelectorAll<HTMLElement>('.splash-letter, .splash-logo-wrap, .splash-tagline, .splash-bar, .splash-bar-fill, .splash-loading-text').forEach(el => {
-      el.style.animation = 'none';
-      void el.offsetWidth;
-      el.style.animation = '';
-    });
+    // Habilita la coreografía. Las animaciones del contenido viven pausadas
+    // en CSS (html:not(.splash-ready)) y arrancan UNA sola vez aquí, de forma
+    // sincronizada con los temporizadores de abajo. El reinicio manual que
+    // había antes volvía a reproducir la intro (doble refresco) tras el
+    // primer pintado del HTML estático.
+    root.classList.add('splash-ready');
     // --- Siluetas line-art estaticas (layout.tsx) animadas SOLO por CSS ---
 // Al aparecer art-on, las lineas se dibujan solas (dashoffset) y los
 // puntos dorados recorren sus trazos (offset-path). Sin JS extra.

@@ -6515,6 +6515,19 @@ textarea:focus-visible,
   visibility: hidden;
 }
 html.show-splash .splash-screen { visibility: visible; }
+/* Las animaciones del contenido viven PAUSADAS hasta que el JS agrega
+   'splash-ready' en el useLayoutEffect de page.tsx. Sin esto, la intro
+   arrancaba en el primer pintado del HTML estático y luego se reiniciaba
+   al hidratar (doble refresco). Con el pause solo corren una vez y de
+   forma sincronizada con los temporizadores. */
+html:not(.splash-ready) .splash-letter,
+html:not(.splash-ready) .splash-logo-wrap,
+html:not(.splash-ready) .splash-tagline,
+html:not(.splash-ready) .splash-bar,
+html:not(.splash-ready) .splash-bar-fill,
+html:not(.splash-ready) .splash-loading-text {
+  animation-play-state: paused !important;
+}
 /* Salida cinematográfica en DOS fases (ver efecto del splash en page.tsx):
    Fase 1 — keyframes REALES (no transiciones: las transiciones sobre una
    propiedad retenida por otra animación y sobre visibility se cortan a mitad
@@ -11515,7 +11528,7 @@ html.show-splash .splash-screen { visibility: visible; }
 }
 
 
-/* Panel push (configuraci�n) */
+/* Panel push (configuraci�n) */
 .cf-keybox {
   display: grid;
   gap: 6px;
