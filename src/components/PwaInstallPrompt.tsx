@@ -33,20 +33,19 @@ export default function PwaInstallPrompt() {
   useEffect(() => {
     if (isStandalone || installed) return;
     if (dismissedThisSession) return;
-    try {
-      if (sessionStorage.getItem('pjl_pwa_dismissed_session')) return;
-    } catch { /* ignore */ }
 
     const show = () => setVisible(true);
     const onInstalled = () => setVisible(false);
 
     // Se muestra en móviles de forma proactiva (Android o iOS), o en escritorio
-    // cuando el navegador habilita la instalación nativa.
+    // cuando el navegador habilita la instalación nativa. Aparece en cada
+    // carga de página (sin guardado persistente) para que el aviso de
+    // instalación nunca quede "atrapado" en un estado anterior de la sesión.
     const autoShow = () => {
       if (isIos || isAndroid || canInstallNative) setVisible(true);
     };
 
-    const timer = window.setTimeout(autoShow, 3500);
+    const timer = window.setTimeout(autoShow, 2500);
     window.addEventListener('pjl_request_install', show);
     window.addEventListener('pjl_app_installed', onInstalled);
 
@@ -73,11 +72,8 @@ export default function PwaInstallPrompt() {
   }, []);
 
   const dismiss = useCallback(() => {
-    try {
-      sessionStorage.setItem('pjl_pwa_dismissed_session', '1');
-    } catch {
-      /* almacenamiento no disponible */
-    }
+    // Solo se oculta para esta vista de la página: al volver a cargar (o en
+    // una navegación nueva) el aviso vuelve a aparecer.
     setDismissedThisSession(true);
     setVisible(false);
   }, []);
