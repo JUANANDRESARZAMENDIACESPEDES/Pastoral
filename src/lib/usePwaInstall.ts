@@ -9,7 +9,7 @@ interface BeforeInstallPromptEvent extends Event {
 export function usePwaInstall() {
   const [isStandalone, setIsStandalone] = useState(false);
   const [installed, setInstalled] = useState(false);
-  const [canInstall, setCanInstall] = useState(false);
+  const [deferredAvailable, setDeferredAvailable] = useState(false);
   const [isIos, setIsIos] = useState(false);
   const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null);
 
@@ -27,12 +27,11 @@ export function usePwaInstall() {
     const onBeforeInstall = (e: Event) => {
       e.preventDefault();
       deferredPrompt.current = e as BeforeInstallPromptEvent;
-      setCanInstall(true);
-      window.dispatchEvent(new CustomEvent('pjl_can_install'));
+      setDeferredAvailable(true);
     };
     const onAppInstalled = () => {
       setInstalled(true);
-      setCanInstall(false);
+      setDeferredAvailable(false);
       window.dispatchEvent(new CustomEvent('pjl_app_installed'));
     };
 
@@ -51,8 +50,8 @@ export function usePwaInstall() {
       await deferred.prompt();
       const result = await deferred.userChoice.catch(() => null);
       deferredPrompt.current = null;
+      setDeferredAvailable(false);
       if (result && result.outcome === 'accepted') {
-        setCanInstall(false);
         setInstalled(true);
         return true;
       }
@@ -61,7 +60,7 @@ export function usePwaInstall() {
     return false;
   }, []);
 
-  const triggerInstall = useCallback(() => {
+  const requestInstallUI = useCallback(() => {
     if (deferredPrompt.current) {
       install();
     } else {
@@ -69,5 +68,5 @@ export function usePwaInstall() {
     }
   }, [install]);
 
-  return { isStandalone, installed, canInstall, isIos, install, triggerInstall };
+  return { isStandalone, installed, deferredAvailable, isIos, install, requestInstallUI };
 }

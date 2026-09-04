@@ -583,25 +583,27 @@ window.setTimeout(() => {
   const sp = document.getElementById('splash-pjl');
   if (!sp) return;
   sp.classList.add('art-on');
-  // Salida encadenada al arte: el dibujo completo (~3.7s max) termina
-  // antes del fundido (+4.6s); velo a +5.25s y retiro a +5.55s.
+  // Salida y revelado en UNA sola transición cruzada (para evitar el "doble
+  // refresco" de ver el splash fundirse y LUEGO la página reaparecer):
+  // a los 4600ms la intro empieza a salir (is-leaving) y EN EL MISMO INSTANTE
+  // la página comienza a revelarse por debajo (pjl-reveal), fundiendo ambos.
   window.setTimeout(() => {
     document.getElementById('splash-pjl')?.classList.add('is-leaving');
-  }, 4600);
-  window.setTimeout(() => {
     root.classList.add('pjl-reveal');
     root.classList.remove('show-splash');
-    window.setTimeout(() => setNavEntered(true), 260);
-  }, 5250);
+    window.setTimeout(() => setNavEntered(true), 240);
+  }, 4600);
+  // Retiro de 'pjl-reveal' cuando el fundido del contenido terminó (0.55s
+  // desde 4600 => ~5150).
+  window.setTimeout(() => {
+    root.classList.remove('pjl-reveal');
+  }, 5200);
+  // Retiro del nodo del splash cuando ya está fundido (0.95s desde 4600).
   window.setTimeout(() => {
     document.getElementById('splash-pjl')?.remove();
     setNavEntered(true);
     setSplashDone(true);
-    // Retiro 'pjl-reveal' SOLO después de que termine su fundido (0.55s desde
-    // 5250 => ~5800). Antes se quitaba a los 5550 a mitad de animación y el
-    // contenido 'saltaba' a opacidad 1 (efecto de doble refresco).
-    window.setTimeout(() => root.classList.remove('pjl-reveal'), 400);
-  }, 5550);
+  }, 5600);
 }, 900);
 
     // Intencionadamente NO se cancelan en el cleanup: si el usuario navega a
