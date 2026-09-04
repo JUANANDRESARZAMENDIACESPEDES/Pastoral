@@ -4,6 +4,7 @@ import { Fraunces, Manrope, Libre_Baskerville } from "next/font/google";
 import ThemeLoader from "../components/ThemeLoader";
 import PwaInstallPrompt from "../components/PwaInstallPrompt";
 import PwaIconSync from "../components/PwaIconSync";
+import InstalledToast from "../components/InstalledToast";
 import UpdatePrompt from "../components/UpdatePrompt";
 import "./globals.css";
 import "./responsive-fix.css";
@@ -233,6 +234,7 @@ export default function RootLayout({
             __html: `(function(){if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'}).then(function(r){r.update()}).catch(function(){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'}).catch(function(){})});});}})();` }}
         />
         <PwaInstallPrompt />
+        <InstalledToast />
         <UpdatePrompt />
         {children}
         <Script

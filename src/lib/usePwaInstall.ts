@@ -9,6 +9,8 @@ interface BeforeInstallPromptEvent extends Event {
 export type InstallOutcome = 'accepted' | 'dismissed' | 'unavailable' | 'error';
 export type InstallState = 'idle' | 'installing' | InstallOutcome;
 
+const INSTALLED_FLAG = 'pjl_installed';
+
 export function usePwaInstall() {
   const [isStandalone, setIsStandalone] = useState(false);
   const [installed, setInstalled] = useState(false);
@@ -29,6 +31,62 @@ export function usePwaInstall() {
         setDeferredAvailable(true);
       }
     } catch {}
+  }, []);
+
+  // Detecta si la app ya está instalada:
+  // 1. Modo standalone (la app abierta en pantalla completa),
+  // 2. navigator.getInstalledRelatedApps() (Chrome/Android real),
+  // 3. Flag persistido que guardamos cuando se completó la instalación
+  //    (fallback para iOS/Safari donde no hay API de detección).
+  useEffect(() => {
+    const standalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true;
+    setIsStandalone(standalone);
+
+    let flagInstalled = false;
+    try {
+      flagInstalled = localStorage.getItem(INSTALLED_FLAG) === '1';
+    } catch {}
+
+    if (standalone) {
+      setInstalled(true);
+      return;
+    }
+
+    const autoInstalled = standalone || flagInstalled;
+    setInstalled(autoInstalled);
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const nav = navigator as any;
+        if (typeof nav.getInstalledRelatedApps === 'function') {
+          const apps = await nav.getInstalledRelatedApps();
+          if (cancelled) return;
+          const match = (apps || []).some(
+            (app: any) =>
+              app &&
+              app.platform === 'webapp' &&
+              String(app.url || app.id || '').includes('/manifest.json')
+          );
+          if (match) {
+            try { localStorage.setItem(INSTALLED_FLAG, '1'); } catch {}
+          } else {
+            // El usuario eliminó la app: reiniciar el estado instalado.
+            try { localStorage.removeItem(INSTALLED_FLAG); } catch {}
+          }
+          const standaloneNow =
+            window.matchMedia('(display-mode: standalone)').matches ||
+            (window.navigator as any).standalone === true;
+          setInstalled(standaloneNow || match);
+        }
+      } catch {
+        // Sin API: se mantiene el flag/standalone ya calculado.
+      }
+    })();
+
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
@@ -56,11 +114,6 @@ export function usePwaInstall() {
       }
     } catch {}
 
-    const standalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone === true;
-    setIsStandalone(standalone);
-
     const onBeforeInstall = (e: Event) => {
       e.preventDefault();
       deferredPrompt.current = e as BeforeInstallPromptEvent;
@@ -73,6 +126,7 @@ export function usePwaInstall() {
       setDeferredAvailable(false);
       deferredPrompt.current = null;
       try {
+        localStorage.setItem(INSTALLED_FLAG, '1');
         const g = (window as any).__pjlpwa; if (g) { g.hasPrompt = false; g.deferredPrompt = null; }
         sessionStorage.removeItem('pjl_install_reload_done');
         sessionStorage.removeItem('pjl_install_intent');
@@ -112,7 +166,22 @@ export function usePwaInstall() {
     });
   }, []);
 
+  // Muestra el toast "ya está instalada" sin navegar. Solo una vez por página.
+  const notifyAlreadyInstalled = useCallback(() => {
+    try {
+      if (sessionStorage.getItem('pjl_installed_toast') === '1') return;
+      sessionStorage.setItem('pjl_installed_toast', '1');
+    } catch {}
+    window.dispatchEvent(new CustomEvent('pjl_already_installed'));
+  }, []);
+
   const install = useCallback(async (): Promise<boolean> => {
+    // Ya instalada: avisamos y no hacemos nada más.
+    if (installed) {
+      notifyAlreadyInstalled();
+      return false;
+    }
+
     let deferred = deferredPrompt.current;
     if (!deferred) {
       // Re-sincroniza con la captura temprana del layout por si llegó tarde.
@@ -126,7 +195,6 @@ export function usePwaInstall() {
       // Si no llega, RECARGAMOS UNA sola vez: al volver a cargar Chrome
       // vuelve a evaluar instalabilidad (con el SW ya controlando la página)
       // y generalmente dispara beforeinstallprompt de inmediato.
-      let reloaded = false;
       try {
         deferred = await waitForPrompt(2000);
       } catch {
@@ -134,7 +202,6 @@ export function usePwaInstall() {
       }
       if (!deferred && isAndroid && !reloadTriedRef.current && !inAppBrowser) {
         reloadTriedRef.current = true;
-        reloaded = true;
         try {
           sessionStorage.setItem('pjl_install_reload_done', '1');
           sessionStorage.setItem('pjl_install_intent', '1');
@@ -185,33 +252,40 @@ export function usePwaInstall() {
     }
     setInstallState('dismissed');
     return false;
-  }, [syncFromGlobal, waitForPrompt, isAndroid, inAppBrowser]);
+  }, [syncFromGlobal, waitForPrompt, isAndroid, inAppBrowser, installed, notifyAlreadyInstalled]);
 
   // Android/Chrome: si recibimos el 'beforeinstallprompt' mostramos el
   // instalador nativo de inmediato. Si no (iOS o criterios aún no reunidos),
   // abrimos el modal con las instrucciones adecuadas.
   const requestInstallUI = useCallback(() => {
+    if (installed) {
+      notifyAlreadyInstalled();
+      return;
+    }
     if (deferredPrompt.current) {
       install();
     } else {
       window.dispatchEvent(new CustomEvent('pjl_request_install'));
     }
-  }, [install]);
+  }, [install, installed, notifyAlreadyInstalled]);
 
   const canInstallNative = deferredAvailable && !isIos;
 
   // Acción del botón "Descargar App":
-  // - Android con capacidad de instalación nativa disponible → muestra el
-  //   diálogo nativo del navegador (beforeinstallprompt).
-  // - iOS o sin prompt nativo disponible → redirige a la guía paso a paso
-  //   (/instalar) que se adapta al dispositivo.
+  // - App ya instalada → toast "ya está instalada" (sin navegar).
+  // - Android con prompt nativo disponible → muestra el diálogo nativo.
+  // - iOS o sin prompt nativo → redirige a la guía paso a paso.
   const handleDownload = useCallback(async () => {
+    if (installed) {
+      notifyAlreadyInstalled();
+      return;
+    }
     if (deferredPrompt.current && !isIos) {
       const ok = await install();
       if (ok) return;
     }
     window.location.href = '/instalar';
-  }, [install, isIos]);
+  }, [install, isIos, installed, notifyAlreadyInstalled]);
 
   return {
     isStandalone,

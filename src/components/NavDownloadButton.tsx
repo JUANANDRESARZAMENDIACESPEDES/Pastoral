@@ -2,7 +2,11 @@
 import { usePwaInstall } from '../lib/usePwaInstall';
 
 export default function NavDownloadButton({ variant = 'desktop' }: { variant?: 'desktop' | 'mobile' }) {
-  const { isStandalone, installed, handleDownload } = usePwaInstall();
+  const { isStandalone, installed, isIos, isAndroid, handleDownload } = usePwaInstall();
+
+  // En escritorio no existe botón de instalación: solo las instrucciones de
+  // la página /instalar.
+  if (!isIos && !isAndroid) return null;
 
   // Si la app ya está instalada (o abierta en pantalla completa), ocultar botón.
   if (isStandalone || installed) return null;

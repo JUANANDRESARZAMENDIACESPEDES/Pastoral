@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { usePwaInstall } from '../lib/usePwaInstall';
 
 /* Estilo propio del banner, acorde a la identidad navy/dorado del sitio. */
@@ -27,19 +28,26 @@ const MODAL_STYLE: React.CSSProperties = {
 
 export default function PwaInstallPrompt() {
   const { isStandalone, installed, isIos, isAndroid, inAppBrowser, canInstallNative, install, installState } = usePwaInstall();
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
   const [dismissedThisSession, setDismissedThisSession] = useState(false);
+
+  // En la página de guía (/instalar) NO se muestra ningún banner: solo ese
+  // contenido con las instrucciones correspondientes. En escritorio tampoco
+  // (ahí solo existen las instrucciones de esa misma página).
+  const isGuidePage = pathname?.startsWith('/instalar') ?? false;
+  const isDesktop = !isIos && !isAndroid;
 
   useEffect(() => {
     if (isStandalone || installed) return;
     if (dismissedThisSession) return;
+    if (isGuidePage || isDesktop) return;
 
     const show = () => setVisible(true);
     const onInstalled = () => setVisible(false);
 
-    // Se muestra en móviles de forma proactiva (Android o iOS), o en escritorio
-    // cuando el navegador habilita la instalación nativa. Aparece en cada
-    // carga de página (sin guardado persistente) para que el aviso de
+    // Se muestra en móviles de forma proactiva (Android o iOS). Aparece en
+    // cada carga de página (sin guardado persistente) para que el aviso de
     // instalación nunca quede "atrapado" en un estado anterior de la sesión.
     // Si vienes de una recarga por intención de instalar, aparezca antes.
     let installIntent = false;
@@ -58,7 +66,7 @@ export default function PwaInstallPrompt() {
       window.removeEventListener('pjl_request_install', show);
       window.removeEventListener('pjl_app_installed', onInstalled);
     };
-  }, [isStandalone, installed, dismissedThisSession, isIos, isAndroid, canInstallNative]);
+  }, [isStandalone, installed, dismissedThisSession, isIos, isAndroid, canInstallNative, isGuidePage, isDesktop]);
 
   const handleInstall = useCallback(async () => {
     const ok = await install();
@@ -85,6 +93,9 @@ export default function PwaInstallPrompt() {
   }, []);
 
   if (!visible || isStandalone || installed) return null;
+  // En la guía o en escritorio el aviso nunca se renderiza: solo las
+  // instrucciones de la página /instalar.
+  if (isGuidePage || isDesktop) return null;
 
   const iosSteps = isIos
     ? [

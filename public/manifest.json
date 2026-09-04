@@ -11,6 +11,12 @@
   "theme_color": "#1A2744",
   "categories": ["lifestyle", "education", "social"],
   "id": "/",
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "/manifest.json"
+    }
+  ],
   "icons": [
     {
       "src": "/android-chrome-192.png",
