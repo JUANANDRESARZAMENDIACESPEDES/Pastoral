@@ -11,6 +11,7 @@ export function usePwaInstall() {
   const [installed, setInstalled] = useState(false);
   const [deferredAvailable, setDeferredAvailable] = useState(false);
   const [isIos, setIsIos] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
   const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
@@ -18,6 +19,11 @@ export function usePwaInstall() {
       /iphone|ipad|ipod/i.test(navigator.userAgent) &&
       (window.navigator as any).standalone === undefined;
     setIsIos(isIosEval);
+
+    const isAndroidEval =
+      /android/i.test(navigator.userAgent) &&
+      /mobile/i.test(navigator.userAgent);
+    setIsAndroid(isAndroidEval);
 
     const standalone =
       window.matchMedia('(display-mode: standalone)').matches ||
@@ -79,5 +85,28 @@ export function usePwaInstall() {
 
   const canInstallNative = deferredAvailable && !isIos;
 
-  return { isStandalone, installed, deferredAvailable, isIos, canInstallNative, install, requestInstallUI };
+  // Acción del botón "Descargar App":
+  // - Android con capacidad de instalación nativa disponible → muestra el
+  //   diálogo nativo del navegador (beforeinstallprompt).
+  // - iOS o sin prompt nativo disponible → redirige a la guía paso a paso
+  //   (/instalar) que se adapta al dispositivo.
+  const handleDownload = useCallback(() => {
+    if (deferredPrompt.current && !isIos) {
+      install();
+      return;
+    }
+    window.location.href = '/instalar';
+  }, [install, isIos]);
+
+  return {
+    isStandalone,
+    installed,
+    deferredAvailable,
+    isIos,
+    isAndroid,
+    canInstallNative,
+    install,
+    requestInstallUI,
+    handleDownload,
+  };
 }

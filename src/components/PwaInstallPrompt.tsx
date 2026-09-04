@@ -26,8 +26,7 @@ const MODAL_STYLE: React.CSSProperties = {
 };
 
 export default function PwaInstallPrompt() {
-  const { isStandalone, installed, isIos, deferredAvailable, canInstallNative, install } =
-    usePwaInstall();
+  const { isStandalone, installed, isIos, isAndroid, canInstallNative, install } = usePwaInstall();
   const [visible, setVisible] = useState(false);
   const [dismissedThisSession, setDismissedThisSession] = useState(false);
 
@@ -41,10 +40,10 @@ export default function PwaInstallPrompt() {
     const show = () => setVisible(true);
     const onInstalled = () => setVisible(false);
 
-    // Se muestra solo si el navegador es capaz de instalar de forma nativa
-    // (beforeinstallprompt disponible) o si es iOS (instrucciones manuales).
+    // Se muestra en móviles de forma proactiva (Android o iOS), o en escritorio
+    // cuando el navegador habilita la instalación nativa.
     const autoShow = () => {
-      if (isIos || deferredAvailable) setVisible(true);
+      if (isIos || isAndroid || canInstallNative) setVisible(true);
     };
 
     const timer = window.setTimeout(autoShow, 3500);
@@ -56,12 +55,22 @@ export default function PwaInstallPrompt() {
       window.removeEventListener('pjl_request_install', show);
       window.removeEventListener('pjl_app_installed', onInstalled);
     };
-  }, [isStandalone, installed, dismissedThisSession, isIos, deferredAvailable]);
+  }, [isStandalone, installed, dismissedThisSession, isIos, isAndroid, canInstallNative]);
 
   const handleInstall = useCallback(async () => {
     const ok = await install();
-    if (ok) setVisible(false);
+    if (ok) {
+      setVisible(false);
+      return;
+    }
+    // Sin diálogo nativo (iOS o prompt aún no disponible): vamos a la guía.
+    window.location.href = '/instalar';
   }, [install]);
+
+  const goToGuide = useCallback(() => {
+    setVisible(false);
+    window.location.href = '/instalar';
+  }, []);
 
   const dismiss = useCallback(() => {
     try {
@@ -75,15 +84,25 @@ export default function PwaInstallPrompt() {
 
   if (!visible || isStandalone || installed) return null;
 
-  const canNative = canInstallNative;
-
   const iosSteps = isIos
     ? [
-        '1️⃣ Tocá el botón Compartir (cuadrado con flecha ⬆️) en la barra de Safari.',
-        '2️⃣ Deslizá hasta la opción "Agregar a Pantalla de Inicio".',
-        '3️⃣ Tocá "Agregar" y la app quedará en tu teléfono. 📲',
+        '1️⃣ Tocá Compartir (cuadrado con flecha ⬆️) en Safari.',
+        '2️⃣ Elegí «Agregar a Pantalla de Inicio».',
+        '3️⃣ Tocá «Agregar».',
       ]
     : null;
+
+  const body = iosSteps ? (
+    iosSteps.map((s, i) => (
+      <div key={i} style={{ marginTop: i === 0 ? 0 : 4 }}>{s}</div>
+    ))
+  ) : isAndroid ? (
+    canInstallNative
+      ? 'Tocá «Instalar» y confirmá el aviso del navegador. Si no aparece, te guiamos paso a paso.'
+      : 'En Android tocá «Ver pasos» y te mostramos cómo instalarla desde el menú de tu navegador.'
+  ) : (
+    'Tocá «Ver pasos» y te mostramos cómo instalar la app en este dispositivo.'
+  );
 
   return (
     <div role="dialog" aria-label="Instalar Pastoral Juvenil Luqueña" style={MODAL_STYLE}>
@@ -94,13 +113,7 @@ export default function PwaInstallPrompt() {
             Instalá la app de Pastoral Luque en tu teléfono
           </div>
           <div style={{ fontSize: '12.5px', opacity: 0.85, marginTop: 4, lineHeight: 1.45 }}>
-            {iosSteps
-              ? iosSteps.map((s, i) => (
-                  <div key={i} style={{ marginTop: i === 0 ? 0 : 6 }}>{s}</div>
-                ))
-              : canNative
-                ? 'Tocá "Instalar" y confirmá el aviso del navegador. Tendrás la comunidad, la agenda y los avisos siempre a mano, incluso sin internet.'
-                : 'Abrí el menú ⋮ de tu navegador y elegí "Instalar aplicación" o "Agregar a pantalla de inicio". Así tendrás la app siempre a mano.'}
+            {body}
           </div>
         </div>
       </div>
@@ -117,7 +130,7 @@ export default function PwaInstallPrompt() {
         >
           Ahora no
         </button>
-        {canNative && (
+        {canInstallNative ? (
           <button
             type="button"
             onClick={handleInstall}
@@ -129,18 +142,17 @@ export default function PwaInstallPrompt() {
           >
             📲 Instalar
           </button>
-        )}
-        {!canNative && (
+        ) : (
           <button
             type="button"
-            onClick={dismiss}
+            onClick={goToGuide}
             style={{
               flex: 1, padding: '11px 14px', borderRadius: '999px', border: 'none',
               background: 'linear-gradient(135deg, #C8973A, #e2b45a)',
               color: '#1A2744', fontWeight: 800, fontSize: '13px', cursor: 'pointer',
             }}
           >
-            Entendido
+            Ver pasos →
           </button>
         )}
       </div>

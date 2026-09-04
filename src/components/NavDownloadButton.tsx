@@ -2,7 +2,7 @@
 import { usePwaInstall } from '../lib/usePwaInstall';
 
 export default function NavDownloadButton({ variant = 'desktop' }: { variant?: 'desktop' | 'mobile' }) {
-  const { isStandalone, installed, requestInstallUI } = usePwaInstall();
+  const { isStandalone, installed, handleDownload } = usePwaInstall();
 
   // Si la app ya está instalada (o abierta en pantalla completa), ocultar botón.
   if (isStandalone || installed) return null;
@@ -10,7 +10,7 @@ export default function NavDownloadButton({ variant = 'desktop' }: { variant?: '
   const onClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    requestInstallUI();
+    handleDownload();
   };
 
   if (variant === 'mobile') {
