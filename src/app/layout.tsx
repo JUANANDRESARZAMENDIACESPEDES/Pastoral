@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Fraunces, Manrope, Libre_Baskerville } from "next/font/google";
 import ThemeLoader from "../components/ThemeLoader";
+import PwaInstallPrompt from "../components/PwaInstallPrompt";
 import "./globals.css";
 import "./responsive-fix.css";
 
@@ -26,6 +27,13 @@ const accentFont = Libre_Baskerville({
 export const metadata: Metadata = {
   title: "Pastoral Juvenil Luqueña | PJL",
   description: "Sitio oficial de la Pastoral Juvenil Luqueña. Comunidad, fe y misión para la juventud de Luque.",
+  applicationName: "Pastoral Juvenil Luqueña",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "PJL Luque",
+    statusBarStyle: "black-translucent",
+  },
   icons: {
     icon: [
       { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
@@ -40,6 +48,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  themeColor: "#1A2744",
 };
 
 export default function RootLayout({
@@ -179,6 +188,14 @@ export default function RootLayout({
             evitar que se vea el logo por defecto un instante. */}
         <script dangerouslySetInnerHTML={{ __html: `(function(){try{var r=localStorage.getItem('pjl_branding');if(!r)return;var b=JSON.parse(r);var u=b&&b.mainLogo;if(!u)return;var f=document.querySelector('.splash-logo-fallback');if(!f)return;var img=document.createElement('img');img.src=u;img.alt='Logotipo de la Pastoral Juvenil Luqueña';img.className='splash-logo-img';img.onload=function(){f.replaceWith(img)};img.onerror=function(){};if(img.complete&&img.naturalWidth>0)setTimeout(function(){if(f.isConnected)f.replaceWith(img)},0)}catch(e){}})();` }} />
         <ThemeLoader />
+        {/* Registro del Service Worker (PWA instalable / offline shell).
+            Se registra solo en producción/*seguro y con soporte del navegador. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}`,
+          }}
+        />
+        <PwaInstallPrompt />
         {children}
         <Script
           src="https://www.vaticannews.va/etc/designs/vaticannews/widget/widget.js"
