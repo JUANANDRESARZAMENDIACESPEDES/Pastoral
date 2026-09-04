@@ -26,7 +26,8 @@ const MODAL_STYLE: React.CSSProperties = {
 };
 
 export default function PwaInstallPrompt() {
-  const { isStandalone, installed, isIos, deferredAvailable, install } = usePwaInstall();
+  const { isStandalone, installed, isIos, deferredAvailable, canInstallNative, install } =
+    usePwaInstall();
   const [visible, setVisible] = useState(false);
   const [dismissedThisSession, setDismissedThisSession] = useState(false);
 
@@ -74,7 +75,15 @@ export default function PwaInstallPrompt() {
 
   if (!visible || isStandalone || installed) return null;
 
-  const canNative = !isIos && deferredAvailable;
+  const canNative = canInstallNative;
+
+  const iosSteps = isIos
+    ? [
+        '1️⃣ Tocá el botón Compartir (cuadrado con flecha ⬆️) en la barra de Safari.',
+        '2️⃣ Deslizá hasta la opción "Agregar a Pantalla de Inicio".',
+        '3️⃣ Tocá "Agregar" y la app quedará en tu teléfono. 📲',
+      ]
+    : null;
 
   return (
     <div role="dialog" aria-label="Instalar Pastoral Juvenil Luqueña" style={MODAL_STYLE}>
@@ -85,10 +94,12 @@ export default function PwaInstallPrompt() {
             Instalá la app de Pastoral Luque en tu teléfono
           </div>
           <div style={{ fontSize: '12.5px', opacity: 0.85, marginTop: 4, lineHeight: 1.45 }}>
-            {isIos
-              ? 'Tocá el botón Compartir (⬆️) de tu navegador Safari y elegí "Agregar a pantalla de inicio". Así nunca te perdés los avisos.'
+            {iosSteps
+              ? iosSteps.map((s, i) => (
+                  <div key={i} style={{ marginTop: i === 0 ? 0 : 6 }}>{s}</div>
+                ))
               : canNative
-                ? 'Tendrás la comunidad, la agenda y los avisos siempre a mano, incluso sin internet.'
+                ? 'Tocá "Instalar" y confirmá el aviso del navegador. Tendrás la comunidad, la agenda y los avisos siempre a mano, incluso sin internet.'
                 : 'Abrí el menú ⋮ de tu navegador y elegí "Instalar aplicación" o "Agregar a pantalla de inicio". Así tendrás la app siempre a mano.'}
           </div>
         </div>

@@ -46,20 +46,29 @@ export function usePwaInstall() {
 
   const install = useCallback(async (): Promise<boolean> => {
     const deferred = deferredPrompt.current;
-    if (deferred) {
+    if (!deferred) return false;
+    try {
+      // 'prompt()' debe llamarse en el mismo gesto del usuario para que el
+      // navegador muestre el diálogo nativo de instalación.
       await deferred.prompt();
-      const result = await deferred.userChoice.catch(() => null);
+    } catch {
       deferredPrompt.current = null;
       setDeferredAvailable(false);
-      if (result && result.outcome === 'accepted') {
-        setInstalled(true);
-        return true;
-      }
       return false;
+    }
+    const result = await deferred.userChoice.catch(() => null);
+    deferredPrompt.current = null;
+    setDeferredAvailable(false);
+    if (result && result.outcome === 'accepted') {
+      setInstalled(true);
+      return true;
     }
     return false;
   }, []);
 
+  // Android/Chrome: si recibimos el 'beforeinstallprompt' mostramos el
+  // instalador nativo de inmediato. Si no (iOS o criterios aún no reunidos),
+  // abrimos el modal con las instrucciones adecuadas.
   const requestInstallUI = useCallback(() => {
     if (deferredPrompt.current) {
       install();
@@ -68,5 +77,7 @@ export function usePwaInstall() {
     }
   }, [install]);
 
-  return { isStandalone, installed, deferredAvailable, isIos, install, requestInstallUI };
+  const canInstallNative = deferredAvailable && !isIos;
+
+  return { isStandalone, installed, deferredAvailable, isIos, canInstallNative, install, requestInstallUI };
 }
