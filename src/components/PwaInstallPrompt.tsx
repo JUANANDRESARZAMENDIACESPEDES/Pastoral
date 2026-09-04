@@ -26,7 +26,7 @@ const MODAL_STYLE: React.CSSProperties = {
 };
 
 export default function PwaInstallPrompt() {
-  const { isStandalone, installed, isIos, isAndroid, canInstallNative, install, installState } = usePwaInstall();
+  const { isStandalone, installed, isIos, isAndroid, inAppBrowser, canInstallNative, install, installState } = usePwaInstall();
   const [visible, setVisible] = useState(false);
   const [dismissedThisSession, setDismissedThisSession] = useState(false);
 
@@ -41,11 +41,15 @@ export default function PwaInstallPrompt() {
     // cuando el navegador habilita la instalación nativa. Aparece en cada
     // carga de página (sin guardado persistente) para que el aviso de
     // instalación nunca quede "atrapado" en un estado anterior de la sesión.
+    // Si vienes de una recarga por intención de instalar, aparezca antes.
+    let installIntent = false;
+    try { installIntent = sessionStorage.getItem('pjl_install_intent') === '1'; } catch {}
+
     const autoShow = () => {
       if (isIos || isAndroid || canInstallNative) setVisible(true);
     };
 
-    const timer = window.setTimeout(autoShow, 2500);
+    const timer = window.setTimeout(autoShow, installIntent ? 400 : 2500);
     window.addEventListener('pjl_request_install', show);
     window.addEventListener('pjl_app_installed', onInstalled);
 
@@ -104,10 +108,17 @@ export default function PwaInstallPrompt() {
 
   const androidManualHint =
     isAndroid && !canInstallNative && (installState === 'unavailable' || installState === 'dismissed') ? (
-      <div style={{ marginTop: 4, fontSize: '12px', opacity: 0.9, lineHeight: 1.4 }}>
-        Si no aparece el aviso del navegador, abrí el menú <strong>⋮</strong> de Chrome y tocá{' '}
-        <strong>«Instalar aplicación»</strong>.
-      </div>
+      inAppBrowser ? (
+        <div style={{ marginTop: 4, fontSize: '12px', opacity: 0.9, lineHeight: 1.4 }}>
+          Estás dentro de una app (Facebook, WhatsApp, Instagram…). Abrí esta web en{' '}
+          <strong>Chrome</strong> y tocá «Instalar» de nuevo.
+        </div>
+      ) : (
+        <div style={{ marginTop: 4, fontSize: '12px', opacity: 0.9, lineHeight: 1.4 }}>
+          Si no aparece el aviso del navegador, abrí el menú <strong>⋮</strong> de Chrome y tocá{' '}
+          <strong>«Instalar aplicación»</strong>.
+        </div>
+      )
     ) : null;
 
   return (
