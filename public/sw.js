@@ -1,18 +1,16 @@
 /* ============================================================
    Pastoral Juvenil Luqueña — Service Worker
    ------------------------------------------------------------
-   POR EL MOMENTO: permite instalar la web como APP en el
-   celular (cachea la shell para arranque rápido/offline).
-   El código queda preparado con secciones marcadas para
-   habilitar luego la WEB PUSH y el soporte offline completo.
+   Permite instalar la web como APP en el celular
+   (cachea la shell para arranque rápido/offline).
+   sirve iconos PWA personalizados desde Cache API
+   cuando el admin cambia el logo desde el panel.
    ============================================================ */
 
-const VERSION = 'pjl-v1';
+const VERSION = 'pjl-v2';
 const SHELL_CACHE = 'pjl-shell';
+const CUSTOM_ICONS_CACHE = 'pjl-custom-icons';
 
-/* Cache de "cáscara de la app": recursos estables que se
-   guardan al instalar y permiten abrir desde pantalla de inicio
-   sin depender 100% de la red. */
 const CORE_ASSETS = [
   '/',
   '/manifest.json',
@@ -23,6 +21,8 @@ const CORE_ASSETS = [
   '/favicon-32.png',
   '/pjl-logo.svg',
 ];
+
+const ICON_URLS = ['/android-chrome-192.png', '/android-chrome-512.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -41,7 +41,7 @@ self.addEventListener('activate', (event) => {
       .then((keys) =>
         Promise.all(
           keys
-            .filter((k) => k.startsWith('pjl-') && k !== SHELL_CACHE)
+            .filter((k) => k.startsWith('pjl-') && k !== SHELL_CACHE && k !== CUSTOM_ICONS_CACHE)
             .map((k) => caches.delete(k))
         )
       )
@@ -49,15 +49,25 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'UPDATE_PWA_ICONS') {
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      clients.forEach((client) => {
+        if (client.url && !client.url.includes('chrome-extension://')) {
+          client.postMessage({ type: 'PWA_ICONS_UPDATED' });
+        }
+      });
+    });
+  }
+});
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 
-  // No interceptar llamadas no-GET ni a otros orígenes (API, fuentes, etc.)
   if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) {
     return;
   }
 
-  // Navegación: red primero, con respaldo a la shell cacheada.
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
@@ -71,7 +81,26 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Resto de recursos estáticos: cache primero, red por detrás.
+  const pathname = new URL(request.url).pathname;
+
+  if (ICON_URLS.includes(pathname)) {
+    event.respondWith(
+      caches.open(CUSTOM_ICONS_CACHE).then((cache) =>
+        cache.match(request).then((custom) => {
+          if (custom) return custom;
+          return caches.match(request).then((cached) => cached || fetch(request).then((res) => {
+            if (res.ok) {
+              const copy = res.clone();
+              caches.open(SHELL_CACHE).then((c) => c.put(request, copy));
+            }
+            return res;
+          }));
+        })
+      )
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(request).then(
       (cached) =>
@@ -88,12 +117,7 @@ self.addEventListener('fetch', (event) => {
 });
 
 /* ============================================================
-   LISTO PARA WEB PUSH (próximo paso)
-   ------------------------------------------------------------
-   Habilitar cuando se agregue la suscripción push:
-   1) el service worker recibe el mensaje push del servidor
-   2) notifica al celular aunque la app esté cerrada.
-   Ej: "La misa de hoy cambia de horario" / "¡Llegamos a la meta!"
+   WEB PUSH — Notificaciones push habilitadas
    ============================================================ */
 self.addEventListener('push', (event) => {
   let data = { title: 'Pastoral Juvenil Luqueña', body: 'Tenés una nueva notificación', url: '/' };

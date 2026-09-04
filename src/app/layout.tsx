@@ -3,6 +3,7 @@ import Script from "next/script";
 import { Fraunces, Manrope, Libre_Baskerville } from "next/font/google";
 import ThemeLoader from "../components/ThemeLoader";
 import PwaInstallPrompt from "../components/PwaInstallPrompt";
+import PwaIconSync from "../components/PwaIconSync";
 import "./globals.css";
 import "./responsive-fix.css";
 
@@ -186,8 +187,9 @@ export default function RootLayout({
         <noscript><style>{"#splash-pjl{display:none!important}"}</style></noscript>
         {/* Inyecta el logo oficial en el splash ANTES de la hidratación para
             evitar que se vea el logo por defecto un instante. */}
-        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var r=localStorage.getItem('pjl_branding');if(!r)return;var b=JSON.parse(r);var u=b&&b.mainLogo;if(!u)return;var f=document.querySelector('.splash-logo-fallback');if(!f)return;var img=document.createElement('img');img.src=u;img.alt='Logotipo de la Pastoral Juvenil Luqueña';img.className='splash-logo-img';img.onload=function(){f.replaceWith(img)};img.onerror=function(){};if(img.complete&&img.naturalWidth>0)setTimeout(function(){if(f.isConnected)f.replaceWith(img)},0)}catch(e){}})();` }} />
+        <script dangerouslySetInnerHTML={{ __html: `(function(){function inject(){try{var r=localStorage.getItem('pjl_branding');if(!r)return;var b=JSON.parse(r);var u=b&&b.mainLogo;if(!u)return;var f=document.querySelector('.splash-logo-fallback');if(!f)return;if(f.querySelector('img'))return;var img=document.createElement('img');img.src=u;img.alt='Logotipo de la Pastoral Juvenil Luqueña';img.className='splash-logo-img';img.onload=function(){if(f.isConnected)f.replaceWith(img)};img.onerror=function(){};if(img.complete&&img.naturalWidth>0)setTimeout(function(){if(f.isConnected)f.replaceWith(img)},0)}catch(e){}}inject();setTimeout(inject,300);setTimeout(inject,1200);window.addEventListener('load',inject);window.addEventListener('pjl_store_update',function(){setTimeout(inject,50)});window.addEventListener('storage',function(e){if(e.key==='pjl_branding')setTimeout(inject,50)})})();` }} />
         <ThemeLoader />
+        <PwaIconSync />
         {/* Registro del Service Worker (PWA instalable / offline shell).
             Se registra solo en producción/*seguro y con soporte del navegador. */}
         <script
