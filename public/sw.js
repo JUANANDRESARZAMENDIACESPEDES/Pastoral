@@ -7,7 +7,7 @@
    cuando el admin cambia el logo desde el panel.
    ============================================================ */
 
-const VERSION = 'pjl-v2';
+const VERSION = 'pjl-v3';
 const SHELL_CACHE = 'pjl-shell';
 const CUSTOM_ICONS_CACHE = 'pjl-custom-icons';
 
@@ -82,6 +82,11 @@ self.addEventListener('fetch', (event) => {
   }
 
   const pathname = new URL(request.url).pathname;
+
+  if (pathname.startsWith('/api/')) {
+    event.respondWith(fetch(request));
+    return;
+  }
 
   if (ICON_URLS.includes(pathname)) {
     event.respondWith(

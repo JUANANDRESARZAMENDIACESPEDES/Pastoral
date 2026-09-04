@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   title: "Pastoral Juvenil Luqueña | PJL",
   description: "Sitio oficial de la Pastoral Juvenil Luqueña. Comunidad, fe y misión para la juventud de Luque.",
   applicationName: "Pastoral Juvenil Luqueña",
-  manifest: "/manifest.json",
+  manifest: "/api/manifest",
   appleWebApp: {
     capable: true,
     title: "PJL Luque",
