@@ -11324,3 +11324,47 @@ html.show-splash .splash-screen { visibility: visible; }
 @media (prefers-reduced-motion: reduce) {
   .pjl-update-banner { animation: none; }
 }
+
+/* ---------- BOTÓN "DESCARGAR APP" (navbar + drawer) ---------- */
+.nav-download-item { margin-left: 6px; }
+.nav-download-btn {
+  background: linear-gradient(135deg, #e0b866 0%, #c8973a 55%, #b07d26 100%) !important;
+  color: #1A2744 !important;
+  border: 1px solid rgba(255, 238, 199, 0.7) !important;
+  box-shadow: 0 10px 24px rgba(200, 151, 58, 0.45), inset 0 1px 0 rgba(255,255,255,0.35) !important;
+  padding-right: clamp(12px, 1vw, 18px) !important;
+  padding-left: clamp(12px, 1vw, 18px) !important;
+  animation: navCtaPulse 2.6s ease-in-out infinite;
+}
+.nav-download-btn:hover,
+.nav-download-btn:focus-visible {
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: 0 16px 34px rgba(200, 151, 58, 0.6), inset 0 1px 0 rgba(255,255,255,0.4) !important;
+}
+.nav-download-ico { font-size: 16px; }
+@keyframes navCtaPulse {
+  0%, 100% { box-shadow: 0 10px 24px rgba(200, 151, 58, 0.45), inset 0 1px 0 rgba(255,255,255,0.35); }
+  50% { box-shadow: 0 10px 30px rgba(200, 151, 58, 0.75), inset 0 1px 0 rgba(255,255,255,0.4); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-download-btn { animation: none; }
+}
+
+/* Variante del drawer móvil */
+.drawer-btn-download {
+  margin: 6px 12px 10px;
+  width: auto !important;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #e0b866 0%, #c8973a 55%, #b07d26 100%) !important;
+  color: #1A2744 !important;
+  border: 1px solid rgba(255, 238, 199, 0.7) !important;
+  border-radius: 14px !important;
+  font-weight: 800 !important;
+  box-shadow: 0 10px 24px rgba(200, 151, 58, 0.35) !important;
+}
+.drawer-btn-download:hover,
+.drawer-btn-download:focus {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(200, 151, 58, 0.5) !important;
+}

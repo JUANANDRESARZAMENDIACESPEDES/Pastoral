@@ -13,6 +13,7 @@ import { buildGoogleCalendarEmbedUrl, DEFAULT_GOOGLE_CALENDAR_OPTIONS } from '@/
 import { fetchStoreValue } from '@/lib/supabaseStore';
 import Link from 'next/link';
 import Script from 'next/script';
+import NavDownloadButton from '@/components/NavDownloadButton';
 
 type PublicNewsItem = Omit<NewsItem, 'id'> & {
   id: number | string;
@@ -594,9 +595,12 @@ window.setTimeout(() => {
   }, 5250);
   window.setTimeout(() => {
     document.getElementById('splash-pjl')?.remove();
-    root.classList.remove('pjl-reveal');
     setNavEntered(true);
     setSplashDone(true);
+    // Retiro 'pjl-reveal' SOLO después de que termine su fundido (0.55s desde
+    // 5250 => ~5800). Antes se quitaba a los 5550 a mitad de animación y el
+    // contenido 'saltaba' a opacidad 1 (efecto de doble refresco).
+    window.setTimeout(() => root.classList.remove('pjl-reveal'), 400);
   }, 5550);
 }, 900);
 
@@ -1100,6 +1104,8 @@ window.setTimeout(() => {
                 <vaticannews-widget lang="es" fontSize="18"></vaticannews-widget>
               </div>
             </li>
+
+            <NavDownloadButton />
           </ul>
         </div>
       </nav>
@@ -1224,6 +1230,8 @@ window.setTimeout(() => {
                 </div>
               )}
             </li>
+
+            <NavDownloadButton variant="mobile" />
           </ul>
         </div>
       </div>

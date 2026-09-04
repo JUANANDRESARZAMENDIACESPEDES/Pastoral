@@ -90,6 +90,11 @@ export default function RootLayout({
                  flash visible -> re-animación desde 0). */
               'html.show-splash:not(.pjl-reveal) body>*:not(#splash-pjl):not(script):not(style):not(noscript){visibility:hidden!important}',
               'html.pjl-reveal body>*:not(#splash-pjl):not(script):not(style):not(noscript){visibility:visible!important;animation:pjlPageIn .55s ease-out both}',
+              /* IMPORTANTE: el navbar NO debe heredar pjlPageIn. Si lo recibe,
+                 entraría con el fundido del contenido y LUEGO otra vez con su
+                 propia animación nav-entered -> doble refresco. Se le quita la
+                 animación de pjlPageIn y queda solamente con su fundido único. */
+              'html.pjl-reveal body>.top-nav{animation:none!important;visibility:visible!important}',
               '@keyframes pjlPageIn{from{opacity:0}to{opacity:1}}',
               'html.show-splash body:not(:has(> #splash-pjl))>*{visibility:visible!important}',
               '@media (prefers-reduced-motion:reduce){#splash-pjl{display:none!important}html.show-splash body>*:not(#splash-pjl){visibility:visible!important}}',
