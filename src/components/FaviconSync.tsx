@@ -1,6 +1,8 @@
 'use client';
 import { useEffect } from 'react';
 
+const DEFAULT_LOGO = '/pjl-logo.svg';
+
 export default function FaviconSync() {
   useEffect(() => {
     let cancelled = false;
@@ -26,10 +28,11 @@ export default function FaviconSync() {
       if (cancelled) return;
       try {
         const raw = localStorage.getItem('pjl_branding');
-        if (!raw) { retry(); return; }
-        const branding = JSON.parse(raw);
-        const logoUrl = branding?.mainLogo;
-        if (!logoUrl) { retry(); return; }
+        let logoUrl = DEFAULT_LOGO;
+        if (raw) {
+          const branding = JSON.parse(raw);
+          if (branding?.mainLogo) logoUrl = branding.mainLogo;
+        }
 
         if (logoUrl.endsWith('.svg') || logoUrl.startsWith('data:')) {
           fetch(logoUrl)

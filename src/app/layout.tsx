@@ -98,9 +98,13 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){
+  var FALLBACK='/pjl-logo.svg';
   function setFavicon(u){var l=document.querySelectorAll('link[rel="icon"],link[rel="apple-touch-icon"]');for(var i=0;i<l.length;i++)l[i].remove();var c=document.createElement('link');c.rel='icon';c.type='image/png';c.href=u;document.head.insertBefore(c,document.head.firstChild);var a=document.createElement('link');a.rel='apple-touch-icon';a.href=u;document.head.appendChild(a)}
-  function drawCircle(img){var s=256,ca=document.createElement('canvas');ca.width=s;ca.height=s;var x=ca.getContext('2d');x.beginPath();x.arc(s/2,s/2,s/2,0,Math.PI*2);x.closePath();x.clip();var m=Math.min(img.width,img.height);x.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,s,s);setFavicon(ca.toDataURL('image/png'))}
-  function loadLogo(){try{var r=localStorage.getItem('pjl_branding');if(!r)return;var b=JSON.parse(r);var u=b&&b.mainLogo;if(!u)return;if(u.indexOf('data:')===0){var img=new Image();img.onload=function(){drawCircle(img)};img.src=u}else{fetch(u).then(function(res){return res.blob()}).then(function(blob){var reader=new FileReader();reader.onload=function(){var img=new Image();img.onload=function(){drawCircle(img)};img.onerror=function(){setFavicon(u)};img.src=reader.result};reader.readAsDataURL(blob)}).catch(function(){setFavicon(u)})}}catch(e){}}
+  function drawCircle(imgUrl){var img=new Image();img.onload=function(){var s=256,ca=document.createElement('canvas');ca.width=s;ca.height=s;var x=ca.getContext('2d');x.beginPath();x.arc(s/2,s/2,s/2,0,Math.PI*2);x.closePath();x.clip();var m=Math.min(img.width,img.height);x.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,s,s);setFavicon(ca.toDataURL('image/png'));try{if(navigator.serviceWorker&&navigator.serviceWorker.controller)navigator.serviceWorker.controller.postMessage({type:'FAVICON_UPDATED'})}catch(e){}};img.onerror=function(){setFavicon(FALLBACK)};img.src=imgUrl+(imgUrl.indexOf('data:')===0?'':'?ts='+Date.now())}
+  function loadLogo(){try{var r=localStorage.getItem('pjl_branding');var u=null;if(r){var b=JSON.parse(r);u=b&&b.mainLogo}
+    if(!u||u===FALLBACK){setFavicon(FALLBACK);try{if(navigator.serviceWorker&&navigator.serviceWorker.controller)navigator.serviceWorker.controller.postMessage({type:'FAVICON_UPDATED'})}catch(e){};return}
+    drawCircle(u)
+  }catch(e){setFavicon(FALLBACK)}}
   setTimeout(loadLogo,50);
   function onStore(e){try{var d=e.detail||{};if(d.key==='branding')setTimeout(loadLogo,50)}catch(ex){}}
   if(typeof window!=='undefined'){window.addEventListener('pjl_store_update',onStore);window.addEventListener('storage',function(e){if(e.key==='pjl_branding')setTimeout(loadLogo,50)})}
@@ -194,7 +198,7 @@ export default function RootLayout({
             Se registra solo en producción/*seguro y con soporte del navegador. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}`,
+            __html: `if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'}).then(function(r){r.update()} ).catch(function(){});});}`,
           }}
         />
         <PwaInstallPrompt />

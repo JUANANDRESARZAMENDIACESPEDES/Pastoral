@@ -64,10 +64,11 @@ export default function PwaIconSync() {
       if (cancelled) return;
       try {
         const raw = localStorage.getItem('pjl_branding');
-        if (!raw) return;
-        const branding = JSON.parse(raw);
-        const logoUrl = branding?.mainLogo;
-        if (!logoUrl) return;
+        let logoUrl = '/pjl-logo.svg';
+        if (raw) {
+          const branding = JSON.parse(raw);
+          if (branding?.mainLogo) logoUrl = branding.mainLogo;
+        }
         updatePwaIcons(logoUrl);
       } catch {}
     }
