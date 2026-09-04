@@ -68,6 +68,29 @@ export default function RootLayout({
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&display=swap" media="print" />
         <script dangerouslySetInnerHTML={{ __html: "var pf=document.querySelector('link[href*=\"Playfair\"][media=\"print\"]');if(pf)pf.onload=function(){this.media='all'};" }} />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+        {/* Captura TEMPRANA del beforeinstallprompt (antes de la hidratación).
+            Chrome lo dispara al cargar si la web es instalable; si React no lo
+            escucha a tiempo el evento se pierde y nunca habría instalación
+            nativa. Lo guardamos en una variable global para que el hook lo
+            recupere cuando se monte. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){
+  try{
+    if(!window.__pjlpwa) window.__pjlpwa={deferredPrompt:null,hasPrompt:false,captured:false};
+    function capture(e){
+      if(e && e.preventDefault) e.preventDefault();
+      window.__pjlpwa.captured=true;
+      window.__pjlpwa.deferredPrompt=e;
+      window.__pjlpwa.hasPrompt=true;
+      try{window.dispatchEvent(new CustomEvent('pjl_beforeinstall',{detail:e}))}catch(_){}
+    }
+    window.addEventListener('beforeinstallprompt',capture);
+    window.addEventListener('appinstalled',function(){try{window.__pjlpwa.hasPrompt=false;window.__pjlpwa.deferredPrompt=null}catch(_){}});
+  }catch(e){}
+})();`,
+          }}
+        />
         {/* Critical CSS anti-destello, en DOS fases:
             1) La navbar nace oculta y SOLO su animación la revela.
             2) Mientras el splash corre SIN clase pjl-reveal, TODO el

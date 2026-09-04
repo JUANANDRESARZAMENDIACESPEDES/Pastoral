@@ -62,11 +62,14 @@ export default function PwaInstallPrompt() {
       setVisible(false);
       return;
     }
-    // En Android si por algún motivo no hay prompt nativo aún, igual va a la
-    // guía como respaldo.
-    setVisible(false);
-    window.location.href = '/instalar';
-  }, [install]);
+    // En Android la instalación es nativa y debe ocurrir aquí. Si aún no hay
+    // prompt disponible lo dejamos visible para que reintente al tocar de nuevo;
+    // nunca redirigimos a la guía desde esta acción directa.
+    if (!isAndroid) {
+      setVisible(false);
+      window.location.href = '/instalar';
+    }
+  }, [install, isAndroid]);
 
   const goToGuide = useCallback(() => {
     setVisible(false);
