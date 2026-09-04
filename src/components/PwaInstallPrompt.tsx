@@ -62,7 +62,9 @@ export default function PwaInstallPrompt() {
       setVisible(false);
       return;
     }
-    // Sin diálogo nativo (iOS o prompt aún no disponible): vamos a la guía.
+    // En Android si por algún motivo no hay prompt nativo aún, igual va a la
+    // guía como respaldo.
+    setVisible(false);
     window.location.href = '/instalar';
   }, [install]);
 
@@ -126,7 +128,7 @@ export default function PwaInstallPrompt() {
         >
           Ahora no
         </button>
-        {canInstallNative ? (
+        {isAndroid ? (
           <button
             type="button"
             onClick={handleInstall}
