@@ -7,19 +7,29 @@
    cuando el admin cambia el logo desde el panel.
    ============================================================ */
 
-const VERSION = 'pjl-v4';
-const SHELL_CACHE = 'pjl-shell';
+const VERSION = 'pjl-v5';
+/* Cache con sufijo de versión: al cambiar, la antigua 'pjl-shell'
+   se borra durante activate. Así nunca queda servido un manifest
+   o shell obsoleto que rompa la instalación PWA. */
+const SHELL_CACHE = 'pjl-shell-v5';
 const CUSTOM_ICONS_CACHE = 'pjl-custom-icons';
 
 const CORE_ASSETS = [
   '/',
-  '/manifest.json',
-  '/android-chrome-192.png',
-  '/android-chrome-512.png',
   '/apple-touch-icon.png',
   '/favicon-192.png',
   '/favicon-32.png',
   '/pjl-logo.svg',
+];
+
+/* Los assets críticos para la instalación PWA SIEMPRE se resuelven
+   yendo a la red primero. Si un manifest/ícono quedó cacheado en una
+   versión vieja (apuntando a rutas eliminadas como /api/manifest),
+   servirlo desde cache rompería la "installability". */
+const NETWORK_FIRST_ASSETS = [
+  '/manifest.json',
+  '/android-chrome-192.png',
+  '/android-chrome-512.png',
 ];
 
 const ICON_URLS = ['/android-chrome-192.png', '/android-chrome-512.png'];
@@ -97,20 +107,30 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (ICON_URLS.includes(pathname)) {
+  /* Network-first para manifest e íconos: nunca servir versiones viejas
+     cacheadas. Si hay un ícono custom generado por el panel (Cache API),
+     ese tiene prioridad y sí se sirve desde CUSTOM_ICONS_CACHE. */
+  if (NETWORK_FIRST_ASSETS.includes(pathname)) {
     event.respondWith(
-      caches.open(CUSTOM_ICONS_CACHE).then((cache) =>
-        cache.match(request).then((custom) => {
-          if (custom) return custom;
-          return caches.match(request).then((cached) => cached || fetch(request).then((res) => {
+      (ICON_URLS.includes(pathname)
+        ? caches.open(CUSTOM_ICONS_CACHE).then((c) => c.match(request))
+        : Promise.resolve(undefined)
+      ).then((custom) => {
+        if (custom) return custom;
+        return fetch(request)
+          .then((res) => {
             if (res.ok) {
               const copy = res.clone();
               caches.open(SHELL_CACHE).then((c) => c.put(request, copy));
             }
             return res;
-          }));
-        })
-      )
+          })
+          .catch(() =>
+            caches
+              .match(request)
+              .then((cached) => cached || (request.mode !== 'navigate' ? new Response('', { status: 504 }) : undefined))
+          );
+      })
     );
     return;
   }

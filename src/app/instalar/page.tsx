@@ -10,6 +10,12 @@ interface PlatformInfo {
   icon: string;
 }
 
+interface Diagnostic {
+  label: string;
+  ok: boolean | null;
+  detail: string;
+}
+
 function detectPlatform(): PlatformInfo {
   const ua = navigator.userAgent;
   const isIos = /iphone|ipad|ipod/i.test(ua) && (window.navigator as any).standalone === undefined;
@@ -48,15 +54,75 @@ const DESKTOP_EDGE_STEPS = [
 ];
 
 export default function InstallGuidePage() {
-  const { isStandalone, installed, isIos, deferredAvailable, install } = usePwaInstall();
+  const { isStandalone, installed, isIos, deferredAvailable, install, installState } = usePwaInstall();
   const [platform, setPlatform] = useState<PlatformInfo | null>(null);
-  const [installing, setInstalling] = useState(false);
   const [isEdge, setIsEdge] = useState(false);
+  const [diagnostics, setDiagnostics] = useState<Diagnostic[]>([]);
 
   useEffect(() => {
     setPlatform(detectPlatform());
     setIsEdge(/edg/i.test(navigator.userAgent));
   }, []);
+
+  useEffect(() => {
+    const p = platform;
+    if (!p) return;
+    const platformLabel = p.label;
+    const platformKey = p.key;
+    const checks: Diagnostic[] = [];
+
+    async function run() {
+      const ua = navigator.userAgent;
+      checks.push({ label: 'Navegador', ok: null, detail: platformLabel + ' · ' + ua.split(' ').slice(-2).join(' ') });
+      checks.push({ label: 'HTTPS', ok: location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1', detail: location.protocol });
+      checks.push({ label: 'Promoción nativa disponible', ok: deferredAvailable, detail: deferredAvailable ? 'Sí (beforeinstallprompt capturado)' : 'No / aún no' });
+
+      try {
+        const manifestRes = await fetch('/manifest.json', { cache: 'no-store' });
+        const ok = manifestRes.ok && manifestRes.headers.get('content-type')?.includes('manifest');
+        checks.push({
+          label: 'Manifest /manifest.json',
+          ok: !!ok,
+          detail: manifestRes.status + ' · ' + (manifestRes.headers.get('content-type') || 'sin content-type'),
+        });
+        const m = await manifestRes.json().catch(() => null);
+        if (m && Array.isArray(m.icons)) {
+          const bad = m.icons.filter((ic: any) => !ic.src || !/192x192|512x512/.test(ic.sizes || ''));
+          checks.push({ label: 'Íconos del manifest', ok: bad.length === 0, detail: `${m.icons.length} íconos` + (bad.length ? ' (faltan 192/512)' : ' (192 y 512 ok)') });
+        }
+      } catch {
+        checks.push({ label: 'Manifest /manifest.json', ok: false, detail: 'falló la descarga' });
+      }
+
+      try {
+        if ('serviceWorker' in navigator) {
+          const reg = await navigator.serviceWorker.getRegistration('/sw.js');
+          checks.push({
+            label: 'Service Worker',
+            ok: !!reg,
+            detail: reg ? `estado: ${reg.active ? reg.active.state : 'sin activo'}` : 'no registrado',
+          });
+        } else {
+          checks.push({ label: 'Service Worker', ok: false, detail: 'no soportado' });
+        }
+      } catch {
+        checks.push({ label: 'Service Worker', ok: null, detail: 'no consultable' });
+      }
+
+      const pngCheck = platformKey === 'android' || platformKey === 'desktop';
+      if (pngCheck) {
+        try {
+          const iconRes = await fetch('/android-chrome-512.png', { cache: 'no-store' });
+          checks.push({ label: 'Ícono 512', ok: iconRes.ok, detail: `status ${iconRes.status}` });
+        } catch {
+          checks.push({ label: 'Ícono 512', ok: false, detail: 'falló la descarga' });
+        }
+      }
+
+      setDiagnostics([...checks]);
+    }
+    run();
+  }, [platform, deferredAvailable]);
 
   const installedState = isStandalone || installed;
 
@@ -71,13 +137,9 @@ export default function InstallGuidePage() {
   const canNative = !isIos && deferredAvailable;
 
   const handleInstall = async () => {
-    setInstalling(true);
     const ok = await install();
-    if (ok) {
-      return;
-    }
+    if (ok) return;
     // Sin prompt nativo (todavía): mostramos que use el menú del navegador.
-    setInstalling(false);
   };
 
   return (
@@ -142,7 +204,7 @@ export default function InstallGuidePage() {
                   <button
                     type="button"
                     onClick={handleInstall}
-                    disabled={installing}
+                    disabled={installState === 'installing'}
                     style={{
                       width: '100%',
                       padding: '14px 18px',
@@ -155,23 +217,21 @@ export default function InstallGuidePage() {
                       cursor: 'pointer',
                     }}
                   >
-                    {installing ? 'Preparando…' : '📲 Instalar la app ahora'}
+                    {installState === 'installing' ? 'Preparando…' : '📲 Instalar la app ahora'}
                   </button>
-                  {!canNative && (
-                    <div
-                      style={{
-                        marginTop: '10px',
-                        fontSize: '12.5px',
-                        color: '#1A2744',
-                        fontWeight: 700,
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      {!deferredAvailable
-                        ? 'Si no aparece el aviso del navegador, seguí los pasos de acá abajo.'
-                        : 'Chrome te mostrará el aviso de instalación. Confirmá tocando «Instalar».'}
-                    </div>
-                  )}
+                  <div
+                    style={{
+                      marginTop: '10px',
+                      fontSize: '12.5px',
+                      color: '#1A2744',
+                      fontWeight: 700,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {installState === 'unavailable' || (!deferredAvailable && !isIos)
+                      ? 'Si no aparece el aviso del navegador, seguí los pasos de acá abajo (menú ⋮ → «Instalar aplicación»).'
+                      : 'Chrome te mostrará el aviso de instalación. Confirmá tocando «Instalar».'}
+                  </div>
                 </div>
               )}
 
@@ -243,6 +303,8 @@ export default function InstallGuidePage() {
           )}
         </div>
 
+        <DiagnosticsPanel items={diagnostics} />
+
         <p
           style={{
             textAlign: 'center',
@@ -257,6 +319,67 @@ export default function InstallGuidePage() {
         </p>
       </div>
     </div>
+  );
+}
+
+function DiagnosticsPanel({ items }: { items: Diagnostic[] }) {
+  const [open, setOpen] = useState(false);
+  if (items.length === 0) return null;
+  const allOk = items.every((d) => d.ok !== false);
+
+  return (
+    <details
+      open={open}
+      onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}
+      style={{
+        marginTop: '20px',
+        background: 'rgba(255,255,255,0.05)',
+        border: '1px solid rgba(255,255,255,0.14)',
+        borderRadius: '14px',
+        padding: '14px 16px',
+        fontSize: '13px',
+        lineHeight: 1.5,
+      }}
+    >
+      <summary
+        style={{
+          cursor: 'pointer',
+          fontWeight: 700,
+          color: 'var(--gold-light, #E8B85A)',
+          fontSize: '13.5px',
+          userSelect: 'none',
+        }}
+      >
+        🔍 Diagnóstico de instalación {allOk ? '(todo en orden)' : '(revisar)'}
+      </summary>
+      <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {items.map((d, i) => (
+          <div
+            key={i}
+            style={{
+              display: 'flex',
+              gap: '10px',
+              alignItems: 'flex-start',
+              padding: '8px 10px',
+              borderRadius: '10px',
+              background:
+                d.ok === false
+                  ? 'rgba(220,70,70,0.15)'
+                  : d.ok === true
+                    ? 'rgba(80,180,120,0.12)'
+                    : 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.1)',
+            }}
+          >
+            <span>{d.ok === false ? '❌' : d.ok === true ? '✅' : '❓'}</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 700 }}>{d.label}</div>
+              <div style={{ opacity: 0.85, wordBreak: 'break-word' }}>{d.detail}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </details>
   );
 }
 

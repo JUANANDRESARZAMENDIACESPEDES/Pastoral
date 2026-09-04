@@ -26,7 +26,7 @@ const MODAL_STYLE: React.CSSProperties = {
 };
 
 export default function PwaInstallPrompt() {
-  const { isStandalone, installed, isIos, isAndroid, canInstallNative, install } = usePwaInstall();
+  const { isStandalone, installed, isIos, isAndroid, canInstallNative, install, installState } = usePwaInstall();
   const [visible, setVisible] = useState(false);
   const [dismissedThisSession, setDismissedThisSession] = useState(false);
 
@@ -62,14 +62,11 @@ export default function PwaInstallPrompt() {
       setVisible(false);
       return;
     }
-    // En Android la instalación es nativa y debe ocurrir aquí. Si aún no hay
-    // prompt disponible lo dejamos visible para que reintente al tocar de nuevo;
-    // nunca redirigimos a la guía desde esta acción directa.
-    if (!isAndroid) {
-      setVisible(false);
-      window.location.href = '/instalar';
-    }
-  }, [install, isAndroid]);
+    // En Android la instalación es nativa y debe ocurrir aquí. Si el
+    // navegador NO ofrece el prompt nativo mostramos un mensaje inline con
+    // la vía manual (menú ⋮ → Instalar aplicación). Nunca se redirige a la
+    // guía desde esta acción directa.
+  }, [install]);
 
   const goToGuide = useCallback(() => {
     setVisible(false);
@@ -98,12 +95,20 @@ export default function PwaInstallPrompt() {
       <div key={i} style={{ marginTop: i === 0 ? 0 : 4 }}>{s}</div>
     ))
   ) : isAndroid ? (
-    canInstallNative
-      ? 'Tocá «Instalar» y confirmá el aviso del navegador. Si no aparece, te guiamos paso a paso.'
-      : 'En Android tocá «Ver pasos» y te mostramos cómo instalarla desde el menú de tu navegador.'
+    'Tocá «Instalar» y confirmá el aviso del navegador para dejar la app en tu teléfono.'
+  ) : canInstallNative ? (
+    'Tocá «Instalar» y confirmá el aviso del navegador.'
   ) : (
     'Tocá «Ver pasos» y te mostramos cómo instalar la app en este dispositivo.'
   );
+
+  const androidManualHint =
+    isAndroid && !canInstallNative && (installState === 'unavailable' || installState === 'dismissed') ? (
+      <div style={{ marginTop: 4, fontSize: '12px', opacity: 0.9, lineHeight: 1.4 }}>
+        Si no aparece el aviso del navegador, abrí el menú <strong>⋮</strong> de Chrome y tocá{' '}
+        <strong>«Instalar aplicación»</strong>.
+      </div>
+    ) : null;
 
   return (
     <div role="dialog" aria-label="Instalar Pastoral Juvenil Luqueña" style={MODAL_STYLE}>
@@ -116,6 +121,7 @@ export default function PwaInstallPrompt() {
           <div style={{ fontSize: '12.5px', opacity: 0.85, marginTop: 4, lineHeight: 1.45 }}>
             {body}
           </div>
+          {androidManualHint}
         </div>
       </div>
 
@@ -141,7 +147,7 @@ export default function PwaInstallPrompt() {
               color: '#1A2744', fontWeight: 800, fontSize: '13px', cursor: 'pointer',
             }}
           >
-            📲 Instalar
+            {installState === 'installing' ? 'Preparando…' : '📲 Instalar'}
           </button>
         ) : (
           <button

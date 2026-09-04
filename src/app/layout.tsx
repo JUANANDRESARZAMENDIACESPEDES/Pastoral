@@ -225,11 +225,12 @@ export default function RootLayout({
         <ThemeLoader />
         <PwaIconSync />
         {/* Registro del Service Worker (PWA instalable / offline shell).
-            Se registra solo en producción/*seguro y con soporte del navegador. */}
+            Se registra en producción/*seguro y con soporte del navegador.
+            Registro TEMPRANO (no espera window.load) para que Chrome
+            evalúe la web como instalable lo antes posible. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'}).then(function(r){r.update()} ).catch(function(){});});}`,
-          }}
+            __html: `(function(){if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'}).then(function(r){r.update()}).catch(function(){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'}).catch(function(){})});});}})();` }}
         />
         <PwaInstallPrompt />
         <UpdatePrompt />

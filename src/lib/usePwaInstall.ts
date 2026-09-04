@@ -6,12 +6,16 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
 }
 
+export type InstallOutcome = 'accepted' | 'dismissed' | 'unavailable' | 'error';
+export type InstallState = 'idle' | 'installing' | InstallOutcome;
+
 export function usePwaInstall() {
   const [isStandalone, setIsStandalone] = useState(false);
   const [installed, setInstalled] = useState(false);
   const [deferredAvailable, setDeferredAvailable] = useState(false);
   const [isIos, setIsIos] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
+  const [installState, setInstallState] = useState<InstallState>('idle');
   const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null);
 
   // Recupera el prompt capturado por el script TEMPRANO del layout (window.__pjlpwa)
@@ -49,6 +53,7 @@ export function usePwaInstall() {
     };
     const onAppInstalled = () => {
       setInstalled(true);
+      setInstallState('accepted');
       setDeferredAvailable(false);
       deferredPrompt.current = null;
       try { const g = (window as any).__pjlpwa; if (g) { g.hasPrompt = false; g.deferredPrompt = null; } } catch {}
@@ -78,29 +83,35 @@ export function usePwaInstall() {
     }
     if (!deferred) {
       // Aún sin evento: espera brevemente a que Chrome lo dispare (puede
-      // llegar algo después de pintar la página). Timeout de 6s.
+      // llegar algo después de pintar la página). Timeout de 3s.
       try {
         deferred = await new Promise<BeforeInstallPromptEvent | null>((resolve) => {
           let settled = false;
           const onEvt = (e: Event) => { if (!settled) { settled = true; resolve(e as BeforeInstallPromptEvent); } };
           window.addEventListener('beforeinstallprompt', onEvt);
           window.addEventListener('pjl_beforeinstall', onEvt);
-          window.setTimeout(() => { if (!settled) { settled = true; window.removeEventListener('beforeinstallprompt', onEvt); window.removeEventListener('pjl_beforeinstall', onEvt); resolve(null); } }, 6000);
+          window.setTimeout(() => { if (!settled) { settled = true; window.removeEventListener('beforeinstallprompt', onEvt); window.removeEventListener('pjl_beforeinstall', onEvt); resolve(null); } }, 3000);
         });
       } catch {
+        setInstallState('unavailable');
         return false;
       }
-      if (!deferred) return false;
+      if (!deferred) {
+        setInstallState('unavailable');
+        return false;
+      }
       deferredPrompt.current = deferred;
       setDeferredAvailable(true);
     }
     try {
       // 'prompt()' debe llamarse en el mismo gesto del usuario para que el
       // navegador muestre el diálogo nativo de instalación.
+      setInstallState('installing');
       await deferred.prompt();
     } catch {
       deferredPrompt.current = null;
       setDeferredAvailable(false);
+      setInstallState('error');
       return false;
     }
     const result = await deferred.userChoice.catch(() => null);
@@ -108,8 +119,10 @@ export function usePwaInstall() {
     setDeferredAvailable(false);
     if (result && result.outcome === 'accepted') {
       setInstalled(true);
+      setInstallState('accepted');
       return true;
     }
+    setInstallState('dismissed');
     return false;
   }, [syncFromGlobal]);
 
@@ -131,10 +144,10 @@ export function usePwaInstall() {
   //   diálogo nativo del navegador (beforeinstallprompt).
   // - iOS o sin prompt nativo disponible → redirige a la guía paso a paso
   //   (/instalar) que se adapta al dispositivo.
-  const handleDownload = useCallback(() => {
+  const handleDownload = useCallback(async () => {
     if (deferredPrompt.current && !isIos) {
-      install();
-      return;
+      const ok = await install();
+      if (ok) return;
     }
     window.location.href = '/instalar';
   }, [install, isIos]);
@@ -146,6 +159,7 @@ export function usePwaInstall() {
     isIos,
     isAndroid,
     canInstallNative,
+    installState,
     install,
     requestInstallUI,
     handleDownload,
