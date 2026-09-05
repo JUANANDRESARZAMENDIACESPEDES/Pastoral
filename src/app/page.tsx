@@ -3572,6 +3572,20 @@ window.setTimeout(() => {
         @media (max-width: 768px) { .footer-grid { grid-template-columns: repeat(2, 1fr); gap: 34px; } .footer-bottom { flex-direction: column; text-align: center; } }
         @media (max-width: 520px) { .footer-grid { grid-template-columns: 1fr; } }
 
+        /* El copyright no debe desbordar la pantalla en móvil/tablet
+           (los botones llevan white-space: nowrap global en ≤1024px) */
+        @media (max-width: 1024px) {
+          .fb-copy {
+            white-space: normal !important;
+            overflow-wrap: anywhere !important;
+            word-break: normal !important;
+            width: 100%;
+            max-width: 100%;
+            line-height: 1.5;
+            text-align: center;
+          }
+        }
+
         /* Custom Scrollbar for Modals */
         .modal-scroll::-webkit-scrollbar { width: 6px; }
         .modal-scroll::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 10px; }
