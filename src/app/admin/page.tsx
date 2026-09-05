@@ -3383,6 +3383,27 @@ function AdminContent() {
                             <label className="premium-label">TEXTO ALT DE LA IMAGEN</label>
                             <input className="pjl-input" value={content.instiAltText || ''} onChange={e => setContent({ ...content, instiAltText: e.target.value })} placeholder="Texto alternativo de la foto" />
                           </div>
+                          <div className="form-group">
+                            <label className="premium-label">IMAGEN INSTITUCIONAL (DECORATIVA)</label>
+                            {content.instiFoto ? (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                                <img src={content.instiFoto} alt="" style={{ width: '150px', height: '96px', objectFit: 'cover', borderRadius: '12px', border: '1px solid var(--gold-pale)' }} />
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                  <label className="btn-premium btn-premium-outline" style={{ padding: '9px 14px', fontSize: '11px', cursor: 'pointer' }}>
+                                    🔁 Cambiar
+                                    <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, (url) => { setContent({ ...content, instiFoto: url }); showToast('Imagen institucional actualizada ✔'); })} />
+                                  </label>
+                                  <button className="btn-premium btn-premium-outline" style={{ padding: '9px 14px', fontSize: '11px' }} onClick={() => setContent({ ...content, instiFoto: '' })}>✖ Quitar</button>
+                                </div>
+                              </div>
+                            ) : (
+                              <label className="btn-premium btn-premium-gold" style={{ padding: '11px 16px', fontSize: '11px', cursor: 'pointer', width: 'fit-content' }}>
+                                📷 Subir imagen institucional
+                                <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, (url) => { setContent({ ...content, instiFoto: url }); showToast('Imagen institucional añadida ✔'); })} />
+                              </label>
+                            )}
+                            <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: '8px 0 0' }}>Se muestra como foto decorativa en la página Institucional.</p>
+                          </div>
                         </div>
 
                         <div className="pjl-card" style={{ padding: '24px 28px', background: '#fff', border: '1px solid var(--gold-pale)', borderRadius: '24px' }}>
