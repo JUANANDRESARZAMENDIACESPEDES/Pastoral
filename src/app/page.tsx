@@ -548,6 +548,29 @@ const [newsSearch, setNewsSearch] = useState('');
   useLayoutEffect(() => {
     const splash = document.getElementById('splash-pjl');
     const root = document.documentElement;
+    // Si venimos de una navegación interna (no de una recarga), NO reproducir
+    // la intro: revelar todo al instante. La bandera la marca navigate() justo
+    // antes de router.push(). Una recarga real siempre muestra la intro.
+    let skipSplash = false;
+    try {
+      const ne = window.performance?.getEntriesByType?.('navigation');
+      const nt = ne && ne[0] ? (ne[0] as any).type : '';
+      const isReload = nt === 'reload' || (window.performance as any)?.navigation?.type === 1;
+      if (!isReload) {
+        const ts = parseInt(sessionStorage.getItem('pjl_skip_splash') || '', 10);
+        if (ts && Date.now() - ts < 8000) skipSplash = true;
+      }
+    } catch {
+      skipSplash = false;
+    }
+    if (skipSplash) {
+      try { sessionStorage.removeItem('pjl_skip_splash'); } catch { /* ignore */ }
+      root.classList.remove('show-splash');
+      splash?.remove();
+      setNavEntered(true);
+      setSplashDone(true);
+      return;
+    }
     root.classList.add('show-splash');
     const reduced = typeof window.matchMedia === 'function'
       && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -797,6 +820,12 @@ window.setTimeout(() => {
   }, []);
 
   // --- UI ACTIONS ---
+  const markInternalNav = () => {
+    // Marca la navegación interna para que el splash NO se reproduzca en la
+    // siguiente carga (por si algún cliente la convierte en carga completa).
+    try { sessionStorage.setItem('pjl_skip_splash', String(Date.now())); } catch { /* ignore */ }
+  };
+
   const navigate = (id: string, e?: React.MouseEvent) => {
     if (e) e.preventDefault();
     trackInteraction(id);
@@ -810,6 +839,7 @@ window.setTimeout(() => {
     if (id === 'zonas') setSelectedZone(null);
 
     if (pageIds.has(id)) {
+      markInternalNav();
       router.push(id === 'home' ? '/' : `/?page=${id}`);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
@@ -822,6 +852,7 @@ window.setTimeout(() => {
       return;
     }
 
+    markInternalNav();
     router.push(`/?page=${id}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
