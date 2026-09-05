@@ -3489,6 +3489,9 @@ input:checked + .pjl-slider:before {
 .drawer-body {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
   padding: 24px 16px;
 }
 
@@ -3747,7 +3750,8 @@ input:checked + .pjl-slider:before {
 .mobile-nav-drawer {
   position: fixed;
   top: 0;
-  left: -100%;
+  left: auto;
+  right: -100%;
   width: min(85vw, 320px);
   height: 100dvh;
   background: linear-gradient(180deg, var(--navy) 0%, #0e1828 100%);
@@ -3756,13 +3760,15 @@ input:checked + .pjl-slider:before {
   z-index: 100001;
   display: flex;
   flex-direction: column;
-  transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
-  box-shadow: 8px 0 40px rgba(0,0,0,0.4);
+  overscroll-behavior: contain;
+  box-shadow: -8px 0 40px rgba(0,0,0,0.4);
 }
 
 .mobile-nav-drawer.open {
-  left: 0;
+  left: auto;
+  right: 0;
 }
 
 .drawer-backdrop {
@@ -4466,15 +4472,17 @@ textarea:focus-visible,
 /* ---------- DRAWER MÓVIL: POSICIONAMIENTO DETERMINÍSTICO ----------
    El archivo base define el drawer dos veces (una con 'right', otra con
    'left'). Al aplicar juntas quedan sobredeterminadas y algunos navegadores
-   resuelven distinto. Unificamos: oculto = left:-100%, abierto = left:0,
-   y anulamos cualquier 'right' residual. */
+   resuelven distinto. Unificamos: oculto = right:-100%, abierto = right:0
+   (se desliza desde la derecha, donde está el botón de menú), y anulamos
+   cualquier 'left' residual. */
 .mobile-nav-drawer {
-  right: auto;
-  left: -100%;
+  left: auto;
+  right: -100%;
+  overscroll-behavior: contain;
 }
 .mobile-nav-drawer.open {
-  right: auto;
-  left: 0;
+  left: auto;
+  right: 0;
 }
 
 /* ---------- CARRUSEL ADMIN (MAESTRO-DETALLE) ---------- */
