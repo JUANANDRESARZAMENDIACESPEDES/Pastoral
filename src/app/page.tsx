@@ -3718,10 +3718,10 @@ window.setTimeout(() => {
         }
 
         /* ===== EVANGELIO DEL DÍA ===== */
-        .evg-overlay { position: fixed; inset: 0; z-index: 10050; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(10,16,32,.66); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); animation: evgFade .35s ease both; }
+        .evg-overlay { position: fixed; inset: 0; z-index: 100050; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(10,16,32,.66); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); overscroll-behavior: contain; animation: evgFade .35s ease both; }
         @keyframes evgFade { from { opacity: 0; } to { opacity: 1; } }
 
-        .evg-card { position: relative; width: 100%; max-width: 560px; max-height: calc(100dvh - 40px); overflow-y: auto; border-radius: 24px; background: linear-gradient(170deg, #ffffff 0%, #fffdf6 100%); border: 1px solid var(--gold-pale); box-shadow: 0 34px 90px rgba(5,10,25,.5), 0 0 0 1px rgba(255,255,255,.08) inset; animation: evgPop .5s cubic-bezier(.34,1.56,.64,1) both; -webkit-overflow-scrolling: touch; }
+        .evg-card { position: relative; width: 100%; max-width: 560px; max-height: calc(100dvh - 40px); overflow-y: auto; overscroll-behavior: contain; border-radius: 24px; background: linear-gradient(170deg, #ffffff 0%, #fffdf6 100%); border: 1px solid var(--gold-pale); box-shadow: 0 34px 90px rgba(5,10,25,.5), 0 0 0 1px rgba(255,255,255,.08) inset; animation: evgPop .5s cubic-bezier(.34,1.56,.64,1) both; -webkit-overflow-scrolling: touch; }
         @keyframes evgPop { from { opacity: 0; transform: translateY(26px) scale(.94); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
         .evg-close { position: absolute; top: 14px; right: 14px; z-index: 2; width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(255,255,255,.35); background: rgba(10,16,32,.55); color: #fff; font-size: 16px; cursor: pointer; display: grid; place-items: center; backdrop-filter: blur(4px); transition: transform .3s cubic-bezier(.34,1.56,.64,1), background .3s; }
@@ -3743,7 +3743,7 @@ window.setTimeout(() => {
         .evg-btn-wa { background: linear-gradient(120deg, #128c55, #25D366 60%, #128c55); color: #fff; box-shadow: 0 12px 28px rgba(37,211,102,.3); }
         .evg-btn-wa:hover { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(37,211,102,.4); }
 
-        .evg-toast { position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%); z-index: 10070; display: inline-flex; align-items: center; gap: 10px; background: rgba(10,16,32,.92); border: 1px solid rgba(200,151,58,.5); color: #fff; padding: 12px 22px; border-radius: 999px; font-size: 14px; font-weight: 700; box-shadow: 0 18px 44px rgba(5,10,25,.45); animation: evgToast .45s cubic-bezier(.34,1.56,.64,1) both; }
+        .evg-toast { position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%); z-index: 100060; display: inline-flex; align-items: center; gap: 10px; background: rgba(10,16,32,.92); border: 1px solid rgba(200,151,58,.5); color: #fff; padding: 12px 22px; border-radius: 999px; font-size: 14px; font-weight: 700; box-shadow: 0 18px 44px rgba(5,10,25,.45); animation: evgToast .45s cubic-bezier(.34,1.56,.64,1) both; }
         @keyframes evgToast { from { opacity: 0; transform: translate(-50%, 18px) scale(.9); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
         .evg-toast-cloud { font-size: 18px; animation: evgCloud 1.4s ease-in-out infinite; }
         @keyframes evgCloud { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
