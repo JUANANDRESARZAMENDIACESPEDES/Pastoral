@@ -15,6 +15,7 @@ import Script from 'next/script';
 import NavDownloadButton from '@/components/NavDownloadButton';
 import NotificationBell from '@/components/NotificationBell';
 import ShareButton from '@/components/ShareButton';
+import { buildIcs, IcsItem } from '@/lib/ics';
 
 type PublicNewsItem = Omit<NewsItem, 'id'> & {
   id: number | string;
@@ -499,6 +500,44 @@ const [newsSearch, setNewsSearch] = useState('');
   const [liveHeroIndex, setLiveHeroIndex] = useState(0);
   const [liveDocs, setLiveDocs] = useState<DocItem[]>([]);
   const [splashDone, setSplashDone] = useState(false);
+
+  // Descarga la agenda completa en formato .ics para añadirla a Google Calendar
+  const downloadAgendaIcs = () => {
+    const items: IcsItem[] = [];
+    liveActivities.filter(a => a.active !== false).forEach(a => {
+      const d = new Date(a.date);
+      if (isNaN(d.getTime())) return;
+      items.push({
+        title: a.title,
+        date: a.date,
+        description: [a.description, a.category].filter(Boolean).join(' · '),
+        location: 'Pastoral Juvenil Luque\u00f1a',
+      });
+    });
+    liveNews.forEach(n => {
+      const rawDate = n.event_date || n.date;
+      if (!rawDate || isNaN(new Date(rawDate).getTime())) return;
+      items.push({
+        title: n.title,
+        date: String(rawDate).slice(0, 10),
+        description: n.subtitle || n.body.slice(0, 160) || 'Evento especial',
+        location: 'Pastoral Juvenil Luque\u00f1a',
+      });
+    });
+    items.sort((a, b) => a.date.localeCompare(b.date));
+    if (items.length === 0) return;
+
+    const ics = buildIcs(items);
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'agenda-pastoral-juvenil-luquena.ics';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   // --- NOTICIAS · DATOS DERIVADOS ---
   const NEWS_RC = ['#C8973A', '#2563EB', '#0D9488', '#8A2B3B'];
@@ -2628,6 +2667,13 @@ window.setTimeout(() => {
                   <span style={{ display: 'block', marginBottom: '4px', fontSize: '12px', fontWeight: 700, letterSpacing: '2px', color: 'var(--gold)', textTransform: 'uppercase' }}>SINCRONIZACIÓN AUTOMÁTICA</span>
                   <h3 style={{ margin: '10px 0' }}>Agenda &amp; Calendario</h3>
                   <div className="line"></div>
+                </div>
+
+                <div className="ag-export reveal" style={{ animationDelay: '0.05s' }}>
+                  <button className="ag-export-btn" onClick={downloadAgendaIcs}>
+                    📅 Añadir toda la agenda a mi Google Calendar
+                  </button>
+                  <small>Descargá el archivo de eventos (.ics) e impórtalo: Google Calendar → ⚙ Ajustes → Importar y exportar.</small>
                 </div>
 
                 <div className="reveal" style={{ animationDelay: '0.15s' }}>
