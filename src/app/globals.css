@@ -10478,6 +10478,9 @@ html:not(.splash-ready) .splash-loading-text {
   border-radius: 18px; padding: 22px 22px 26px;
   box-shadow: 0 12px 34px -14px rgba(26, 39, 68, 0.16);
   border: 1px solid rgba(200, 151, 58, 0.25);
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 /* --- Cabecera mes --- */
@@ -10517,23 +10520,31 @@ html:not(.splash-ready) .splash-loading-text {
 
 /* --- Grilla --- */
 .ag-grid {
-  display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   margin-bottom: 18px;
   animation: agGridIn 0.4s cubic-bezier(0.22, 0.9, 0.3, 1.1);
 }
 .ag-hcell {
   text-align: center; font-size: 10px; font-weight: 900; letter-spacing: 1px;
   color: var(--text-muted, #8A8477); padding: 5px 0 8px;
+  min-width: 0;
 }
 .ag-day {
   position: relative; aspect-ratio: 1 / 0.82; border-radius: 11px;
   border: 1px solid transparent; background: transparent;
+  min-width: 0; max-width: 100%; margin: 0; padding: 0;
+  overflow: hidden;
   font-family: inherit; cursor: pointer;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
   transition: all 0.18s ease;
 }
 .ag-day.empty { cursor: default; }
-.ag-day i { font-style: normal; font-size: 13px; font-weight: 700; color: var(--navy, #1A2744); }
+.ag-day i { font-style: normal; font-size: 13px; font-weight: 700; color: var(--navy, #1A2744); font-variant-numeric: tabular-nums; line-height: 1; }
 .ag-day:not(.empty):hover { background: var(--cream, #FAF6EE); border-color: rgba(200, 151, 58, 0.35); transform: scale(1.06); }
 .ag-day.today { border-color: var(--navy, #1A2744); }
 .ag-day.today i { color: var(--navy, #1A2744); font-weight: 900; }
