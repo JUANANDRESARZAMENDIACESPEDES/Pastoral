@@ -1271,15 +1271,6 @@ window.setTimeout(() => {
 
             <NotificationBell variant="mobile" />
             <NavDownloadButton variant="mobile" />
-
-            <li className="drawer-a11y">
-              <span className="drawer-a11y-label">Accesibilidad</span>
-              <div className="drawer-a11y-row">
-                <button onClick={() => changeFont(1)} className="drawer-a11y-btn" aria-label="Aumentar texto">A<sup>+</sup></button>
-                <button onClick={() => changeFont(-1)} className="drawer-a11y-btn" aria-label="Disminuir texto">A<sup>–</sup></button>
-                <button onClick={toggleContrast} className={`drawer-a11y-btn ${isHighContrast ? 'is-active' : ''}`} aria-label="Alto contraste">◐ Contraste</button>
-              </div>
-            </li>
           </ul>
         </div>
       </div>
