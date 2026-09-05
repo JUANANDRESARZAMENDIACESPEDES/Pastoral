@@ -3482,7 +3482,12 @@ window.setTimeout(() => {
           </div>
 
           <div className="footer-bottom">
-            <span className="fb-copy">© {new Date().getFullYear()} Pastoral Juvenil Luqueña · Hecho con fe ❤ </span>
+            <button
+              type="button"
+              className="fb-copy"
+              onClick={() => { window.location.href = '/admin'; }}
+              style={{ background: 'none', border: 'none', padding: 0, margin: 0, font: 'inherit', fontSize: 'inherit', color: 'inherit', cursor: 'default', textAlign: 'inherit', lineHeight: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit' }}
+            >© {new Date().getFullYear()} Pastoral Juvenil Luqueña · Hecho con fe ❤</button>
             <span className="fb-faith">† &ldquo;Caminamos juntos hacia el cielo&rdquo;</span>
           </div>
         </div>
