@@ -437,6 +437,7 @@ const [docCategory, setDocCategory] = useState('all');
 const [newsSearch, setNewsSearch] = useState('');
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [a11yOpen, setA11yOpen] = useState(false);
   const [mobileSubmenuOpen, setMobileSubmenuOpen] = useState<Record<string, boolean>>({});
   const toggleMobileSubmenu = (key: string) => {
     setMobileSubmenuOpen(prev => ({ ...prev, [key]: !prev[key] }));
@@ -972,6 +973,18 @@ window.setTimeout(() => {
         </div>
       )}
 
+      {/* FLOATING ACCESSIBILITY WIDGET */}
+      <div className={`a11y-fab ${a11yOpen ? 'open' : ''}`} aria-label="Herramientas de accesibilidad">
+        <div className="a11y-fab-panel">
+          <button onClick={() => changeFont(1)} title="Aumentar texto">A<sup>+</sup></button>
+          <button onClick={() => changeFont(-1)} title="Disminuir texto">A<sup>–</sup></button>
+          <button onClick={toggleContrast} title="Alto contraste" className="a11y-fab-contrast"><span>◐</span></button>
+        </div>
+        <button className="a11y-fab-trigger" onClick={() => setA11yOpen(v => !v)} aria-expanded={a11yOpen} aria-label="Menú de accesibilidad">
+          <span>Aa</span>
+        </button>
+      </div>
+
       {/* BRANDING WATERMARK */}
       {branding.logoWatermark && branding.mainLogo && (
         <div style={{
@@ -991,17 +1004,7 @@ window.setTimeout(() => {
         }}></div>
       )}
 
-      {/* 1. TOPBAR ACCESIBILIDAD */}
-      <div className="a11y-bar">
-        <div className="container">
-          <button onClick={() => changeFont(1)} className="a11y-btn">A+</button>
-          <button onClick={() => changeFont(-1)} className="a11y-btn">A-</button>
-          <button onClick={toggleContrast} className="a11y-btn">Alto Contraste</button>
-          <Link href="/admin" className="a11y-btn">⚙ Panel Admin</Link>
-        </div>
-      </div>
-
-      {/* 2. NAVBAR REFINADA */}
+      {/* 1. NAVBAR REFINADA */}
       <nav className={`top-nav ${navScrolled ? 'nav-scrolled' : ''} ${navEntered ? 'nav-entered' : ''}`}>
         <div className="container nav-content">
           <div
@@ -1281,6 +1284,15 @@ window.setTimeout(() => {
 
             <NotificationBell variant="mobile" />
             <NavDownloadButton variant="mobile" />
+
+            <li className="drawer-a11y">
+              <span className="drawer-a11y-label">Accesibilidad</span>
+              <div className="drawer-a11y-row">
+                <button onClick={() => changeFont(1)} className="drawer-a11y-btn" aria-label="Aumentar texto">A<sup>+</sup></button>
+                <button onClick={() => changeFont(-1)} className="drawer-a11y-btn" aria-label="Disminuir texto">A<sup>–</sup></button>
+                <button onClick={toggleContrast} className={`drawer-a11y-btn ${isHighContrast ? 'is-active' : ''}`} aria-label="Alto contraste">◐ Contraste</button>
+              </div>
+            </li>
           </ul>
         </div>
       </div>
