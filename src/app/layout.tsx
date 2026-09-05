@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    title: "PJL Luque",
+    title: "Pastoral Juvenil Luqueña",
     statusBarStyle: "black-translucent",
   },
   icons: {
