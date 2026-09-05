@@ -37,14 +37,6 @@ export const metadata: Metadata = {
     title: "Pastoral Juvenil Luqueña",
     statusBarStyle: "black-translucent",
   },
-  icons: {
-    icon: [
-      { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
-      { url: '/favicon-192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/android-chrome-512.png', sizes: '512x512', type: 'image/png' },
-    ],
-    apple: '/apple-touch-icon.png',
-  },
 };
 
 export const viewport: Viewport = {
@@ -67,6 +59,11 @@ export default function RootLayout({
         <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
         <link rel="preload" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&display=swap" as="style" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&display=swap" media="print" />
+        {/* Favicon dinámico: SIEMPRE el logo del panel (favLogo > androidLogo > mainLogo).
+            La ruta /api/favicon resuelve en el servidor para TODOS los visitantes,
+            sin depender del localStorage de cada dispositivo. */}
+        <link rel="icon" href="/api/favicon" sizes="any" />
+        <link rel="apple-touch-icon" href="/api/favicon" />
         <script dangerouslySetInnerHTML={{ __html: "var pf=document.querySelector('link[href*=\"Playfair\"][media=\"print\"]');if(pf)pf.onload=function(){this.media='all'};" }} />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
         {/* Captura TEMPRANA del beforeinstallprompt (antes de la hidratación).
@@ -129,13 +126,10 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){
-  var FALLBACK='/android-chrome-192.png';
   function setFavicon(u){var l=document.querySelectorAll('link[rel="icon"],link[rel="apple-touch-icon"]');for(var i=0;i<l.length;i++)l[i].remove();var c=document.createElement('link');c.rel='icon';c.type='image/png';c.href=u;document.head.insertBefore(c,document.head.firstChild);var a=document.createElement('link');a.rel='apple-touch-icon';a.href=u;document.head.appendChild(a)}
-  function drawCircle(imgUrl){var img=new Image();img.onload=function(){var s=256,ca=document.createElement('canvas');ca.width=s;ca.height=s;var x=ca.getContext('2d');x.beginPath();x.arc(s/2,s/2,s/2,0,Math.PI*2);x.closePath();x.clip();var m=Math.min(img.width,img.height);x.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,s,s);setFavicon(ca.toDataURL('image/png'));try{if(navigator.serviceWorker&&navigator.serviceWorker.controller)navigator.serviceWorker.controller.postMessage({type:'FAVICON_UPDATED'})}catch(e){}};img.onerror=function(){setFavicon(FALLBACK)};img.src=imgUrl+(imgUrl.indexOf('data:')===0?'':'?ts='+Date.now())}
-  function loadLogo(){try{var r=localStorage.getItem('pjl_branding');var u=null;if(r){var b=JSON.parse(r);u=b&&b.mainLogo}
-    if(!u||u===FALLBACK){setFavicon(FALLBACK);try{if(navigator.serviceWorker&&navigator.serviceWorker.controller)navigator.serviceWorker.controller.postMessage({type:'FAVICON_UPDATED'})}catch(e){};return}
-    drawCircle(u)
-  }catch(e){setFavicon(FALLBACK)}}
+  function pickLogo(b){if(!b)return null;var u=b.favLogo||b.androidLogo||b.mainLogo;return typeof u==='string'&&u.length>0?u:null}
+  function drawCircle(imgUrl){var img=new Image();img.onload=function(){var s=256,ca=document.createElement('canvas');ca.width=s;ca.height=s;var x=ca.getContext('2d');if(!x)return;var m=Math.min(img.width,img.height);if(!m||m<8){setFavicon(imgUrl);return}x.beginPath();x.arc(s/2,s/2,s/2,0,Math.PI*2);x.closePath();x.clip();x.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,s,s);setFavicon(ca.toDataURL('image/png'));try{if(navigator.serviceWorker&&navigator.serviceWorker.controller)navigator.serviceWorker.controller.postMessage({type:'FAVICON_UPDATED'})}catch(e){}};img.onerror=function(){};img.src=imgUrl+(imgUrl.indexOf('data:')===0?'':'?ts='+Date.now())}
+  function loadLogo(){try{var r=localStorage.getItem('pjl_branding');if(!r)return;var u=pickLogo(JSON.parse(r));if(!u)return;drawCircle(u)}catch(e){}}
   setTimeout(loadLogo,50);
   function onStore(e){try{var d=e.detail||{};if(d.key==='branding')setTimeout(loadLogo,50)}catch(ex){}}
   if(typeof window!=='undefined'){window.addEventListener('pjl_store_update',onStore);window.addEventListener('storage',function(e){if(e.key==='pjl_branding')setTimeout(loadLogo,50)})}

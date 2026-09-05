@@ -95,9 +95,10 @@ export default function PwaIconSync() {
         let logoUrl = '/android-chrome-512.png';
         if (raw) {
           const branding = JSON.parse(raw);
-          // Prioridad: androidLogo (logo dedicado para la app en Android);
-          // si no está, cae al logo principal del sitio.
-          if (branding?.androidLogo) logoUrl = branding.androidLogo;
+          // Prioridad: favLogo (icono de pestaña dedicado); si no, el logo
+          // dedicado de la app Android; por último el logo principal del sitio.
+          if (branding?.favLogo) logoUrl = branding.favLogo;
+          else if (branding?.androidLogo) logoUrl = branding.androidLogo;
           else if (branding?.mainLogo) logoUrl = branding.mainLogo;
         }
         updatePwaIcons(logoUrl);

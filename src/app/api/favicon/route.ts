@@ -1,0 +1,70 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { fetchStoreValue } from '@/lib/supabaseStore';
+
+export const dynamic = 'force-dynamic';
+
+const FALLBACK_PATH = '/favicon-32.png';
+const MAX_SIZE = 3_500_000;
+
+function imageHeaders(contentType: string): Record<string, string> {
+  return {
+    'Content-Type': contentType,
+    'Cache-Control': 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400',
+    'X-Content-Type-Options': 'nosniff',
+  };
+}
+
+function bytesResponse(buffer: Buffer, contentType: string): NextResponse {
+  return new NextResponse(new Uint8Array(buffer), { headers: imageHeaders(contentType) });
+}
+
+async function serveLocal(request: NextRequest, path: string): Promise<NextResponse> {
+  try {
+    const origin = new URL(request.url).origin;
+    const res = await fetch(origin + path, { next: { revalidate: 86400 } });
+    if (res.ok) {
+      const buf = Buffer.from(await res.arrayBuffer());
+      return bytesResponse(buf, res.headers.get('content-type') || 'image/png');
+    }
+  } catch { /* caer al 404 */ }
+  return new NextResponse(null, { status: 404, headers: { 'Cache-Control': 'public, max-age=3600' } });
+}
+
+export async function GET(request: NextRequest) {
+  let logo = '';
+  try {
+    const branding = await fetchStoreValue<Record<string, string>>('branding');
+    logo = (branding?.favLogo as string) || (branding?.androidLogo as string) || (branding?.mainLogo as string) || '';
+  } catch { /* sin branding configurado */ }
+
+  // Logo embebido como data:image/*;base64,...
+  if (logo.startsWith('data:')) {
+    const m = /^data:([^;,]+);(base64)?,([\s\S]*)$/.exec(logo);
+    if (m) {
+      const contentType = m[1] || 'image/png';
+      try {
+        const buffer = m[2]
+          ? Buffer.from(m[3], 'base64')
+          : Buffer.from(decodeURIComponent(m[3]), 'utf8');
+        if (buffer.length > 0 && buffer.length <= MAX_SIZE) {
+          return bytesResponse(buffer, contentType);
+        }
+      } catch { /* data URL inválido, seguir al fallback */ }
+    }
+  }
+
+  // Logo remoto (storage, blob, CDN...)
+  if (logo) {
+    try {
+      const res = await fetch(logo, { next: { revalidate: 3600 } });
+      if (res.ok) {
+        const buf = Buffer.from(await res.arrayBuffer());
+        if (buf.length > 0 && buf.length <= MAX_SIZE) {
+          return bytesResponse(buf, res.headers.get('content-type') || 'image/png');
+        }
+      }
+    } catch { /* logo inaccesible, caer al fallback */ }
+  }
+
+  return serveLocal(request, FALLBACK_PATH);
+}
