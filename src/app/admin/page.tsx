@@ -3278,6 +3278,7 @@ function AdminContent() {
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   {[
                     { id: 'institucional', label: 'INSTITUCIONAL' },
+                    { id: 'evangelio', label: 'EVANGELIO DEL DÍA' },
                     { id: 'nosotros', label: 'NOSOTROS' },
                     { id: 'textos_inicio', label: 'TEXTOS DE INICIO' },
                     { id: 'mision_vision', label: 'MISIÓN/VISIÓN' },
@@ -3529,6 +3530,89 @@ function AdminContent() {
                             </div>
                           </div>
                         ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB: EVANGELIO DEL DÍA */}
+                {activeContentTab === 'evangelio' && (
+                  <div className="animate-reveal" style={{ display: 'grid', gap: '24px' }}>
+                    <div className="pjl-card evangelio-admin-card" style={{ padding: '28px 30px', background: 'linear-gradient(160deg, #ffffff 0%, #fdf8ea 100%)', border: '1px solid var(--gold-pale)', borderRadius: '24px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap', marginBottom: '22px' }}>
+                        <span style={{ width: '48px', height: '48px', borderRadius: '16px', background: 'var(--navy)', display: 'grid', placeItems: 'center', color: 'var(--gold)', fontSize: '22px', boxShadow: '0 6px 16px rgba(26,39,68,.22)' }}>✝️</span>
+                        <div style={{ flex: 1, minWidth: '220px' }}>
+                          <h4 className="serif" style={{ margin: 0, color: 'var(--navy)' }}>Evangelio del día</h4>
+                          <p style={{ margin: '5px 0 0', fontSize: '12.5px', color: 'var(--text-muted)' }}>Los peregrinos ven este contenido automáticamente tras la animación inicial y pueden volver a abrirlo desde el menú principal.</p>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1.15fr 1fr', gap: '26px', alignItems: 'start' }}>
+                        <div style={{ display: 'grid', gap: '18px' }}>
+                          <div className="form-group">
+                            <label className="premium-label">EVANGELIO (CAPÍTULO Y VERSÍCULO)</label>
+                            <input
+                              className="pjl-input"
+                              value={content.evangelioRef || ''}
+                              onChange={e => setContent({ ...content, evangelioRef: e.target.value })}
+                              placeholder="Ej: Lucas 15, 11-24 · El hijo pródigo"
+                              style={{ fontFamily: 'var(--font-display), serif', fontSize: '16px' }}
+                            />
+                          </div>
+
+                          <div className="form-group">
+                            <label className="premium-label">TEXTO DEL EVANGELIO</label>
+                            <textarea
+                              className="pjl-input"
+                              rows={8}
+                              value={content.evangelioTexto || ''}
+                              onChange={e => setContent({ ...content, evangelioTexto: e.target.value })}
+                              placeholder="Pegá aquí el texto del Evangelio de hoy... (versión popular recomendada)"
+                              style={{ fontSize: '14.5px', lineHeight: 1.75 }}
+                            />
+                          </div>
+
+                          <div className="form-group">
+                            <label className="premium-label">IMAGEN DEL EVANGELIO (SE ADAPTA A TODAS LAS PANTALLAS)</label>
+                            <div>
+                              {content.evangelioFoto ? (
+                                  <div style={{ borderRadius: '18px', overflow: 'hidden', border: '1px solid var(--gold-pale)', background: '#fff', maxWidth: '300px' }}>
+                                    <img src={content.evangelioFoto} alt="Imagen del Evangelio del día" style={{ width: '100%', height: '120px', objectFit: 'cover', display: 'block' }} />
+                                  </div>
+                                ) : (
+                                  <p style={{ margin: '0 0 8px', fontSize: '13px', color: 'var(--text-muted)' }}>Subí una foto representativa del Evangelio del día (naturaleza, Jesús, entre otros).</p>
+                                )}
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                                  {/* @ts-ignore */}
+                                  <input type="file" style={{ display: 'none' }} accept="image/*" id="evangelioFotoFile" onChange={(e) => handleFileUpload(e, (url) => { setContent({ ...content, evangelioFoto: url }); showToast('Imagen del Evangelio actualizada ✔'); })} />
+                                  <label htmlFor="evangelioFotoFile" className="btn-premium btn-premium-gold" style={{ cursor: 'pointer', padding: '7px 14px', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                    {content.evangelioFoto ? '🔁 Cambiar imagen' : '📷 Subir imagen del Evangelio'}
+                                  </label>
+                                  {content.evangelioFoto && (
+                                    <button className="btn-premium btn-premium-outline" style={{ padding: '7px 14px', fontSize: '11px' }} onClick={() => { setContent({ ...content, evangelioFoto: '' }); showToast('Imagen del Evangelio quitada'); }}>
+                                      ✖ Quitar
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                          </div>
+                        </div>
+
+                        {/* Vista previa en vivo */}
+                        <div style={{ position: 'sticky', top: '90px', alignSelf: 'start' }}>
+                          <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '2px', color: 'var(--gold)', textTransform: 'uppercase', margin: '0 0 10px' }}>Vista previa en vivo</p>
+                          <div className="evg-preview-card" style={{ background: 'linear-gradient(165deg, #ffffff, var(--cream))', borderRadius: '22px', border: '1px solid var(--gold-pale)', overflow: 'hidden', boxShadow: '0 18px 45px rgba(26,39,68,.14)' }}>
+                            <div style={{ height: '190px', background: content.evangelioFoto ? `url(${content.evangelioFoto}) center/cover no-repeat` : 'linear-gradient(135deg, var(--navy), #2d4a7a)', display: 'grid', placeItems: 'center', color: 'rgba(255,255,255,.92)' }}>
+                              {!content.evangelioFoto && <span style={{ fontSize: '34px' }}>🙏</span>}
+                            </div>
+                            <div style={{ padding: '22px 24px' }}>
+                              <span style={{ display: 'inline-block', background: 'var(--gold)', color: '#fff', fontSize: '10px', fontWeight: 800, letterSpacing: '1.5px', padding: '4px 10px', borderRadius: '999px', marginBottom: '12px' }}>✝️ EVANGELIO DEL DÍA</span>
+                              <h4 className="serif" style={{ margin: '0 0 10px', color: 'var(--navy)', fontSize: '20px', lineHeight: 1.25 }}>{content.evangelioRef || 'Evangelio del día'}</h4>
+                              <p style={{ margin: 0, fontSize: '13.5px', lineHeight: 1.75, color: 'var(--text-muted)', maxHeight: '150px', overflow: 'hidden' }}>{content.evangelioTexto || 'El texto del Evangelio se mostrará aquí en forma de tarjeta...'}</p>
+                            </div>
+                          </div>
+                          <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: '12px 4px 0', lineHeight: 1.6 }}>💡 Al copiar o compartir se agrega automáticamente la firma:<br /><em style={{ fontFamily: 'var(--font-display), serif' }}>Pastoral Juvenil Luqueña «Avivando la llama de Cristo en tu corazón»</em></p>
+                        </div>
                       </div>
                     </div>
                   </div>

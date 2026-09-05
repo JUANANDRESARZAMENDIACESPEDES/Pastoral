@@ -123,6 +123,10 @@ export interface SiteContent  {
   horariosMisaLocal: string;
   servicios: { id: string; title: string; desc: string; icon: string }[];
   logros: { id: string; valor: string; label: string; icon: string }[];
+  /* ── EVANGELIO DEL DÍA ── */
+  evangelioRef: string;
+  evangelioTexto: string;
+  evangelioFoto: string;
 }
 export interface ActiveSections { zonas: boolean; consejo: boolean; agenda: boolean; institucional: boolean; faq: boolean; contacto: boolean; }
 export interface Branding { 
@@ -323,6 +327,10 @@ export const DEFAULT_CONTENT: SiteContent = {
     { id: 'l3', valor: '4', label: 'Zonas pastorales', icon: '🗺️' },
     { id: 'l4', valor: '12+', label: 'Comunidades', icon: '🏛️' },
   ],
+  /* ── EVANGELIO DEL DÍA ── */
+  evangelioRef: '',
+  evangelioTexto: '',
+  evangelioFoto: '',
 };
 
 export const DEFAULT_CHAPELS: Chapel[] = [

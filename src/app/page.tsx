@@ -501,6 +501,78 @@ const [newsSearch, setNewsSearch] = useState('');
   const [liveDocs, setLiveDocs] = useState<DocItem[]>([]);
   const [splashDone, setSplashDone] = useState(false);
 
+  // --- EVANGELIO DEL DÍA ---
+  const [evangelioOpen, setEvangelioOpen] = useState(false);
+  const [evangelioToast, setEvangelioToast] = useState(false);
+  const evangelioShownRef = useRef(false);
+  const hasEvangelio = !!(siteContent.evangelioRef || siteContent.evangelioTexto || siteContent.evangelioFoto);
+  const EVANGELIO_SIG = 'Pastoral Juvenil Luque\u00f1a \u00abAvivando la llama de Cristo en tu coraz\u00f3n\u00bb';
+  const evangelioTextForCopy = (siteContent.evangelioRef || 'Evangelio del d\u00eda') + '\n\n' + (siteContent.evangelioTexto || '') + '\n\n' + EVANGELIO_SIG;
+
+  const dataUrlToBlob = async (url: string): Promise<Blob> => {
+    const res = await fetch(url);
+    return await res.blob();
+  };
+
+  const closeEvangelio = () => setEvangelioOpen(false);
+
+  const copyEvangelio = async () => {
+    try {
+      const items: ClipboardItem[] = [new ClipboardItem({ 'text/plain': new Blob([evangelioTextForCopy], { type: 'text/plain' }) })];
+      if (siteContent.evangelioFoto) {
+        try {
+          const blob = await dataUrlToBlob(siteContent.evangelioFoto);
+          if (blob && blob.type.startsWith('image/')) items.push(new ClipboardItem({ 'image/png': blob }));
+        } catch { /* la imagen no se pudo copiar, seguimos con el texto */ }
+      }
+      await navigator.clipboard.write(items);
+    } catch {
+      try { await navigator.clipboard.writeText(evangelioTextForCopy); } catch { /* portapapeles no disponible */ }
+    }
+    setEvangelioToast(true);
+    window.setTimeout(() => setEvangelioToast(false), 2600);
+  };
+
+  const shareEvangelio = async () => {
+    const text = evangelioTextForCopy;
+    if (navigator.share) {
+      try {
+        if (siteContent.evangelioFoto) {
+          try {
+            const blob = await dataUrlToBlob(siteContent.evangelioFoto);
+            const file = new File([blob], 'evangelio-del-dia.jpg', { type: 'image/jpeg' });
+            await navigator.share({ text, files: [file] });
+            return;
+          } catch { /* compartir con archivo falló, seguimos con texto */ }
+        }
+        await navigator.share({ text });
+        return;
+      } catch (e) {
+        const err = e as { name?: string };
+        if (err?.name === 'AbortError') return;
+      }
+    }
+    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener,noreferrer');
+  };
+
+  useEffect(() => {
+    if (!hasEvangelio || !splashDone || evangelioShownRef.current) return;
+    evangelioShownRef.current = true;
+    try {
+      if (sessionStorage.getItem('pjl_evangelio_visto')) return;
+      sessionStorage.setItem('pjl_evangelio_visto', '1');
+    } catch { /* sin sessionStorage en este contexto */ }
+    const t = window.setTimeout(() => setEvangelioOpen(true), 750);
+    return () => window.clearTimeout(t);
+  }, [splashDone, hasEvangelio]);
+
+  useEffect(() => {
+    if (!evangelioOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prevOverflow; };
+  }, [evangelioOpen]);
+
   // Descarga la agenda completa en formato .ics para añadirla a Google Calendar
   const downloadAgendaIcs = () => {
     const items: IcsItem[] = [];
@@ -979,14 +1051,14 @@ window.setTimeout(() => {
           position: 'fixed',
           bottom: '30px',
           right: '30px',
-          width: '60px',
-          height: '60px',
+          width: '66px',
+          height: '66px',
           zIndex: 9999,
           borderRadius: '50%',
           background: 'var(--white)',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
-          padding: '8px',
-          border: '2px solid var(--gold-pale)',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.14)',
+          padding: '4px',
+          border: '1px solid var(--gold-pale)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -1177,6 +1249,15 @@ window.setTimeout(() => {
               </div>
             </li>
 
+            {hasEvangelio && (
+              <li className="nav-item nav-item-icononly evangelio-nav-item">
+                <button type="button" className="nav-btn evangelio-nav-btn" onClick={() => setEvangelioOpen(true)} title="Evangelio del día" aria-label="Evangelio del día">
+                  <span className="nav-ico" aria-hidden="true">✝️</span>
+                  <span className="nav-txt">Evangelio</span>
+                </button>
+              </li>
+            )}
+
             <NotificationBell />
             <NavDownloadButton />
           </ul>
@@ -1206,6 +1287,15 @@ window.setTimeout(() => {
             <li>
               <Link href="/" onClick={(e) => { navigate('home', e); setIsMobileMenuOpen(false); }} className={`drawer-btn ${activeSection === 'home' ? 'is-active' : ''}`}><span className="drawer-ico" aria-hidden="true">🏠</span><span>Inicio</span></Link>
             </li>
+
+            {hasEvangelio && (
+              <li>
+                <button onClick={() => { setEvangelioOpen(true); setIsMobileMenuOpen(false); }} className="drawer-btn">
+                  <span className="drawer-ico" aria-hidden="true">✝️</span>
+                  <span>Evangelio del día</span>
+                </button>
+              </li>
+            )}
 
             <li>
               <button onClick={() => toggleMobileSubmenu('nosotros')} className={`drawer-btn dropdown-toggle ${activeSection === 'institucional' ? 'is-active' : ''}`}>
@@ -3494,6 +3584,37 @@ window.setTimeout(() => {
       </footer>
         );
       })()}
+
+      {/* ===== MODAL EVANGELIO DEL DÍA ===== */}
+      {hasEvangelio && evangelioOpen && (
+        <div className="evg-overlay" onClick={closeEvangelio} role="dialog" aria-modal="true" aria-label="Evangelio del día">
+          <div className="evg-card" onClick={(e) => e.stopPropagation()}>
+            <button type="button" className="evg-close" onClick={closeEvangelio} aria-label="Cerrar Evangelio del día">✕</button>
+            {siteContent.evangelioFoto && (
+              <div className="evg-imgwrap">
+                <img src={siteContent.evangelioFoto} alt="Imagen del Evangelio del día" />
+              </div>
+            )}
+            <div className="evg-body">
+              <span className="evg-badge">✝️ Evangelio del día</span>
+              <h3 className="serif evg-ref">{siteContent.evangelioRef || 'Evangelio del día'}</h3>
+              {siteContent.evangelioTexto && <p className="evg-text">{siteContent.evangelioTexto}</p>}
+              <div className="evg-actions">
+                <button type="button" className="evg-btn evg-btn-copy" onClick={copyEvangelio}><span aria-hidden="true">📋</span> Copiar texto y foto</button>
+                <button type="button" className="evg-btn evg-btn-wa" onClick={shareEvangelio}><span aria-hidden="true">💬</span> WhatsApp</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* NUBECITA "Texto copiado" */}
+      {evangelioToast && (
+        <div className="evg-toast" role="status" aria-live="polite">
+          <span className="evg-toast-cloud" aria-hidden="true">☁️</span>
+          <span className="evg-toast-msg">¡Texto copiado!</span>
+        </div>
+      )}
       
       {/* Styles inline for footer links just to keep it clean */}
       <style dangerouslySetInnerHTML={{__html: `
@@ -3594,6 +3715,45 @@ window.setTimeout(() => {
 
         @media (prefers-reduced-motion: reduce) {
           .footer-ornament span, .footer-topline i, .footer-title::after, .fs-badge, .footer-news-btn::after, .footer-link-btn, .fc-item { animation: none !important; transition: none !important; }
+        }
+
+        /* ===== EVANGELIO DEL DÍA ===== */
+        .evg-overlay { position: fixed; inset: 0; z-index: 10050; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(10,16,32,.66); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); animation: evgFade .35s ease both; }
+        @keyframes evgFade { from { opacity: 0; } to { opacity: 1; } }
+
+        .evg-card { position: relative; width: 100%; max-width: 560px; max-height: calc(100dvh - 40px); overflow-y: auto; border-radius: 24px; background: linear-gradient(170deg, #ffffff 0%, #fffdf6 100%); border: 1px solid var(--gold-pale); box-shadow: 0 34px 90px rgba(5,10,25,.5), 0 0 0 1px rgba(255,255,255,.08) inset; animation: evgPop .5s cubic-bezier(.34,1.56,.64,1) both; -webkit-overflow-scrolling: touch; }
+        @keyframes evgPop { from { opacity: 0; transform: translateY(26px) scale(.94); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+        .evg-close { position: absolute; top: 14px; right: 14px; z-index: 2; width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(255,255,255,.35); background: rgba(10,16,32,.55); color: #fff; font-size: 16px; cursor: pointer; display: grid; place-items: center; backdrop-filter: blur(4px); transition: transform .3s cubic-bezier(.34,1.56,.64,1), background .3s; }
+        .evg-close:hover { transform: rotate(90deg) scale(1.08); background: rgba(10,16,32,.78); }
+        .evg-close:active { transform: scale(.92); }
+
+        .evg-imgwrap { width: 100%; max-height: 420px; overflow: hidden; background: #000; }
+        .evg-imgwrap img { width: 100%; height: 100%; max-height: 420px; object-fit: cover; display: block; }
+
+        .evg-body { padding: 24px 28px 30px; }
+        .evg-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--gold); color: #fff; font-size: 10.5px; font-weight: 800; letter-spacing: 1.6px; text-transform: uppercase; padding: 6px 13px; border-radius: 999px; margin-bottom: 14px; box-shadow: 0 8px 20px rgba(200,151,58,.35); }
+        .evg-ref { margin: 0 0 14px; color: var(--navy); font-size: clamp(1.35rem, 4.5vw, 1.85rem); line-height: 1.22; }
+        .evg-text { margin: 0; font-size: 15.5px; line-height: 1.85; color: #2c3450; white-space: pre-line; }
+        .evg-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; padding-top: 22px; border-top: 1px dashed rgba(200,151,58,.4); }
+        .evg-btn { display: inline-flex; align-items: center; gap: 8px; border: none; cursor: pointer; padding: 13px 20px; border-radius: 14px; font-family: var(--font-display); font-weight: 700; font-size: 14px; letter-spacing: .3px; transition: transform .3s cubic-bezier(.34,1.56,.64,1), box-shadow .3s; }
+        .evg-btn:active { transform: scale(.96); }
+        .evg-btn-copy { background: linear-gradient(120deg, #f0d9a6, var(--gold) 55%, #e8c36a); color: var(--navy); box-shadow: 0 12px 28px rgba(200,151,58,.4); }
+        .evg-btn-copy:hover { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(200,151,58,.5); }
+        .evg-btn-wa { background: linear-gradient(120deg, #128c55, #25D366 60%, #128c55); color: #fff; box-shadow: 0 12px 28px rgba(37,211,102,.3); }
+        .evg-btn-wa:hover { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(37,211,102,.4); }
+
+        .evg-toast { position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%); z-index: 10070; display: inline-flex; align-items: center; gap: 10px; background: rgba(10,16,32,.92); border: 1px solid rgba(200,151,58,.5); color: #fff; padding: 12px 22px; border-radius: 999px; font-size: 14px; font-weight: 700; box-shadow: 0 18px 44px rgba(5,10,25,.45); animation: evgToast .45s cubic-bezier(.34,1.56,.64,1) both; }
+        @keyframes evgToast { from { opacity: 0; transform: translate(-50%, 18px) scale(.9); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
+        .evg-toast-cloud { font-size: 18px; animation: evgCloud 1.4s ease-in-out infinite; }
+        @keyframes evgCloud { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+        /* Botón de reapertura en la barra de navegación */
+        .evangelio-nav-btn { position: relative; }
+        .evangelio-nav-item .nav-btn { background: linear-gradient(135deg, rgba(200,151,58,.16), rgba(200,151,58,.06)); border: 1px solid rgba(200,151,58,.35); border-radius: 12px; }
+        .evangelio-nav-item .nav-txt { font-size: 11.5px; }
+        @media (hover: hover) and (pointer: fine) {
+          .evangelio-nav-item .nav-btn:hover { background: linear-gradient(135deg, rgba(200,151,58,.28), rgba(200,151,58,.1)); border-color: var(--gold); }
         }
       `}} />
     </div>
