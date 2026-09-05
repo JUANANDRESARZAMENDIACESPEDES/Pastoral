@@ -3728,8 +3728,8 @@ window.setTimeout(() => {
         .evg-close:hover { transform: rotate(90deg) scale(1.08); background: rgba(10,16,32,.78); }
         .evg-close:active { transform: scale(.92); }
 
-        .evg-imgwrap { width: 100%; max-height: 420px; overflow: hidden; background: #000; }
-        .evg-imgwrap img { width: 100%; height: 100%; max-height: 420px; object-fit: cover; display: block; }
+        .evg-imgwrap { width: 100%; background: #000; }
+        .evg-imgwrap img { width: 100%; height: auto; max-height: 60vh; object-fit: contain; display: block; background: #0c1226; }
 
         .evg-body { padding: 24px 28px 30px; }
         .evg-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--gold); color: #fff; font-size: 10.5px; font-weight: 800; letter-spacing: 1.6px; text-transform: uppercase; padding: 6px 13px; border-radius: 999px; margin-bottom: 14px; box-shadow: 0 8px 20px rgba(200,151,58,.35); }
