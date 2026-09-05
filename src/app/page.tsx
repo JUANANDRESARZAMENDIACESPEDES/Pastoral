@@ -9,7 +9,6 @@ import {
   DEFAULT_CONTENT, DEFAULT_NEWS, DEFAULT_ACTIVITIES, DEFAULT_FAQ, DEFAULT_SOCIAL, SocialLinks, DEFAULT_BRANDING, DEFAULT_CHAPELS,
   DEFAULT_STATS, PageStat, mergePageStats
 } from '@/lib/pjlStore';
-import { buildGoogleCalendarEmbedUrl, DEFAULT_GOOGLE_CALENDAR_OPTIONS } from '@/lib/googleCalendar';
 import { fetchStoreValue } from '@/lib/supabaseStore';
 import Link from 'next/link';
 import Script from 'next/script';
@@ -490,8 +489,6 @@ const [newsSearch, setNewsSearch] = useState('');
   const [liveChapels, setLiveChapels] = useState<Chapel[]>([]);
   const [selectedNews, setSelectedNews] = useState<PublicNewsItem | null>(null);
   const [siteContent, setSiteContent] = useState<SiteContent>(DEFAULT_CONTENT);
-  const publicCalendarOptions = siteContent.googleCalendarOptions ?? DEFAULT_GOOGLE_CALENDAR_OPTIONS;
-  const publicCalendarEmbedUrl = buildGoogleCalendarEmbedUrl(siteContent.googleCalendarUrl, publicCalendarOptions);
   const [liveActivities, setLiveActivities] = useState<Activity[]>([]);
   const [liveNews, setLiveNews] = useState<PublicNewsItem[]>([]);
   const [liveFaq, setLiveFaq] = useState<FaqItem[]>([]);
@@ -500,7 +497,6 @@ const [newsSearch, setNewsSearch] = useState('');
   const [liveHeroImages, setLiveHeroImages] = useState<HeroSlide[]>([]);
   const [heroIntervalSecs, setHeroIntervalSecs] = useState<number>(3);
   const [liveHeroIndex, setLiveHeroIndex] = useState(0);
-  const [calMode, setCalMode] = useState<'pjl' | 'gcal'>('pjl');
   const [liveDocs, setLiveDocs] = useState<DocItem[]>([]);
   const [splashDone, setSplashDone] = useState(false);
 
@@ -2634,39 +2630,13 @@ window.setTimeout(() => {
                   <div className="line"></div>
                 </div>
 
-                <div className="cal-mode-tabs reveal" role="tablist" aria-label="Modo del calendario">
-                  <button role="tab" aria-selected={calMode === 'pjl'} className={`cmt-btn ${calMode === 'pjl' ? 'on' : ''}`} onClick={() => setCalMode('pjl')}>
-                    📅 Agenda PJL
-                  </button>
-                  {publicCalendarEmbedUrl && (
-                    <button role="tab" aria-selected={calMode === 'gcal'} className={`cmt-btn ${calMode === 'gcal' ? 'on' : ''}`} onClick={() => setCalMode('gcal')}>
-                      🗓️ Institucional
-                    </button>
-                  )}
+                <div className="reveal" style={{ animationDelay: '0.15s' }}>
+                  <AgendaCalendar
+                    activities={liveActivities}
+                    news={liveNews}
+                    onOpenNews={(n) => setSelectedNews(n)}
+                  />
                 </div>
-
-                {(calMode === 'pjl' || !publicCalendarEmbedUrl) ? (
-                  <div className="reveal" style={{ animationDelay: '0.15s' }}>
-                    <AgendaCalendar
-                      activities={liveActivities}
-                      news={liveNews}
-                      onOpenNews={(n) => setSelectedNews(n)}
-                    />
-                  </div>
-                ) : (
-                  <div className="reveal calendar-wrapper" style={{ animationDelay: '0.2s', height: 'clamp(480px, 70vw, 650px)' }}>
-                    <div className="calendar-inner">
-                      <iframe
-                        src={publicCalendarEmbedUrl}
-                        title="Google Calendar institucional"
-                        style={{ border: 0, width: '100%', height: '100%', borderRadius: '8px' }}
-                        scrolling="no"
-                        loading="lazy"
-                        referrerPolicy="no-referrer-when-downgrade"
-                      ></iframe>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </section>
