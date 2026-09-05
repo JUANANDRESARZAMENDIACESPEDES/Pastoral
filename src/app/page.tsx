@@ -437,7 +437,6 @@ const [docCategory, setDocCategory] = useState('all');
 const [newsSearch, setNewsSearch] = useState('');
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [a11yOpen, setA11yOpen] = useState(false);
   const [mobileSubmenuOpen, setMobileSubmenuOpen] = useState<Record<string, boolean>>({});
   const toggleMobileSubmenu = (key: string) => {
     setMobileSubmenuOpen(prev => ({ ...prev, [key]: !prev[key] }));
@@ -972,18 +971,6 @@ window.setTimeout(() => {
           />
         </div>
       )}
-
-      {/* FLOATING ACCESSIBILITY WIDGET */}
-      <div className={`a11y-fab ${a11yOpen ? 'open' : ''}`} aria-label="Herramientas de accesibilidad">
-        <div className="a11y-fab-panel">
-          <button onClick={() => changeFont(1)} title="Aumentar texto">A<sup>+</sup></button>
-          <button onClick={() => changeFont(-1)} title="Disminuir texto">A<sup>–</sup></button>
-          <button onClick={toggleContrast} title="Alto contraste" className="a11y-fab-contrast"><span>◐</span></button>
-        </div>
-        <button className="a11y-fab-trigger" onClick={() => setA11yOpen(v => !v)} aria-expanded={a11yOpen} aria-label="Menú de accesibilidad">
-          <span>Aa</span>
-        </button>
-      </div>
 
       {/* BRANDING WATERMARK */}
       {branding.logoWatermark && branding.mainLogo && (
