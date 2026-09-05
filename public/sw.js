@@ -1,16 +1,16 @@
-/* ============================================================
-   Pastoral Juvenil Luqueña — Service Worker
+﻿/* ============================================================
+   Pastoral Juvenil LuqueÃ±a â€” Service Worker
    ------------------------------------------------------------
    Permite instalar la web como APP en el celular
-   (cachea la shell para arranque rápido/offline).
+   (cachea la shell para arranque rÃ¡pido/offline).
    sirve iconos PWA personalizados desde Cache API
    cuando el admin cambia el logo desde el panel.
    ============================================================ */
 
 const VERSION = 'pjl-v5';
-/* Cache con sufijo de versión: al cambiar, la antigua 'pjl-shell'
-   se borra durante activate. Así nunca queda servido un manifest
-   o shell obsoleto que rompa la instalación PWA. */
+/* Cache con sufijo de versiÃ³n: al cambiar, la antigua 'pjl-shell'
+   se borra durante activate. AsÃ­ nunca queda servido un manifest
+   o shell obsoleto que rompa la instalaciÃ³n PWA. */
 const SHELL_CACHE = 'pjl-shell-v5';
 const CUSTOM_ICONS_CACHE = 'pjl-custom-icons';
 
@@ -19,27 +19,28 @@ const CORE_ASSETS = [
   '/apple-touch-icon.png',
   '/favicon-192.png',
   '/favicon-32.png',
-  '/pjl-logo.svg',
+  '/maskable-512.png',
 ];
 
-/* Los assets críticos para la instalación PWA SIEMPRE se resuelven
-   yendo a la red primero. Si un manifest/ícono quedó cacheado en una
-   versión vieja (apuntando a rutas eliminadas como /api/manifest),
-   servirlo desde cache rompería la "installability". */
+/* Los assets crÃ­ticos para la instalaciÃ³n PWA SIEMPRE se resuelven
+   yendo a la red primero. Si un manifest/Ã­cono quedÃ³ cacheado en una
+   versiÃ³n vieja (apuntando a rutas eliminadas como /api/manifest),
+   servirlo desde cache romperÃ­a la "installability". */
 const NETWORK_FIRST_ASSETS = [
   '/manifest.json',
   '/android-chrome-192.png',
   '/android-chrome-512.png',
+  '/maskable-512.png',
 ];
 
-const ICON_URLS = ['/android-chrome-192.png', '/android-chrome-512.png'];
+const ICON_URLS = ['/android-chrome-192.png', '/android-chrome-512.png', '/maskable-512.png'];
 
-/* Instalación: cachea la shell y avisa de la actualización.
-   NO se llama a self.skipWaiting() aquí a propósito: cuando ya existe un
+/* InstalaciÃ³n: cachea la shell y avisa de la actualizaciÃ³n.
+   NO se llama a self.skipWaiting() aquÃ­ a propÃ³sito: cuando ya existe un
    service worker activo, el nuevo queda en estado "waiting" y el
-   componente UpdatePrompt muestra el aviso "nueva actualización".
+   componente UpdatePrompt muestra el aviso "nueva actualizaciÃ³n".
    Solo cuando el usuario confirma (mensaje SKIP_WAITING) el nuevo SW toma
-   el control y recarga la página con la versión actualizada. */
+   el control y recarga la pÃ¡gina con la versiÃ³n actualizada. */
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
@@ -107,9 +108,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  /* Network-first para manifest e íconos: nunca servir versiones viejas
-     cacheadas. Si hay un ícono custom generado por el panel (Cache API),
-     ese tiene prioridad y sí se sirve desde CUSTOM_ICONS_CACHE. */
+  /* Network-first para manifest e Ã­conos: nunca servir versiones viejas
+     cacheadas. Si hay un Ã­cono custom generado por el panel (Cache API),
+     ese tiene prioridad y sÃ­ se sirve desde CUSTOM_ICONS_CACHE. */
   if (NETWORK_FIRST_ASSETS.includes(pathname)) {
     event.respondWith(
       (ICON_URLS.includes(pathname)
@@ -151,10 +152,10 @@ self.addEventListener('fetch', (event) => {
 });
 
 /* ============================================================
-   WEB PUSH — Notificaciones push habilitadas
+   WEB PUSH â€” Notificaciones push habilitadas
    ============================================================ */
 self.addEventListener('push', (event) => {
-  let data = { title: 'Pastoral Juvenil Luqueña', body: 'Tenés una nueva notificación', url: '/' };
+  let data = { title: 'Pastoral Juvenil LuqueÃ±a', body: 'TenÃ©s una nueva notificaciÃ³n', url: '/' };
   try {
     if (event.data) data = { ...data, ...event.data.json() };
   } catch (e) {

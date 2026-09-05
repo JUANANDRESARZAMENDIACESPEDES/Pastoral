@@ -1,7 +1,7 @@
 'use client';
 import { useEffect } from 'react';
 
-const DEFAULT_LOGO = '/pjl-logo.svg';
+const DEFAULT_LOGO = '/android-chrome-512.png';
 
 export default function FaviconSync() {
   useEffect(() => {

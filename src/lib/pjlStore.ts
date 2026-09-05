@@ -337,8 +337,8 @@ export const DEFAULT_SECTIONS: ActiveSections = { zonas: true, consejo: true, ag
 export const DEFAULT_GALLERY: GalleryItem[] = [];
 
 export const DEFAULT_BRANDING: Branding = { 
-  mainLogo: '/pjl-logo.svg', 
-  androidLogo: '',
+  mainLogo: '/android-chrome-512.png', 
+  androidLogo: '/android-chrome-512.png',
   adminIconDashboard: '📊',
   adminIconIdentidad: '🎨',
   adminIconCarrusel: '🖼️',

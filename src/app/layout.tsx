@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     icon: [
       { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
       { url: '/favicon-192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/pjl-logo.svg', type: 'image/svg+xml' },
+      { url: '/android-chrome-512.png', sizes: '512x512', type: 'image/png' },
     ],
     apple: '/apple-touch-icon.png',
   },
@@ -129,7 +129,7 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){
-  var FALLBACK='/pjl-logo.svg';
+  var FALLBACK='/android-chrome-192.png';
   function setFavicon(u){var l=document.querySelectorAll('link[rel="icon"],link[rel="apple-touch-icon"]');for(var i=0;i<l.length;i++)l[i].remove();var c=document.createElement('link');c.rel='icon';c.type='image/png';c.href=u;document.head.insertBefore(c,document.head.firstChild);var a=document.createElement('link');a.rel='apple-touch-icon';a.href=u;document.head.appendChild(a)}
   function drawCircle(imgUrl){var img=new Image();img.onload=function(){var s=256,ca=document.createElement('canvas');ca.width=s;ca.height=s;var x=ca.getContext('2d');x.beginPath();x.arc(s/2,s/2,s/2,0,Math.PI*2);x.closePath();x.clip();var m=Math.min(img.width,img.height);x.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,s,s);setFavicon(ca.toDataURL('image/png'));try{if(navigator.serviceWorker&&navigator.serviceWorker.controller)navigator.serviceWorker.controller.postMessage({type:'FAVICON_UPDATED'})}catch(e){}};img.onerror=function(){setFavicon(FALLBACK)};img.src=imgUrl+(imgUrl.indexOf('data:')===0?'':'?ts='+Date.now())}
   function loadLogo(){try{var r=localStorage.getItem('pjl_branding');var u=null;if(r){var b=JSON.parse(r);u=b&&b.mainLogo}

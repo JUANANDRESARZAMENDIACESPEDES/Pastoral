@@ -78,6 +78,7 @@ export default function PwaIconSync() {
         const cache = await caches.open('pjl-custom-icons');
         if (icon192) await cache.put(new Request('/android-chrome-192.png'), new Response(icon192, { headers: { 'Content-Type': 'image/png' } }));
         if (icon512) await cache.put(new Request('/android-chrome-512.png'), new Response(icon512, { headers: { 'Content-Type': 'image/png' } }));
+        if (icon512) await cache.put(new Request('/maskable-512.png'), new Response(icon512, { headers: { 'Content-Type': 'image/png' } }));
       } catch {}
       try {
         if (navigator.serviceWorker?.controller) {
@@ -90,7 +91,8 @@ export default function PwaIconSync() {
       if (cancelled) return;
       try {
         const raw = localStorage.getItem('pjl_branding');
-        let logoUrl = '/pjl-logo.svg';
+        // Logo real de la app (ya no el placeholder pjl-logo.svg).
+        let logoUrl = '/android-chrome-512.png';
         if (raw) {
           const branding = JSON.parse(raw);
           // Prioridad: androidLogo (logo dedicado para la app en Android);
