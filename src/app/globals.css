@@ -6555,7 +6555,9 @@ html:not(.splash-ready) .splash-loading-text,
 html:not(.splash-ready) .splash-stars-1,
 html:not(.splash-ready) .splash-stars-2,
 html:not(.splash-ready) .splash-galaxy,
-html:not(.splash-ready) .x-s {
+html:not(.splash-ready) .x-s,
+html:not(.splash-ready) .splash-creation,
+html:not(.splash-ready) .splash-moon {
   animation-play-state: paused !important;
 }
 /* Salida cinematográfica en DOS fases (ver efecto del splash en page.tsx):
@@ -6820,7 +6822,8 @@ html:not(.splash-ready) .x-s {
 
 @media (prefers-reduced-motion: reduce) {
   .splash-orb, .splash-ember, .splash-ring, .splash-halo, .splash-flame, .splash-bar-shine,
-  .splash-stars, .splash-galaxy, .splash-constellation, .x-p, .x-n, .x-s, .splash-shoot, .splash-glints i { animation: none !important; }
+  .splash-stars, .splash-galaxy, .splash-constellation, .x-p, .x-n, .x-s, .splash-shoot, .splash-glints i,
+  .splash-creation, .splash-moon { animation: none !important; }
   .splash-letter, .splash-logo-wrap, .splash-tagline, .splash-bar, .splash-bar-fill, .splash-loading-text { animation-duration: 0.01s !important; animation-delay: 0s !important; }
 }
 
@@ -8874,8 +8877,65 @@ html:not(.splash-ready) .x-s {
 @media (max-width: 760px) {
   .splash-constellation { width: 66vw; right: -7vw; top: 5%; opacity: .55; }
   .splash-galaxy { top: 26vh; }
-  .splash-shoot { animation: none !important; opacity: 0 !important; }
-}/* ============================================================
+.splash-shoot { animation: none !important; opacity: 0 !important; }
+}
+
+/* --- Obra de la Creación: planetas y la luna creciente --- */
+.splash-creation,
+.splash-moon {
+  position: absolute;
+  pointer-events: none;
+}
+.splash-creation {
+  left: .5%;
+  bottom: 4%;
+  width: clamp(120px, 27vw, 250px);
+  aspect-ratio: 1 / 1;
+  opacity: .92;
+  filter: drop-shadow(0 0 18px rgba(200, 151, 58, .18));
+}
+.splash-moon {
+  left: 5%;
+  top: 15%;
+  width: clamp(64px, 13vw, 118px);
+  aspect-ratio: 1 / 1;
+  opacity: .85;
+  filter: drop-shadow(0 0 14px rgba(245, 223, 174, .25));
+}
+.splash-creation::before,
+.splash-moon::before {
+  content: '';
+  position: absolute;
+  inset: -18%;
+  background: radial-gradient(circle, rgba(200, 151, 58, .16), transparent 66%);
+  z-index: -1;
+}
+.splash-screen.art-on .splash-creation {
+  animation:
+    planetReveal .9s cubic-bezier(.34, 1.56, .64, 1) .2s both,
+    spaceDrift 11s ease-in-out 1.4s infinite alternate;
+}
+.splash-screen.art-on .splash-moon {
+  animation:
+    moonReveal 1s cubic-bezier(.34, 1.56, .64, 1) .5s both,
+    moonBob 9s ease-in-out 1.9s infinite alternate;
+}
+@keyframes planetReveal { from { opacity: 0; transform: translateY(26px) scale(.82) rotate(-8deg); } }
+@keyframes moonReveal  { from { opacity: 0; transform: translateY(-20px) scale(.8); } }
+@keyframes spaceDrift  { to   { transform: translate3d(16px, -10px, 0) rotate(2deg); } }
+@keyframes moonBob     { to   { transform: translate3d(-8px, 10px, 0) rotate(-3deg); } }
+.pl-ring {
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px rgba(240, 217, 166, .6));
+}
+.pl-night { mix-blend-mode: multiply; }
+
+@media (max-width: 760px) {
+  .splash-creation { width: 46vw; left: -5vw; bottom: 1%; opacity: .8; }
+  .splash-moon { width: 20vw; left: 3%; top: 11%; opacity: .75; }
+}
+
+/* ============================================================
    GESTION DE TERRITORIO - PANEL 2.0
    Dashboard de cobertura, tarjetas de zona, ubicacion y export
    ============================================================ */
